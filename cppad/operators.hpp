@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include <cppad/concepts.hpp>
 #include <cppad/expression.hpp>
 #include <cppad/detail.hpp>
@@ -77,6 +79,29 @@ class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
                 + this->get_a().value()*this->get_b().partial(e);
         });
     }
+};
+
+template<concepts::Expression E>
+class Exponential : public ExpressionBase {
+ public:
+    explicit Exponential(E e)
+    : _storage(std::forward<E>(e))
+    {}
+
+    constexpr auto value() const {
+        using std::exp;
+        return exp(_storage.get().value());
+    }
+
+    template<concepts::Expression _E>
+    constexpr double partial(_E&& e) const {
+        return this->partial_to(std::forward<_E>(e), [&] (auto&& e) {
+            return value()*_storage.get().partial(e);
+        });
+    }
+
+ private:
+    detail::Storage<E> _storage;
 };
 
 }  // namespace cppad::concepts

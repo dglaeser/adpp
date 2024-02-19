@@ -26,6 +26,7 @@ namespace detail {
 // forward declarations
 template<concepts::Expression A, concepts::Expression B> class Plus;
 template<concepts::Expression A, concepts::Expression B> class Times;
+template<concepts::Expression E> class Exponential;
 
 struct ExpressionBase {
     template<typename Self, concepts::IntoExpression Other>
@@ -44,6 +45,11 @@ struct ExpressionBase {
             std::forward<Self>(self),
             as_expression(std::forward<Other>(other))
         };
+    }
+
+    template<typename Self>
+    constexpr auto exp(this Self&& self) {
+        return Exponential<Self>{std::forward<Self>(self)};
     }
 
  protected:
