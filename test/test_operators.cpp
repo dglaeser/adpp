@@ -40,6 +40,16 @@ int main() {
         expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
     };
 
+    "plus_times_operators_three_levels_with_arithmetics"_test = [] () {
+        const auto a = cppad::var(2);
+        const auto b = cppad::var(4);
+        const auto c = a*42 + b*48;
+        const auto d = c*a;
+        expect(eq(d.value(), (42*2 + 48*4)*2));
+        expect(eq(c.partial(a), 42));
+        expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
+    };
+
     "plus_times_operators_three_levels_single_expression"_test = [] () {
         const auto a = cppad::var(2);
         const auto d = (a*cppad::constant(42) + cppad::var(4)*cppad::constant(48))*a;
