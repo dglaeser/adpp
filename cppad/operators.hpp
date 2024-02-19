@@ -2,34 +2,13 @@
 
 #include <cppad/concepts.hpp>
 #include <cppad/expression.hpp>
+#include <cppad/detail.hpp>
 
 
 namespace cppad {
 
 #ifndef DOXYGEN
 namespace detail {
-
-    template<typename E>
-    class ExpressionStorage {
-        using Stored = std::conditional_t<
-            std::is_lvalue_reference_v<E>,
-            std::add_const_t<E>,
-            std::remove_cvref_t<E>
-        >;
-
-     public:
-        template<std::convertible_to<Stored> _E>
-        ExpressionStorage(_E&& e)
-        : _expression{std::forward<_E>(e)}
-        {}
-
-        decltype(auto) get() const {
-            return _expression;
-        }
-
-     private:
-        Stored _expression;
-    };
 
     template<concepts::Expression A, concepts::Expression B>
     class BinaryOperationBase {
@@ -49,8 +28,8 @@ namespace detail {
         }
 
      private:
-        ExpressionStorage<A> _a;
-        ExpressionStorage<B> _b;
+        detail::Storage<A> _a;
+        detail::Storage<B> _b;
     };
 
 }  // namespace detail
@@ -58,7 +37,7 @@ namespace detail {
 
 
 template<concepts::Expression A, concepts::Expression B>
-class Plus : ExpressionBase, detail::BinaryOperationBase<A, B> {
+class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
     explicit Plus(A a, B b)
     : detail::BinaryOperationBase<A, B>(
@@ -79,7 +58,7 @@ class Plus : ExpressionBase, detail::BinaryOperationBase<A, B> {
 };
 
 template<concepts::Expression A, concepts::Expression B>
-class Times : ExpressionBase, detail::BinaryOperationBase<A, B> {
+class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
     explicit Times(A a, B b)
     : detail::BinaryOperationBase<A, B>(

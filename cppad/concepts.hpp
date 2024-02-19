@@ -18,7 +18,7 @@ namespace detail {
 #endif  // DOXYGEN
 
 template<typename T>
-concept Arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<T>;
+concept Arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
 
 template<typename T>
 concept Expression = requires(const T& t) {
