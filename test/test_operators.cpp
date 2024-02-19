@@ -68,6 +68,10 @@ int main() {
         a /= 2;
         expect(eq(c.value(), 84));
         expect(eq(c.partial(a), 2));
+
+        a.set(5);
+        expect(eq(c.value(), 10));
+        expect(eq(c.partial(a), 2));
     };
 
     return EXIT_SUCCESS;
