@@ -57,5 +57,16 @@ int main() {
         static_assert(std::is_same_v<decltype(a.value()), const double&>);
     };
 
+    "variable_self_derivative"_test = [] () {
+        const auto a = cppad::var(42.0);
+        expect(eq(a.partial(a), 1.0));
+    };
+
+    "variable_other_derivative"_test = [] () {
+        const auto a = cppad::var(42.0);
+        const auto other = cppad::var(20.0);
+        expect(eq(a.partial(other), 0.0));
+    };
+
     return EXIT_SUCCESS;
 }
