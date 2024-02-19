@@ -1,0 +1,61 @@
+#pragma once
+
+#include <concepts>
+#include <utility>
+#include <memory>
+#include <type_traits>
+
+#include <cppad/concepts.hpp>
+#include <cppad/traits.hpp>
+
+namespace cppad {
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename A, typename B>
+    constexpr bool is_same_object(A&& a, B&& b) {
+        if constexpr (std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>)
+            return std::addressof(a) == std::addressof(b);
+        return false;
+    }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+// forward declarations
+template<concepts::Expression A, concepts::Expression B> class Plus;
+template<concepts::Expression A, concepts::Expression B> class Times;
+
+struct ExpressionBase {
+    template<typename Self, concepts::IntoExpression Other>
+    constexpr auto operator+(this Self&& self, Other&& other) {
+        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
+        return Plus<Self, OtherExpression>{
+            std::forward<Self>(self),
+            as_expression(std::forward<Other>(other))
+        };
+    }
+
+    template<typename Self, concepts::IntoExpression Other>
+    constexpr auto operator*(this Self&& self, Other&& other) {
+        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
+        return Times<Self, OtherExpression>{
+            std::forward<Self>(self),
+            as_expression(std::forward<Other>(other))
+        };
+    }
+
+ protected:
+    template<typename Self, concepts::Expression E, std::invocable<E> Partial>
+        requires(concepts::Arithmetic<std::invoke_result_t<Partial, E>>)
+    constexpr double partial_to(this Self&& self, E&& e, Partial&& partial) {
+        static_assert(
+            !traits::IsConstant<std::remove_cvref_t<E>>::value,
+            "Derivative w.r.t. a constant requested"
+        );
+        return detail::is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
+    }
+};
+
+}  // namespace cppad

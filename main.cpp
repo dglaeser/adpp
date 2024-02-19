@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "cppad.hpp"
+#include <cppad/cppad.hpp>
 
 using cppad::var;
 
