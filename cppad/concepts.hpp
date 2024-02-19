@@ -40,6 +40,11 @@ concept IntoExpression = Expression<T> or requires(const T& t) {
 
 }  // namespace concepts
 
+template<concepts::IntoExpression E>
+constexpr decltype(auto) as_expression(E&& e) {
+    return traits::AsExpression<std::remove_cvref_t<E>>::get(std::forward<E>(e));
+}
+
 namespace traits {
 
 template<concepts::Expression E>
@@ -51,11 +56,4 @@ struct AsExpression<E> {
 };
 
 }  // namespace traits
-
-
-template<concepts::IntoExpression E>
-constexpr decltype(auto) as_expression(E&& e) {
-    return traits::AsExpression<std::remove_cvref_t<E>>::get(std::forward<E>(e));
-}
-
 }  // namespace cppad
