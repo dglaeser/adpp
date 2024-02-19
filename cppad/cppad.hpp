@@ -8,16 +8,32 @@
 namespace cppad {
 namespace Concepts {
 
+#ifndef DOXYGEN
+namespace Detail {
+
+    struct MockExpression {
+        double value() const { return 1.0; }
+
+        template<typename T>
+        double partial(T&&) const { return 1.0; }
+    };
+
+}  // namespace Detail
+#endif  // DOXYGEN
+
 template<typename T>
 concept Arithmetic = std::floating_point<T> or std::integral<T>;
 
 template<typename T>
 concept Expression = requires(const T& t) {
     { t.value() } -> Arithmetic;
+    { t.partial(Detail::MockExpression{}) } -> Arithmetic;
 };
 
 }  // namespace Concepts
 
+
+#ifndef DOXYGEN
 namespace Detail {
 
     template<typename E>
@@ -72,6 +88,8 @@ namespace Detail {
     }
 
 }  // namespace Detail
+#endif  // DOXYGEN
+
 
 template<Concepts::Expression A, Concepts::Expression B>
 class Plus : Detail::BinaryOperation<A, B> {
@@ -80,9 +98,7 @@ class Plus : Detail::BinaryOperation<A, B> {
     : Detail::BinaryOperation<A, B>(
         std::forward<A>(a),
         std::forward<B>(b))
-    {
-        static_assert(std::is_lvalue_reference_v<A>);
-    }
+    {}
 
     auto value() const {
         return this->get_a().value() + this->get_b().value();
