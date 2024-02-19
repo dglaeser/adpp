@@ -57,5 +57,18 @@ int main() {
         expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
     };
 
+    "plus_times_expression_modified_variable"_test = [] () {
+        auto a = cppad::var(42);
+        auto b = cppad::var(2);
+        auto c = a*b;
+        a *= 2;
+        expect(eq(c.value(), 168));
+        expect(eq(c.partial(a), 2));
+
+        a /= 2;
+        expect(eq(c.value(), 84));
+        expect(eq(c.partial(a), 2));
+    };
+
     return EXIT_SUCCESS;
 }

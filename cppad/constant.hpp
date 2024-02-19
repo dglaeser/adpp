@@ -27,6 +27,18 @@ class Constant : public ExpressionBase {
         return 0.0;
     }
 
+    template<typename Self, concepts::Arithmetic T>
+    Self& operator*=(this Self& self, T&& value) {
+        self._storage.get() *= std::forward<T>(value);
+        return self;
+    }
+
+    template<typename Self, concepts::Arithmetic T>
+    Self& operator/=(this Self& self, T&& value) {
+        self._storage.get() /= std::forward<T>(value);
+        return self;
+    }
+
  private:
     detail::Storage<V> _storage;
 };
