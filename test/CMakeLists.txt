@@ -13,3 +13,4 @@ function (cppad_add_test NAME SOURCE)
 endfunction ()
 
 cppad_add_test(test_detail test_detail.cpp)
+cppad_add_test(test_constant test_constant.cpp)
