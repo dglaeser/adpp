@@ -1,20 +1,23 @@
 #pragma once
 
+#include <utility>
 #include <concepts>
+#include <type_traits>
 
 #include <cppad/type_traits.hpp>
 #include <cppad/traits.hpp>
 
-namespace cppad::concepts {
+namespace cppad {
+namespace concepts {
 
 #ifndef DOXYGEN
 namespace detail {
 
     struct MockExpression {
-        double value() const { return 1.0; }
+        constexpr double value() const { return 1.0; }
 
         template<typename T>
-        double partial(T&&) const { return 1.0; }
+        constexpr double partial(T&&) const { return 1.0; }
     };
 
 }  // namespace detail
@@ -35,4 +38,24 @@ concept IntoExpression = Expression<T> or requires(const T& t) {
     { traits::AsExpression<std::remove_cvref_t<T>>::get(t) } -> Expression;
 };
 
-}  // namespace cppad::concepts
+}  // namespace concepts
+
+namespace traits {
+
+template<concepts::Expression E>
+struct AsExpression<E> {
+    template<typename _E> requires(std::same_as<E, std::remove_cvref_t<_E>>)
+    static constexpr decltype(auto) get(_E&& e) {
+        return std::forward<_E>(e);
+    }
+};
+
+}  // namespace traits
+
+
+template<concepts::IntoExpression E>
+constexpr decltype(auto) as_expression(E&& e) {
+    return traits::AsExpression<std::remove_cvref_t<E>>::get(std::forward<E>(e));
+}
+
+}  // namespace cppad

@@ -68,5 +68,14 @@ int main() {
         expect(eq(a.partial(other), 0.0));
     };
 
+    "variable_as_expression"_test = [] () {
+        static_assert(cppad::concepts::Expression<cppad::Variable<int>>);
+        static_assert(cppad::concepts::IntoExpression<cppad::Variable<int>>);
+
+        const auto a = cppad::var(42.0);
+        static_assert(std::is_same_v<decltype(cppad::as_expression(a)), const cppad::Variable<double>&>);
+        expect(cppad::detail::is_same_object(a, cppad::as_expression(a)));
+    };
+
     return EXIT_SUCCESS;
 }

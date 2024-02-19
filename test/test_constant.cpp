@@ -90,5 +90,14 @@ int main() {
         }
     };
 
+    "constant_as_expression"_test = [] () {
+        static_assert(cppad::concepts::Expression<cppad::Constant<int>>);
+        static_assert(cppad::concepts::IntoExpression<cppad::Constant<int>>);
+
+        const auto a = cppad::constant(42.0);
+        static_assert(std::is_same_v<decltype(cppad::as_expression(a)), const cppad::Constant<double>&>);
+        expect(cppad::detail::is_same_object(a, cppad::as_expression(a)));
+    };
+
     return EXIT_SUCCESS;
 }
