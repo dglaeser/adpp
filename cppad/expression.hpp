@@ -4,6 +4,7 @@
 #include <utility>
 #include <memory>
 #include <type_traits>
+#include <cmath>
 
 #include <cppad/concepts.hpp>
 #include <cppad/traits.hpp>
@@ -65,3 +66,12 @@ struct ExpressionBase {
 };
 
 }  // namespace cppad
+
+namespace std {
+
+template<cppad::concepts::Expression E>
+constexpr auto exp(E&& e) {
+    return std::forward<E>(e).exp();
+}
+
+}  // namespace std

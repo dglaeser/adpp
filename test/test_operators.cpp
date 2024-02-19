@@ -81,5 +81,12 @@ int main() {
         expect(eq(e.partial(a), std::exp(3*2)*2));
     };
 
+    "exp_expression_with_std_function"_test = [] () {
+        auto a = cppad::var(3);
+        auto e = std::exp(a*2);
+        expect(eq(e.value(), std::exp(3*2)));
+        expect(eq(e.partial(a), std::exp(3*2)*2));
+    };
+
     return EXIT_SUCCESS;
 }
