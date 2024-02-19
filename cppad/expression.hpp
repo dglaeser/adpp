@@ -28,19 +28,21 @@ template<concepts::Expression A, concepts::Expression B> class Plus;
 template<concepts::Expression A, concepts::Expression B> class Times;
 
 struct ExpressionBase {
-    template<typename Self, concepts::Expression Other>
+    template<typename Self, concepts::IntoExpression Other>
     constexpr auto operator+(this Self&& self, Other&& other) {
-        return Plus<Self, Other>{
+        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
+        return Plus<Self, OtherExpression>{
             std::forward<Self>(self),
-            std::forward<Other>(other)
+            as_expression(std::forward<Other>(other))
         };
     }
 
-    template<typename Self, concepts::Expression Other>
+    template<typename Self, concepts::IntoExpression Other>
     constexpr auto operator*(this Self&& self, Other&& other) {
-        return Times<Self, Other>{
+        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
+        return Times<Self, OtherExpression>{
             std::forward<Self>(self),
-            std::forward<Other>(other)
+            as_expression(std::forward<Other>(other))
         };
     }
 
