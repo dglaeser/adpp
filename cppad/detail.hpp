@@ -20,12 +20,12 @@ class Storage {
     {}
 
     template<typename Self> requires(!std::is_lvalue_reference_v<Self>)
-    T&& get(this Self&& self) {
+    constexpr T&& get(this Self&& self) {
         return std::move(self._value);
     }
 
     template<typename Self>
-    auto& get(this Self& self) {
+    constexpr auto& get(this Self& self) {
         if constexpr (std::is_const_v<Self>)
             return std::as_const(self._value);
         else

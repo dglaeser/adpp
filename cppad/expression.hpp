@@ -47,7 +47,7 @@ struct ExpressionBase {
  protected:
     template<typename Self, concepts::Expression E, std::invocable<E> Partial>
         requires(concepts::Arithmetic<std::invoke_result_t<Partial, E>>)
-    double partial_to(this Self&& self, E&& e, Partial&& partial) {
+    constexpr double partial_to(this Self&& self, E&& e, Partial&& partial) {
         static_assert(
             !traits::IsConstant<std::remove_cvref_t<E>>::value,
             "Derivative w.r.t. a constant requested"

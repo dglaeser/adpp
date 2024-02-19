@@ -45,12 +45,12 @@ class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
         std::forward<B>(b))
     {}
 
-    auto value() const {
+    constexpr auto value() const {
         return this->get_a().value() + this->get_b().value();
     }
 
     template<concepts::Expression E>
-    double partial(E&& e) const {
+    constexpr double partial(E&& e) const {
         return this->partial_to(std::forward<E>(e), [&] (auto&& e) {
             return this->get_a().partial(e) + this->get_b().partial(e);
         });
@@ -66,12 +66,12 @@ class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
         std::forward<B>(b))
     {}
 
-    auto value() const {
+    constexpr auto value() const {
         return this->get_a().value() * this->get_b().value();
     }
 
     template<concepts::Expression E>
-    double partial(E&& e) const {
+    constexpr double partial(E&& e) const {
         return this->partial_to(std::forward<E>(e), [&] (auto&& e) {
             return this->get_a().partial(e)*this->get_b().value()
                 + this->get_a().value()*this->get_b().partial(e);

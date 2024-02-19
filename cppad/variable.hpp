@@ -14,7 +14,7 @@ class Variable : public Constant<V> {
     using Parent::Parent;
 
     template<concepts::Expression E>
-    double partial(E&& e) const {
+    constexpr double partial(E&& e) const {
         return this->partial_to(std::forward<E>(e), [] (auto&& e) {
             return 0.0;
         });

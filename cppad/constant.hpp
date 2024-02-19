@@ -18,12 +18,12 @@ class Constant : public ExpressionBase {
     {}
 
     template<typename Self>
-    decltype(auto) value(this Self&& self) {
+    constexpr decltype(auto) value(this Self&& self) {
         return self._storage.get();
     }
 
     template<concepts::Expression E>
-    double partial(E&& e) const {
+    constexpr double partial(E&& e) const {
         return 0.0;
     }
 
@@ -48,7 +48,7 @@ struct IsConstant<Constant<T>> : public std::true_type {};
 template<concepts::Arithmetic T>
 struct AsExpression<T> {
     template<typename _T> requires(std::same_as<T, std::remove_cvref_t<_T>>)
-    static auto get(_T&& value) {
+    static constexpr auto get(_T&& value) {
         return constant(std::forward<_T>(value));
     }
 };
