@@ -1,19 +1,17 @@
 #pragma once
 
-#include <cppad/expression.hpp>
+#include <cppad/concepts.hpp>
+#include <cppad/constant.hpp>
+#include <cppad/detail.hpp>
 
 namespace cppad {
 
 template<concepts::Arithmetic V>
-class Variable : public ExpressionBase {
- public:
-    explicit Variable(V&& v)
-    : _value{std::move(v)}
-    {}
+class Variable : public Constant<V> {
+    using Parent = Constant<V>;
 
-    V value() const {
-        return _value;
-    }
+ public:
+    using Parent::Parent;
 
     template<concepts::Expression E>
     double partial(E&& e) const {
@@ -21,14 +19,14 @@ class Variable : public ExpressionBase {
             return 0.0;
         });
     }
-
- private:
-    V _value;
 };
 
-template<typename E>
-constexpr auto var(E&& e) {
-    return Variable{std::forward<E>(e)};
+template<typename T>
+Variable(T&&) -> Variable<std::remove_cvref_t<T>>;
+
+template<typename T>
+constexpr auto var(T&& value) {
+    return Variable<std::remove_cvref_t<T>>{std::forward<T>(value)};
 }
 
 }  // namespace cppad

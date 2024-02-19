@@ -23,9 +23,7 @@ class Constant : public ExpressionBase {
 
     template<concepts::Expression E>
     double partial(E&& e) const {
-        return this->partial_to(std::forward<E>(e), [] (auto&& e) {
-            return 0.0;
-        });
+        return 0.0;
     }
 
  private:
