@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include <cppad/concepts.hpp>
+#include <cppad/traits.hpp>
 
 namespace cppad {
 
@@ -47,6 +48,10 @@ struct ExpressionBase {
     template<typename Self, concepts::Expression E, std::invocable<E> Partial>
         requires(concepts::Arithmetic<std::invoke_result_t<Partial, E>>)
     double partial_to(this Self&& self, E&& e, Partial&& partial) {
+        static_assert(
+            !traits::IsConstant<std::remove_cvref_t<E>>::value,
+            "Derivative w.r.t. a constant requested"
+        );
         return detail::is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
     }
 };

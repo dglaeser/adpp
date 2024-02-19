@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <type_traits>
 
 #include <cppad/concepts.hpp>
 #include <cppad/expression.hpp>
@@ -39,4 +40,10 @@ constexpr auto constant(T&& value) {
     return Constant<std::remove_cvref_t<T>>{std::forward<T>(value)};
 }
 
+namespace traits {
+
+template<typename T>
+struct IsConstant<Constant<T>> : public std::true_type {};
+
+}  // namespace traits
 }  // namespace cppad
