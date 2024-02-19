@@ -45,5 +45,13 @@ namespace traits {
 template<typename T>
 struct IsConstant<Constant<T>> : public std::true_type {};
 
+template<concepts::Arithmetic T>
+struct AsExpression<T> {
+    template<typename _T> requires(std::same_as<T, std::remove_cvref_t<_T>>)
+    static auto get(_T&& value) {
+        return constant(std::forward<_T>(value));
+    }
+};
+
 }  // namespace traits
 }  // namespace cppad

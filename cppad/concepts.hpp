@@ -2,6 +2,9 @@
 
 #include <concepts>
 
+#include <cppad/type_traits.hpp>
+#include <cppad/traits.hpp>
+
 namespace cppad::concepts {
 
 #ifndef DOXYGEN
@@ -24,6 +27,12 @@ template<typename T>
 concept Expression = requires(const T& t) {
     { t.value() } -> Arithmetic;
     { t.partial(detail::MockExpression{}) } -> Arithmetic;
+};
+
+template<typename T>
+concept IntoExpression = Expression<T> or requires(const T& t) {
+    requires is_complete<traits::AsExpression<std::remove_cvref_t<T>>>;
+    { traits::AsExpression<std::remove_cvref_t<T>>::get(t) } -> Expression;
 };
 
 }  // namespace cppad::concepts
