@@ -17,8 +17,6 @@ add_library(${CPP_AD_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 # TODO: installation instructions
 
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE cppad::cppad)
-
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(examples)
