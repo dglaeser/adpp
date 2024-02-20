@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include <cppad/concepts.hpp>
 #include <cppad/constant.hpp>
 #include <cppad/detail.hpp>
@@ -29,4 +31,10 @@ constexpr auto var(T&& value) {
     return Variable<std::remove_cvref_t<T>>{std::forward<T>(value)};
 }
 
+namespace traits {
+
+template<typename T> struct IsVariable : public std::false_type {};
+template<typename T> struct IsVariable<Variable<T>> : public std::true_type {};
+
+}  // namespace traits
 }  // namespace cppad
