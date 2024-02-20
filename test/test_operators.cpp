@@ -93,6 +93,8 @@ int main() {
         static constexpr auto b = cppad::var(2);
         constexpr auto c = (a + b)*b;
         static_assert(c.value() == 6);
+        static_assert(c.partial(a) == 2);
+        static_assert(c.partial(b) == 5);
     };
 
     return EXIT_SUCCESS;
