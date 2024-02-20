@@ -88,5 +88,12 @@ int main() {
         expect(eq(e.partial(a), std::exp(3*2)*2));
     };
 
+    "plus_times_expression_at_compile_time"_test = [] () {
+        static constexpr auto a = cppad::var(1);
+        static constexpr auto b = cppad::var(2);
+        constexpr auto c = (a + b)*b;
+        static_assert(c.value() == 6);
+    };
+
     return EXIT_SUCCESS;
 }

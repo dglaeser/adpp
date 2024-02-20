@@ -15,17 +15,17 @@ namespace detail {
     template<concepts::Expression A, concepts::Expression B>
     class BinaryOperationBase {
      public:
-        explicit BinaryOperationBase(A a, B b)
+        constexpr explicit BinaryOperationBase(A a, B b)
         : _a{std::forward<A>(a)}
         , _b{std::forward<B>(b)}
         {}
 
      protected:
-        decltype(auto) get_a() const {
+        constexpr decltype(auto) get_a() const {
             return _a.get();
         }
 
-        decltype(auto) get_b() const {
+        constexpr decltype(auto) get_b() const {
             return _b.get();
         }
 
@@ -41,7 +41,7 @@ namespace detail {
 template<concepts::Expression A, concepts::Expression B>
 class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
-    explicit Plus(A a, B b)
+    constexpr explicit Plus(A a, B b)
     : detail::BinaryOperationBase<A, B>(
         std::forward<A>(a),
         std::forward<B>(b))
@@ -62,7 +62,7 @@ class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
 template<concepts::Expression A, concepts::Expression B>
 class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
-    explicit Times(A a, B b)
+    constexpr explicit Times(A a, B b)
     : detail::BinaryOperationBase<A, B>(
         std::forward<A>(a),
         std::forward<B>(b))
@@ -84,7 +84,7 @@ class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
 template<concepts::Expression E>
 class Exponential : public ExpressionBase {
  public:
-    explicit Exponential(E e)
+    constexpr explicit Exponential(E e)
     : _storage(std::forward<E>(e))
     {}
 
