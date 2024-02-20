@@ -2,27 +2,14 @@
 
 #include <concepts>
 #include <utility>
-#include <memory>
 #include <type_traits>
 #include <cmath>
 
 #include <cppad/concepts.hpp>
 #include <cppad/traits.hpp>
+#include <cppad/detail.hpp>
 
 namespace cppad {
-
-#ifndef DOXYGEN
-namespace detail {
-
-    template<typename A, typename B>
-    constexpr bool is_same_object(A&& a, B&& b) {
-        if constexpr (std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>)
-            return std::addressof(a) == std::addressof(b);
-        return false;
-    }
-
-}  // namespace detail
-#endif  // DOXYGEN
 
 // forward declarations
 template<concepts::Expression A, concepts::Expression B> class Plus;
