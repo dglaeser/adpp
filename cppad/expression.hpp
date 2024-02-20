@@ -18,7 +18,7 @@ template<concepts::Expression E> class Exponential;
 
 struct ExpressionBase {
     template<typename Self, concepts::IntoExpression Other>
-    constexpr auto operator+(this Self&& self, Other&& other) {
+    constexpr auto operator+(this Self&& self, Other&& other) noexcept {
         using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
         return Plus<Self, OtherExpression>{
             std::forward<Self>(self),
@@ -27,7 +27,7 @@ struct ExpressionBase {
     }
 
     template<typename Self, concepts::IntoExpression Other>
-    constexpr auto operator*(this Self&& self, Other&& other) {
+    constexpr auto operator*(this Self&& self, Other&& other) noexcept {
         using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
         return Times<Self, OtherExpression>{
             std::forward<Self>(self),

@@ -13,33 +13,33 @@ template<concepts::Arithmetic V>
 class Constant : public ExpressionBase {
  public:
     template<typename T>
-    constexpr explicit Constant(T&& t)
+    constexpr explicit Constant(T&& t) noexcept
     : _storage{std::forward<T>(t)}
     {}
 
     template<typename Self>
-    constexpr decltype(auto) value(this Self&& self) {
+    constexpr decltype(auto) value(this Self&& self) noexcept {
         return self._storage.get();
     }
 
     template<concepts::Expression E>
-    constexpr double partial(E&& e) const {
+    constexpr double partial(E&& e) const noexcept {
         return 0.0;
     }
 
     template<typename Self, concepts::Arithmetic T>
-    void set(this Self& self, T value) {
+    void set(this Self& self, T value) noexcept {
         self._storage.get() = value;
     }
 
     template<typename Self, concepts::Arithmetic T>
-    Self& operator*=(this Self& self, T value) {
+    Self& operator*=(this Self& self, T value) noexcept {
         self._storage.get() *= value;
         return self;
     }
 
     template<typename Self, concepts::Arithmetic T>
-    Self& operator/=(this Self& self, T&& value) {
+    Self& operator/=(this Self& self, T&& value) noexcept {
         self._storage.get() /= value;
         return self;
     }

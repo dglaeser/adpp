@@ -28,7 +28,7 @@ concept IntoExpression = Expression<T> or requires(const T& t) {
 }  // namespace concepts
 
 template<concepts::IntoExpression E>
-constexpr decltype(auto) as_expression(E&& e) {
+constexpr decltype(auto) as_expression(E&& e) noexcept {
     return traits::AsExpression<std::remove_cvref_t<E>>::get(std::forward<E>(e));
 }
 
@@ -37,7 +37,7 @@ namespace traits {
 template<concepts::Expression E>
 struct AsExpression<E> {
     template<typename _E> requires(std::same_as<E, std::remove_cvref_t<_E>>)
-    static constexpr decltype(auto) get(_E&& e) {
+    static constexpr decltype(auto) get(_E&& e) noexcept {
         return std::forward<_E>(e);
     }
 };

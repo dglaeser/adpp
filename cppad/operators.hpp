@@ -15,17 +15,17 @@ namespace detail {
     template<concepts::Expression A, concepts::Expression B>
     class BinaryOperationBase {
      public:
-        constexpr explicit BinaryOperationBase(A a, B b)
+        constexpr explicit BinaryOperationBase(A a, B b) noexcept
         : _a{std::forward<A>(a)}
         , _b{std::forward<B>(b)}
         {}
 
      protected:
-        constexpr decltype(auto) get_a() const {
+        constexpr decltype(auto) get_a() const noexcept {
             return _a.get();
         }
 
-        constexpr decltype(auto) get_b() const {
+        constexpr decltype(auto) get_b() const noexcept {
             return _b.get();
         }
 
@@ -41,13 +41,13 @@ namespace detail {
 template<concepts::Expression A, concepts::Expression B>
 class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
-    constexpr explicit Plus(A a, B b)
+    constexpr explicit Plus(A a, B b) noexcept
     : detail::BinaryOperationBase<A, B>(
         std::forward<A>(a),
         std::forward<B>(b))
     {}
 
-    constexpr auto value() const {
+    constexpr auto value() const noexcept {
         return this->get_a().value() + this->get_b().value();
     }
 
@@ -62,13 +62,13 @@ class Plus : public ExpressionBase, detail::BinaryOperationBase<A, B> {
 template<concepts::Expression A, concepts::Expression B>
 class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
  public:
-    constexpr explicit Times(A a, B b)
+    constexpr explicit Times(A a, B b) noexcept
     : detail::BinaryOperationBase<A, B>(
         std::forward<A>(a),
         std::forward<B>(b))
     {}
 
-    constexpr auto value() const {
+    constexpr auto value() const noexcept {
         return this->get_a().value() * this->get_b().value();
     }
 
@@ -84,7 +84,7 @@ class Times : public ExpressionBase, detail::BinaryOperationBase<A, B> {
 template<concepts::Expression E>
 class Exponential : public ExpressionBase {
  public:
-    constexpr explicit Exponential(E e)
+    constexpr explicit Exponential(E e) noexcept
     : _storage(std::forward<E>(e))
     {}
 
