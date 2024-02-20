@@ -77,5 +77,13 @@ int main() {
         expect(cppad::detail::is_same_object(a, cppad::as_expression(a)));
     };
 
+    "variable_at_compile_time"_test = [] () {
+        constexpr auto v = cppad::var(1);
+        constexpr auto b = cppad::var(1);
+        static_assert(v.value() == 1);
+        static_assert(v.partial(v) == 1);
+        static_assert(v.partial(b) == 0);
+    };
+
     return EXIT_SUCCESS;
 }

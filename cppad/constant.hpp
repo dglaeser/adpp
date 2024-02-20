@@ -13,7 +13,7 @@ template<concepts::Arithmetic V>
 class Constant : public ExpressionBase {
  public:
     template<typename T>
-    explicit Constant(T&& t)
+    constexpr explicit Constant(T&& t)
     : _storage{std::forward<T>(t)}
     {}
 

@@ -15,7 +15,7 @@ class Storage {
  public:
     template<typename _T>
         requires(std::convertible_to<_T, T>)
-    explicit Storage(_T&& value)
+    constexpr explicit Storage(_T&& value)
     : _value{std::forward<_T>(value)}
     {}
 
