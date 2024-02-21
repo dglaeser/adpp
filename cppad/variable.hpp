@@ -27,7 +27,7 @@ template<typename T>
 Variable(T&&) -> Variable<std::remove_cvref_t<T>>;
 
 template<typename T, typename _ = decltype([] () {})>
-constexpr auto var(T&& value) {
+inline constexpr auto var(T&& value) {
     return Variable<std::remove_cvref_t<T>, _>{std::forward<T>(value)};
 }
 
