@@ -7,6 +7,16 @@
 #include <cppad/variable.hpp>
 #include <cppad/operators.hpp>
 
+template<typename ExpressionFactory>
+void test_expression_equality(ExpressionFactory&& f) {
+    auto first = f();
+    auto second = f();
+    static_assert(std::is_same_v<
+        std::remove_cvref_t<decltype(first)>,
+        std::remove_cvref_t<decltype(second)>
+    >);
+}
+
 int main() {
     using boost::ut::operator""_test;
     using boost::ut::expect;
@@ -95,6 +105,13 @@ int main() {
         static_assert(c.value() == 6);
         static_assert(c.partial(a) == 2);
         static_assert(c.partial(b) == 5);
+    };
+
+    "expressions_type_equality"_test = [] () {
+        auto a = cppad::var(3);
+        test_expression_equality([&] () { return a + a; });
+        test_expression_equality([&] () { return a*a; });
+        test_expression_equality([&] () { return a.exp(); });
     };
 
     return EXIT_SUCCESS;

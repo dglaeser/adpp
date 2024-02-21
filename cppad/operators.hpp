@@ -21,13 +21,8 @@ namespace detail {
         {}
 
      protected:
-        constexpr decltype(auto) get_a() const noexcept {
-            return _a.get();
-        }
-
-        constexpr decltype(auto) get_b() const noexcept {
-            return _b.get();
-        }
+        constexpr decltype(auto) get_a() const noexcept { return _a.get(); }
+        constexpr decltype(auto) get_b() const noexcept { return _b.get(); }
 
      private:
         detail::Storage<A> _a;
