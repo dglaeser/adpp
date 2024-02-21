@@ -48,7 +48,10 @@ struct ExpressionBase {
             !traits::IsConstant<std::remove_cvref_t<E>>::value,
             "Derivative w.r.t. a constant requested"
         );
-        return detail::is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
+        if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
+            return partial(std::forward<E>(e));
+        else
+            return detail::is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
     }
 };
 
