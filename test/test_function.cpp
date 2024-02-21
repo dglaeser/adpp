@@ -12,15 +12,12 @@ int main() {
 
     auto a = cppad::var(1);
     auto b = cppad::var(2);
+    static_assert(!std::is_same_v<decltype(a), decltype(b)>);
 
     "independent_variables_size"_test = [&] () {
         expect(eq(cppad::IndependentVariables{}.size(), 0_ul));
         expect(eq(cppad::IndependentVariables{a}.size(), 1_ul));
         expect(eq(cppad::IndependentVariables{a, b}.size(), 2_ul));
-    };
-
-    "independent_variables_double_insertion_fails"_test = [&] () {
-        expect(throws([&] () { cppad::IndependentVariables{a, a}; }));
     };
 
     return EXIT_SUCCESS;

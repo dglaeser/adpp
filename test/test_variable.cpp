@@ -73,13 +73,14 @@ int main() {
         static_assert(cppad::concepts::IntoExpression<cppad::Variable<int>>);
 
         const auto a = cppad::var(42.0);
-        static_assert(std::is_same_v<decltype(cppad::as_expression(a)), const cppad::Variable<double>&>);
+        static_assert(std::is_same_v<decltype(cppad::as_expression(a)), decltype(a)&>);
         expect(cppad::detail::is_same_object(a, cppad::as_expression(a)));
     };
 
     "variable_at_compile_time"_test = [] () {
         constexpr auto v = cppad::var(1);
         constexpr auto b = cppad::var(1);
+        static_assert(!std::is_same_v<decltype(v), decltype(b)>);
         static_assert(v.value() == 1);
         static_assert(v.partial(v) == 1);
         static_assert(v.partial(b) == 0);

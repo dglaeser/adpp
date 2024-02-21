@@ -26,4 +26,22 @@ struct EmptyExpression {
     }
 };
 
+template<typename... T>
+struct UniqueTypes;
+
+template<typename T1, typename T2, typename... Ts>
+struct UniqueTypes<T1, T2, Ts...> {
+    static constexpr bool value =
+        UniqueTypes<T1, T2>::value &&
+        UniqueTypes<T1, Ts...>::value &&
+        UniqueTypes<T2, Ts...>::value;
+};
+
+template<typename T1, typename T2>
+struct UniqueTypes<T1, T2> : public std::bool_constant<!std::is_same_v<T1, T2>> {};
+template<typename T>
+struct UniqueTypes<T> : public std::true_type {};
+template<>
+struct UniqueTypes<> : public std::true_type {};
+
 }  // namespace cppad
