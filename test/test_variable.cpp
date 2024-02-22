@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstddef>
+#include <string_view>
 
 #include <boost/ut.hpp>
 #include <cppad/variable.hpp>
@@ -84,6 +85,17 @@ int main() {
         static_assert(v.value() == 1);
         static_assert(v.partial(v) == 1);
         static_assert(v.partial(b) == 0);
+    };
+
+    "variable_name_assignment"_test = [] () {
+        constexpr auto references = [] <typename T> (const cppad::NamedVariable<T>&) {
+            return std::is_lvalue_reference_v<T>;
+        };
+
+        static constexpr auto v = cppad::var(2);
+        constexpr auto named = v |= "myvar";
+        static_assert(references(named) == true);
+        static_assert(std::string_view{named.name()} == std::string_view{"myvar"});
     };
 
     return EXIT_SUCCESS;

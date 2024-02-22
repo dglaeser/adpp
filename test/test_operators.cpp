@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstddef>
+#include <sstream>
 
 #include <boost/ut.hpp>
 
@@ -112,6 +113,20 @@ int main() {
         test_expression_equality([&] () { return a + a; });
         test_expression_equality([&] () { return a*a; });
         test_expression_equality([&] () { return a.exp(); });
+    };
+
+    "expression_export"_test = [] () {
+        std::ostringstream s;
+        auto a = cppad::var(1);
+        auto b = cppad::var(2);
+        auto c = cppad::var(3);
+        auto expr = ((a + b)*c).exp();
+        expr.export_to(s, cppad::VariableNameMapping{
+            a |= "a",
+            b |= "b",
+            c |= "c"
+        });
+        expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
     };
 
     return EXIT_SUCCESS;

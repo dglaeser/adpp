@@ -3,6 +3,7 @@
 #include <concepts>
 #include <utility>
 #include <type_traits>
+#include <ostream>
 #include <cmath>
 
 #include <cppad/concepts.hpp>
