@@ -5,10 +5,12 @@
 #include <cppad/concepts.hpp>
 #include <cppad/constant.hpp>
 #include <cppad/detail.hpp>
+#include <cppad/traits.hpp>
+
 
 namespace cppad {
 
-template<concepts::Arithmetic V, typename _ = decltype([] () {})>
+template<concepts::Arithmetic V, auto _ = [] () {}>
 class Variable : public Constant<V> {
     using Parent = Constant<V>;
 
@@ -26,15 +28,15 @@ class Variable : public Constant<V> {
 template<typename T>
 Variable(T&&) -> Variable<std::remove_cvref_t<T>>;
 
-template<typename T, typename _ = decltype([] () {})>
+template<typename T, auto _ = [] () {}>
 inline constexpr auto var(T&& value) {
     return Variable<std::remove_cvref_t<T>, _>{std::forward<T>(value)};
 }
 
 namespace traits {
 
-template<typename T> struct IsVariable : public std::false_type {};
-template<typename T, typename _> struct IsVariable<Variable<T, _>> : public std::true_type {};
+template<typename T, auto _>
+struct IsVariable<Variable<T, _>> : public std::true_type {};
 
 }  // namespace traits
 }  // namespace cppad
