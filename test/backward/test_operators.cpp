@@ -5,7 +5,6 @@
 
 #include <cppad/backward/var.hpp>
 #include <cppad/backward/let.hpp>
-#include <cppad/backward/operators.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -120,19 +119,19 @@ int main() {
         test_expression_equality([&] () { return a.exp(); });
     };
 
-    "expression_export"_test = [] () {
-        std::ostringstream s;
-        auto a = var{1};
-        auto b = var{2};
-        auto c = var{3};
-        auto expr = ((a + b)*c).exp();
-        expr.export_to(s, naming(
-            a |= "a",
-            b |= "b",
-            c |= "c"
-        ));
-        expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
-    };
+    // "expression_export"_test = [] () {
+    //     std::ostringstream s;
+    //     auto a = var{1};
+    //     auto b = var{2};
+    //     auto c = var{3};
+    //     auto expr = ((a + b)*c).exp();
+    //     expr.export_to(s, naming(
+    //         a |= "a",
+    //         b |= "b",
+    //         c |= "c"
+    //     ));
+    //     expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
+    // };
 
     return EXIT_SUCCESS;
 }

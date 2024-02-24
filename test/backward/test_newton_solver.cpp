@@ -5,7 +5,6 @@
 
 #include <cppad/backward/var.hpp>
 #include <cppad/backward/let.hpp>
-#include <cppad/backward/operators.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;

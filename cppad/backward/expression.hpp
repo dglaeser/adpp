@@ -1,69 +1,57 @@
 #pragma once
 
-#include <concepts>
+#include <cmath>
 #include <utility>
 #include <type_traits>
+#include <functional>
+#include <concepts>
 #include <ostream>
-#include <cmath>
+
 
 #include <cppad/common.hpp>
 
-
 namespace cppad::backward {
 
-// forward declarations
-template<concepts::expression A, concepts::expression B> class minus;
-template<concepts::expression A, concepts::expression B> class plus;
-template<concepts::expression A, concepts::expression B> class times;
-template<concepts::expression E> class exponential;
+template<concepts::unary_operator O, concepts::expression E> class unary_operator;
+template<concepts::binary_operator O, concepts::expression A, concepts::expression B> class binary_operator;
 
-struct expression_base {
-    template<typename Self, concepts::into_expression Other>
-    constexpr auto operator+(this Self&& self, Other&& other) noexcept {
-        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
-        return plus<Self, OtherExpression>{
-            std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
-        };
-    }
 
-    template<typename Self, concepts::into_expression Other>
-    constexpr auto operator-(this Self&& self, Other&& other) noexcept {
-        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
-        return minus<Self, OtherExpression>{
-            std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
-        };
-    }
+namespace operators {
 
-    template<typename Self, concepts::into_expression Other>
-    constexpr auto operator*(this Self&& self, Other&& other) noexcept {
-        using OtherExpression = decltype(as_expression(std::forward<Other>(other)));
-        return times<Self, OtherExpression>{
-            std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
-        };
-    }
-
-    template<typename Self>
-    constexpr auto exp(this Self&& self) {
-        return exponential<Self>{std::forward<Self>(self)};
-    }
-
- protected:
-    template<typename Self, concepts::expression E, std::invocable<E> Partial>
-        requires(concepts::arithmetic<std::invoke_result_t<Partial, E>>)
-    constexpr double partial_to(this Self&& self, E&& e, Partial&& partial) {
-        static_assert(
-            !traits::is_constant<std::remove_cvref_t<E>>::value,
-            "Derivative w.r.t. a constant requested"
-        );
-        if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
-            return partial(std::forward<E>(e));
-        else
-            return is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
+struct exp {
+    template<concepts::arithmetic T>
+    auto operator()(T value) const {
+        using std::exp;
+        return exp(value);
     }
 };
+
+}  // namespace operators
+
+
+template<concepts::expression E>
+class expression {
+ public:
+    constexpr expression(E&& e)
+    : _e{std::move(e)}
+    {}
+
+    constexpr decltype(auto) value() const {
+        return _e.value();
+    }
+
+    template<concepts::expression _E>
+    constexpr decltype(auto) partial(_E&& e) const {
+        return _e.partial(std::forward<_E>(e));
+    }
+
+ private:
+    E _e;
+};
+
+template<concepts::expression E>
+expression(E&&) -> expression<std::remove_cvref_t<E>>;
+
 
 template<concepts::expression E>
 class named_expression {
@@ -90,28 +78,108 @@ class named_expression {
 };
 
 
-template<concepts::expression E>
-class expression {
+struct expression_base {
+    template<typename Self, concepts::into_expression Other>
+    constexpr auto operator+(this Self&& self, Other&& other) noexcept {
+        return binary_operator{
+            std::plus{},
+            std::forward<Self>(self),
+            as_expression(std::forward<Other>(other))
+        };
+    }
+
+    template<typename Self, concepts::into_expression Other>
+    constexpr auto operator-(this Self&& self, Other&& other) noexcept {
+        return binary_operator{
+            std::minus{},
+            std::forward<Self>(self),
+            as_expression(std::forward<Other>(other))
+        };
+    }
+
+    template<typename Self, concepts::into_expression Other>
+    constexpr auto operator*(this Self&& self, Other&& other) noexcept {
+        return binary_operator{
+            std::multiplies{},
+            std::forward<Self>(self),
+            as_expression(std::forward<Other>(other))
+        };
+    }
+
+    template<typename Self>
+    constexpr auto exp(this Self&& self) {
+        return unary_operator{
+            operators::exp{},
+            std::forward<Self>(self)
+        };
+    }
+
+ protected:
+    template<typename Self, concepts::expression E, std::invocable<E> Partial>
+        requires(concepts::arithmetic<std::invoke_result_t<Partial, E>>)
+    constexpr double partial_to(this Self&& self, E&& e, Partial&& partial) {
+        static_assert(
+            !traits::is_constant<std::remove_cvref_t<E>>::value,
+            "Derivative w.r.t. a constant requested"
+        );
+        if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
+            return partial(std::forward<E>(e));
+        else
+            return is_same_object(self, e) ? 1.0 : partial(std::forward<E>(e));
+    }
+};
+
+
+template<concepts::unary_operator O, concepts::expression E>
+class unary_operator : public expression_base {
  public:
-    constexpr expression(E&& e)
-    : _e{std::move(e)}
+    constexpr unary_operator(O&& op, E e) noexcept
+    : _expression{std::forward<E>(e)}
     {}
 
-    constexpr decltype(auto) value() const {
-        return _e.value();
+    constexpr auto value() const {
+        return O{}(_expression.get().value());
     }
 
     template<concepts::expression _E>
-    constexpr decltype(auto) partial(_E&& e) const {
-        return _e.partial(std::forward<_E>(e));
+        requires(concepts::derivable_unary_operator<O, E, _E>)
+    constexpr auto partial(_E&& e) const {
+        return traits::derivative<O>::value(_expression.get(), std::forward<_E>(e));
     }
 
  private:
-    E _e;
+    storage<E> _expression;
 };
 
-template<concepts::expression E>
-expression(E&&) -> expression<std::remove_cvref_t<E>>;
+template<concepts::ownable O, concepts::expression E>
+unary_operator(O&&, E&&) -> unary_operator<std::remove_cvref_t<O>, E>;
+
+
+template<concepts::binary_operator O, concepts::expression A, concepts::expression B>
+class binary_operator : public expression_base {
+ public:
+    constexpr binary_operator(O&&, A a, B b) noexcept
+    : _a{std::forward<A>(a)}
+    , _b{std::forward<B>(b)}
+    {}
+
+    constexpr auto value() const {
+        return O{}(_a.get().value(), _b.get().value());
+    }
+
+    template<concepts::expression E>
+        requires(concepts::derivable_binary_operator<O, A, B, E>)
+    constexpr auto partial(E&& e) const {
+        return traits::derivative<O>::value(_a.get(), _b.get(), std::forward<E>(e));
+    }
+
+ private:
+    storage<A> _a;
+    storage<B> _b;
+};
+
+template<concepts::ownable O, concepts::expression A, concepts::expression B>
+binary_operator(O&&, A&&, B&&) -> binary_operator<std::remove_cvref_t<O>, A, B>;
 
 }  // namespace cppad::backward
 
@@ -122,6 +190,72 @@ struct is_variable<cppad::backward::named_expression<V>> : public std::true_type
 
 template<concepts::expression V> requires(is_variable_v<V>)
 struct is_named_variable<cppad::backward::named_expression<V>> : public std::true_type {};
+
+template<>
+struct derivative<std::plus<void>> {
+    static constexpr auto value(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a.partial(var) + b.partial(var);
+    }
+
+    static constexpr auto expression(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a + b;  // TODO
+    }
+};
+
+template<>
+struct derivative<std::minus<void>> {
+    static constexpr auto value(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a.partial(var) - b.partial(var);
+    }
+
+    static constexpr auto expression(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a + b;  // TODO
+    }
+};
+template<>
+struct derivative<std::multiplies<void>> {
+    static constexpr auto value(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a.partial(var)*b.value() + a.value()*b.partial(var);
+    }
+
+    static constexpr auto expression(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto& var) {
+        return a + b;  // TODO
+    }
+};
+
+template<>
+struct derivative<cppad::backward::operators::exp> {
+    static constexpr auto value(
+        const concepts::expression auto& e,
+        const concepts::expression auto& var) {
+        return cppad::backward::operators::exp{}(e.value())*e.partial(var);
+    }
+
+    static constexpr auto expression(
+        const concepts::expression auto& e,
+        const concepts::expression auto& var) {
+        return e*2;  // TODO
+    }
+};
+
 
 }  // namespace cppad::traits
 
