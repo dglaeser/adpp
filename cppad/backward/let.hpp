@@ -59,6 +59,10 @@ class let : public val<T> {
     constexpr T partial(concepts::expression auto&&) const {
         return T{0};
     }
+
+    constexpr auto partial_expression(concepts::expression auto&&) const {
+        return let<T>{0};
+    }
 };
 
 template<concepts::arithmetic T>

@@ -36,6 +36,13 @@ class var : public let<T> {
         });
     }
 
+    template<concepts::expression E>
+    constexpr auto partial_expression(E&& e) const {
+        return this->partial_to(std::forward<E>(e), [] (auto&&) {
+            return let<T>{0};
+        });
+    }
+
     template<typename Self>
     constexpr auto operator|=(this Self&& self, const char* name) noexcept {
         return named_expression<Self>{std::forward<Self>(self), name};

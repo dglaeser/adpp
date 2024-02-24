@@ -30,9 +30,7 @@ namespace detail {
 #endif  // DOXYGEN
 
 template<typename T>
-struct is_complete {
-    static constexpr bool value = !decltype(detail::is_incomplete(std::declval<T*>()))::value;
-};
+struct is_complete : public std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
 
 template<typename T>
 inline constexpr bool is_complete_v = is_complete<T>::value;
@@ -43,12 +41,36 @@ struct is_ownable : public std::bool_constant<!std::is_lvalue_reference_v<T>> {}
 template<typename T>
 inline constexpr bool is_ownable_v = is_ownable<T>::value;
 
+template<std::size_t i>
+using index_constant = std::integral_constant<std::size_t, i>;
+
+template<typename... T>
+struct are_unique;
+
+template<typename T1, typename T2, typename... Ts>
+struct are_unique<T1, T2, Ts...> {
+    static constexpr bool value =
+        are_unique<T1, T2>::value &&
+        are_unique<T1, Ts...>::value &&
+        are_unique<T2, Ts...>::value;
+};
+
+template<typename T1, typename T2>
+struct are_unique<T1, T2> : public std::bool_constant<!std::is_same_v<T1, T2>> {};
+template<typename T>
+struct are_unique<T> : public std::true_type {};
+template<>
+struct are_unique<> : public std::true_type {};
+
+template<typename... Ts>
+inline constexpr bool are_unique_v = are_unique<Ts...>::value;
 
 namespace traits {
 
 template<typename T> struct is_constant : public std::false_type {};
 template<typename T> struct is_variable : public std::false_type {};
 template<typename T> struct is_named_variable : public std::false_type {};
+template<typename T> struct expression_value;
 template<typename T> struct as_expression;
 template<typename T> struct undefined_value;
 template<typename T> struct format;
@@ -69,9 +91,11 @@ concept expression = requires(const T& t) {
 };
 
 template<typename T>
-concept into_expression = expression<T> or requires(const T& t) {
+concept into_expression = requires(const T& t) {
     requires is_complete_v<traits::as_expression<std::remove_cvref_t<T>>>;
-    { traits::as_expression<std::remove_cvref_t<T>>::get(t) } -> expression;
+    {
+        traits::as_expression<std::remove_cvref_t<T>>::get(t)
+    };  // -> expression does not work because of self-reference issues in places where we use this
 };
 
 template<typename T>
@@ -90,8 +114,10 @@ concept derivable_unary_operator
     = unary_operator<T>
     and is_complete_v<traits::derivative<T>>
     and requires(const T& t, const E& e, const V& variable) {
-        { detail::as_copy(traits::derivative<T>::value(e, variable)) }; // -> arithmetic;
-        { traits::derivative<T>::expression(e, variable) }; // -> expression;
+        { detail::as_copy(traits::derivative<T>::value(e, variable)) } -> arithmetic;
+        {
+            traits::derivative<T>::expression(e, variable)
+        };  // -> expression does not work because of self-reference issues in places where we use this
     };
 
 template<typename T, typename A, typename B, typename V>
@@ -100,8 +126,10 @@ concept derivable_binary_operator
     and expression<A> and expression<B>
     and is_complete_v<traits::derivative<T>>
     and requires(const T& t, const A& a, const B& b, const V& variable) {
-        { detail::as_copy(traits::derivative<T>::value(a, b, variable)) }; // -> arithmetic;
-        { traits::derivative<T>::expression(a, b, variable) }; // -> expression;
+        { detail::as_copy(traits::derivative<T>::value(a, b, variable)) } -> arithmetic;
+        {
+            traits::derivative<T>::expression(a, b, variable)
+        };  // -> expression does not work because of self-reference issues in places where we use this
     };
 
 template<typename T, typename A>
@@ -125,7 +153,8 @@ concept ownable = is_ownable<T>::value;
 
 namespace traits {
 
-template<concepts::expression E>
+template<typename E>
+    requires(!concepts::arithmetic<E>)
 struct as_expression<E> {
     template<typename _E> requires(concepts::same_decay_t_as<E, _E>)
     static constexpr decltype(auto) get(_E&& e) noexcept {
@@ -138,6 +167,9 @@ struct undefined_value<T> {
     static constexpr T value = std::numeric_limits<T>::max();
 };
 
+template<concepts::expression E>
+struct expression_value<E> : public std::type_identity<std::remove_cvref_t<decltype(std::declval<const E&>().value())>> {};
+
 }  // namespace traits
 
 
@@ -145,6 +177,9 @@ template<concepts::into_expression E>
 constexpr decltype(auto) as_expression(E&& e) noexcept {
     return traits::as_expression<std::remove_cvref_t<E>>::get(std::forward<E>(e));
 }
+
+template<concepts::expression E>
+using expression_value_t = typename traits::expression_value<E>::type;
 
 template<concepts::arithmetic T>
 inline constexpr T undefined_value = traits::undefined_value<T>::value;
@@ -195,10 +230,5 @@ constexpr bool is_same_object(A&& a, B&& b) {
         return std::addressof(a) == std::addressof(b);
     return false;
 }
-
-template<typename... Ts>
-struct overload_set : Ts... { using Ts::operator()...; };
-template<typename... Ts> overload_set(Ts...) -> overload_set<Ts...>;
-
 
 }  // namespace cppad

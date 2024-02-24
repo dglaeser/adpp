@@ -12,6 +12,7 @@ using boost::ut::eq;
 
 using cppad::backward::var;
 using cppad::backward::let;
+using cppad::backward::expression;
 
 void test_expression_equality(auto&& expression_factory) {
     auto first = expression_factory();
@@ -117,6 +118,46 @@ int main() {
         test_expression_equality([&] () { return a + a; });
         test_expression_equality([&] () { return a*a; });
         test_expression_equality([&] () { return a.exp(); });
+    };
+
+    "plus_expr_derivative_expression"_test = [] () {
+        static constexpr var a = 1;
+        static constexpr var b = 3;
+        static constexpr expression e = a + b*2;
+        constexpr expression de_db = e.partial_expression(b);
+        static_assert(de_db.value() == 2);
+        expect(eq(de_db.value(), 2));
+    };
+
+    "minus_expr_derivative_expression"_test = [] () {
+        static constexpr var a = 1;
+        static constexpr var b = 3;
+        static constexpr expression e = a - b*2;
+        constexpr expression de_db = e.partial_expression(b);
+        static_assert(de_db.value() == -2);
+        expect(eq(de_db.value(), -2));
+    };
+
+    "times_expr_derivative_expression"_test = [] () {
+        static constexpr var a = 1;
+        static constexpr var b = 3;
+        static constexpr expression e = a*b*2;
+        constexpr expression de_da = e.partial_expression(a);
+        constexpr expression de_db = e.partial_expression(b);
+        static_assert(de_da.value() == 2*3);
+        static_assert(de_db.value() == 2*1);
+        expect(eq(de_da.value(), 2*3));
+        expect(eq(de_db.value(), 2*1));
+    };
+
+    "complex_expr_derivative_expression"_test = [] () {
+        var a = 1;
+        var b = 3;
+        expression e = std::exp(a + b)*(b - 1);
+        expression de_da = e.partial_expression(a);
+        expression de_db = e.partial_expression(b);
+        expect(eq(de_da.value(), std::exp(1 + 3)*(3 - 1)));
+        expect(eq(de_db.value(), std::exp(1 + 3)*3));
     };
 
     // "expression_export"_test = [] () {
