@@ -17,7 +17,10 @@ add_library(${CPP_AD_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 # TODO: installation instructions
 
-add_subdirectory(benchmark)
+option(CPPAD_BUILD_BENCHMARK OFF)
+if (CPPAD_BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
+endif ()
 
 enable_testing()
 add_subdirectory(test)
