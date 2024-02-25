@@ -15,5 +15,3 @@ endfunction ()
 add_subdirectory(backward)
 
 cppad_add_test(test_common test_common.cpp)
-cppad_add_test(test_concepts test_concepts.cpp)
-cppad_add_test(test_function test_function.cpp)

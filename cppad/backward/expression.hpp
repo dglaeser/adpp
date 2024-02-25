@@ -210,7 +210,7 @@ struct is_named_variable<cppad::backward::named_expression<V>> : public std::tru
 
 template<>
 struct derivative<std::plus<void>> {
-    static constexpr auto expression( // todo: inline
+    static constexpr auto expression(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto& var) {
