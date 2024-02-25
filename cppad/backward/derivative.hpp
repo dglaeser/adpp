@@ -51,17 +51,17 @@ struct derivatives : detail::derivative_accessor<R, std::make_index_sequence<siz
     using base = detail::derivative_accessor<R, std::make_index_sequence<sizeof...(Ts)>, Ts...>;
 
  public:
-    constexpr derivatives(R, const Ts&... ts)
+    constexpr derivatives(R, const Ts&... ts) noexcept
     : base(ts...)
     {}
 
     template<typename T> requires(contains_decay_v<T, Ts...>)
-    constexpr R operator[](const T& t) const {
+    constexpr R operator[](const T& t) const noexcept {
         return this->get(this->get_index_of(t));
     }
 
     template<typename T> requires(contains_decay_v<T, Ts...>)
-    constexpr void add_to_derivative_wrt(const T& t, concepts::arithmetic auto value) {
+    constexpr void add_to_derivative_wrt(const T& t, concepts::arithmetic auto value) noexcept {
         if constexpr (contains_decay_v<T, Ts...>)
             this->get(this->get_index_of(t)) += value;
     }
