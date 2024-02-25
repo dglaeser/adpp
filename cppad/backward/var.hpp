@@ -35,6 +35,14 @@ class var : public let<T> {
             derivs.add_to_derivative_wrt(self, multiplier);
     }
 
+    template<typename Self, concepts::expression... E>
+    constexpr auto backpropagate(this Self&& self, const E&... e) {
+        derivatives derivs{double{}, e...};
+        if constexpr (contains_decay_v<Self, E...>)
+            derivs[self] = 1.0;
+        return std::make_pair(self.value(), std::move(derivs));
+    }
+
     template<typename Self, concepts::expression E>
     constexpr auto partial_expression(this Self&&, E&& e) {
         if constexpr (concepts::same_decay_t_as<Self, E>)

@@ -5,6 +5,7 @@
 
 #include <cppad/common.hpp>
 #include <cppad/backward/expression.hpp>
+#include <cppad/backward/derivative.hpp>
 
 
 namespace cppad::backward {
@@ -58,6 +59,11 @@ class let : public val<T> {
 
     constexpr void accumulate_derivatives(concepts::arithmetic auto, auto& derivs) const
     {}
+
+    template<concepts::expression... E>
+    constexpr auto backpropagate(const E&... e) const {
+        return std::make_pair(this->value(), derivatives{double{}, e...});
+    }
 
     constexpr auto partial_expression(concepts::expression auto&&) const {
         return let<T>{0};

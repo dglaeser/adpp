@@ -44,6 +44,11 @@ class expression {
         self._e.accumulate_derivatives(multiplier, derivs);
     }
 
+    template<concepts::expression... _E>
+    constexpr auto backpropagate(const _E&... e) const {
+        return _e.backpropagate(e...);
+    }
+
     constexpr decltype(auto) value() const {
         return _e.value();
     }
@@ -158,6 +163,11 @@ class unary_operator : public expression_base {
         traits::derivative<O>::accumulate(_expression.get(), multiplier, derivs);
     }
 
+    template<concepts::expression... _E>
+    constexpr auto backpropagate(const _E&... e) const {
+        return traits::derivative<O>::backpropagate(_expression.get(), e...);
+    }
+
     constexpr auto value() const {
         return O{}(_expression.get().value());
     }
@@ -188,6 +198,11 @@ class binary_operator : public expression_base {
     constexpr void accumulate_derivatives(T multiplier, derivatives<V...>& derivs) const {
         expression_base::accumulate_derivatives(multiplier, derivs);
         traits::derivative<O>::accumulate(_a.get(), _b.get(), multiplier, derivs);
+    }
+
+    template<concepts::expression... E>
+    constexpr auto backpropagate(const E&... e) const {
+        return traits::derivative<O>::backpropagate(_a.get(), _b.get(), e...);
     }
 
     constexpr auto value() const {
@@ -235,6 +250,17 @@ struct derivative<std::plus<void>> {
         a.accumulate_derivatives(multiplier, derivatives);
         b.accumulate_derivatives(multiplier, derivatives);
     }
+
+    static constexpr auto backpropagate(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.backpropagate(vars...);
+        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto result = value_a + value_b;
+        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
+    }
 };
 
 template<>
@@ -254,6 +280,17 @@ struct derivative<std::minus<void>> {
         a.accumulate_derivatives(multiplier, derivatives);
         b.accumulate_derivatives(std::negate{}(multiplier), derivatives);
     }
+
+    static constexpr auto backpropagate(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.backpropagate(vars...);
+        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto result = value_a - value_b;
+        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
+    }
 };
 template<>
 struct derivative<std::multiplies<void>> {
@@ -272,6 +309,20 @@ struct derivative<std::multiplies<void>> {
         a.accumulate_derivatives(multiplier*b.value(), derivatives);
         b.accumulate_derivatives(multiplier*a.value(), derivatives);
     }
+
+    static constexpr auto backpropagate(
+        const concepts::expression auto& a,
+        const concepts::expression auto& b,
+        const concepts::expression auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.backpropagate(vars...);
+        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto result = value_a*value_b;
+        return std::make_pair(
+            result,
+            std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a)
+        );
+    }
 };
 
 template<>
@@ -289,6 +340,15 @@ struct derivative<cppad::backward::operators::exp> {
         concepts::arithmetic auto multiplier,
         auto& derivatives) {
         e.accumulate_derivatives(multiplier*exp_op(e.value()), derivatives);
+    }
+
+    static constexpr auto backpropagate(
+        const concepts::expression auto& e,
+        const concepts::expression auto&... vars
+    ) {
+        auto [value, derivs] = e.backpropagate(vars...);
+        auto result = exp_op(value);
+        return std::make_pair(result, std::move(derivs).scaled_with(result));
     }
 };
 
