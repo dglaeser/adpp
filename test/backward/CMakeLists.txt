@@ -1,0 +1,4 @@
+cppad_add_test(test_bw_var_let test_var_let.cpp)
+cppad_add_test(test_bw_operators test_operators.cpp)
+cppad_add_test(test_bw_newton test_newton_solver.cpp)
+cppad_add_test(test_bw_derivative test_derivative.cpp)

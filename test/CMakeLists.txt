@@ -12,8 +12,6 @@ function (cppad_add_test NAME SOURCE)
     add_test(NAME ${NAME} COMMAND ./${NAME})
 endfunction ()
 
-cppad_add_test(test_detail test_detail.cpp)
-cppad_add_test(test_concepts test_concepts.cpp)
-cppad_add_test(test_constant test_constant.cpp)
-cppad_add_test(test_variable test_variable.cpp)
-cppad_add_test(test_operators test_operators.cpp)
+add_subdirectory(backward)
+
+cppad_add_test(test_common test_common.cpp)

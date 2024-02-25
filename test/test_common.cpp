@@ -2,7 +2,7 @@
 #include <type_traits>
 
 #include <boost/ut.hpp>
-#include <cppad/detail.hpp>
+#include <cppad/common.hpp>
 
 int main() {
     using boost::ut::operator""_test;
@@ -10,7 +10,7 @@ int main() {
     using boost::ut::eq;
 
     "storage_owned"_test = [] () {
-        cppad::detail::Storage stored{42.0};
+        cppad::storage stored{42.0};
         expect(eq(stored.get(), 42.0));
         static_assert(std::is_same_v<
             decltype(stored.get()),
@@ -19,7 +19,7 @@ int main() {
     };
 
     "storage_owned_const"_test = [] () {
-        const cppad::detail::Storage stored{42.0};
+        const cppad::storage stored{42.0};
         expect(eq(stored.get(), 42.0));
         static_assert(std::is_same_v<
             decltype(stored.get()),
@@ -29,7 +29,7 @@ int main() {
 
     "storage_reference"_test = [] () {
         double value = 42.0;
-        cppad::detail::Storage stored{value};
+        cppad::storage stored{value};
         expect(eq(stored.get(), 42.0));
         static_assert(std::is_same_v<
             decltype(stored.get()),
@@ -42,7 +42,7 @@ int main() {
 
     "storage_reference_const"_test = [] () {
         double value = 42.0;
-        const cppad::detail::Storage stored{value};
+        const cppad::storage stored{value};
         expect(eq(stored.get(), 42.0));
         static_assert(std::is_same_v<
             decltype(stored.get()),
