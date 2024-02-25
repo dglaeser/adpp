@@ -38,6 +38,27 @@ int main() {
         expect(eq(derivative_of(c, wrt(b)), 1.0));
     };
 
+    "plus_operator_left_add_with_constant"_test = [] () {
+        const var a{2.0};
+        auto e = 4.0 + a;
+        expect(eq(e.value(), 6.0));
+        expect(eq(derivative_of(e, wrt(a)), 1.0));
+    };
+
+    "minus_operator_left_add_with_constant"_test = [] () {
+        const var a{2.0};
+        auto e = 4.0 - a;
+        expect(eq(e.value(), 2.0));
+        expect(eq(derivative_of(e, wrt(a)), -1.0));
+    };
+
+    "times_operator_left_multiply_with_constant"_test = [] () {
+        const var a{2.0};
+        auto e = 4.0*a;
+        expect(eq(e.value(), 8.0));
+        expect(eq(derivative_of(e, wrt(a)), 4.0));
+    };
+
     "plus_times_operators_one_level_with_constants"_test = [] () {
         const var a{2};
         const var b{4};

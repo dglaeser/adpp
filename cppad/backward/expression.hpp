@@ -20,6 +20,21 @@ template<concepts::binary_operator O, typename A, typename B>
 class binary_operator;
 
 
+template<concepts::arithmetic T, concepts::expression E>
+constexpr decltype(auto) operator+(T t, E&& e) noexcept {
+    return to_expression(t).operator+(e);
+}
+
+template<concepts::arithmetic T, concepts::expression E>
+constexpr decltype(auto) operator-(T t, E&& e) noexcept {
+    return to_expression(t).operator-(e);
+}
+
+template<concepts::arithmetic T, concepts::expression E>
+constexpr decltype(auto) operator*(T t, E&& e) noexcept {
+    return to_expression(t).operator*(e);
+}
+
 struct expression_base {
     template<typename Self, concepts::into_expression Other>
     constexpr auto operator+(this Self&& self, Other&& other) noexcept {
