@@ -43,20 +43,15 @@ int main() {
         cppad::backward::var b = 3;
         cppad::backward::expression e = std::exp(a + b)*(b - 1);
         const auto derivatives = derivatives_of(e, wrt(a, b));
+        const auto [value, bp_derivatives] = e.back_propagate(a, b);
         expect(eq(derivatives[a], std::exp(1 + 3)*(3 - 1)));
         expect(eq(derivatives[b], std::exp(1 + 3)*3));
+        expect(eq(bp_derivatives[a], std::exp(1 + 3)*(3 - 1)));
+        expect(eq(bp_derivatives[b], std::exp(1 + 3)*3));
+        expect(eq(value, std::exp(1 + 3)*(3 - 1)));
 
         expect(eq(derivative_of(e, wrt(a)), std::exp(1 + 3)*(3 - 1)));
         expect(eq(derivative_of(e, wrt(b)), std::exp(1 + 3)*3));
-    };
-
-    "bw_backpropagation"_test = [] () {
-        cppad::backward::var a = 1;
-        cppad::backward::var b = 3;
-        cppad::backward::expression e = std::exp(a + b)*(b - 1);
-        const auto [value, derivatives] = e.backpropagate(a, b);
-        expect(eq(derivatives[a], std::exp(1 + 3)*(3 - 1)));
-        expect(eq(derivatives[b], std::exp(1 + 3)*3));
     };
 
     return EXIT_SUCCESS;

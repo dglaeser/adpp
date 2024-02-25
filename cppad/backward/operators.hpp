@@ -32,13 +32,13 @@ struct differentiator<std::plus<void>> {
         return a.partial_expression(var) + b.partial_expression(var);
     }
 
-    static constexpr auto backpropagate(
+    static constexpr auto back_propagate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(vars...);
+        auto [value_b, derivs_b] = b.back_propagate(vars...);
         auto result = value_a + value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
     }
@@ -49,17 +49,18 @@ struct differentiator<std::minus<void>> {
     static constexpr auto expression(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
-        const concepts::expression auto& var) {
+        const concepts::expression auto& var
+    ) {
         return a.partial_expression(var) - b.partial_expression(var);
     }
 
-    static constexpr auto backpropagate(
+    static constexpr auto back_propagate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(vars...);
+        auto [value_b, derivs_b] = b.back_propagate(vars...);
         auto result = value_a - value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
@@ -69,17 +70,18 @@ struct differentiator<std::multiplies<void>> {
     static constexpr auto expression(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
-        const concepts::expression auto& var) {
+        const concepts::expression auto& var
+    ) {
         return a.partial_expression(var)*b + a*b.partial_expression(var);
     }
 
-    static constexpr auto backpropagate(
+    static constexpr auto back_propagate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(vars...);
+        auto [value_b, derivs_b] = b.back_propagate(vars...);
         auto result = value_a*value_b;
         return std::make_pair(
             result,
@@ -94,15 +96,16 @@ struct differentiator<cppad::backward::operators::exp> {
 
     static constexpr auto expression(
         const concepts::expression auto& e,
-        const concepts::expression auto& var) {
+        const concepts::expression auto& var
+    ) {
         return e.exp()*e.partial_expression(var);
     }
 
-    static constexpr auto backpropagate(
+    static constexpr auto back_propagate(
         const concepts::expression auto& e,
         const concepts::expression auto&... vars
     ) {
-        auto [value, derivs] = e.backpropagate(vars...);
+        auto [value, derivs] = e.back_propagate(vars...);
         auto result = exp_op(value);
         return std::make_pair(result, std::move(derivs).scaled_with(result));
     }

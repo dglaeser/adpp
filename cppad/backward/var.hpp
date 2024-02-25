@@ -32,7 +32,7 @@ class var : public val<T> {
     }
 
     template<typename Self, concepts::expression... E>
-    constexpr auto backpropagate(this Self&& self, const E&... e) {
+    constexpr auto back_propagate(this Self&& self, const E&... e) {
         derivatives derivs{double{}, e...};
         if constexpr (contains_decay_v<Self, E...>)
             derivs[self] = 1.0;

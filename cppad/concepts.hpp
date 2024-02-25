@@ -19,7 +19,7 @@ namespace detail {
 
     struct test_expression {
         constexpr double value() const { return 0.0; }
-        constexpr auto backpropagate(const auto&) const {
+        constexpr auto back_propagate(const auto&) const {
             return std::make_pair(double{}, test_derivatives{});
         }
     };
@@ -56,9 +56,9 @@ static_assert(derivative_for<detail::test_derivatives, detail::test_expression>)
 template<typename T>
 concept expression = requires(const T& t) {
     { t.value() } -> arithmetic;
-    { t.backpropagate(detail::test_expression{}) } -> pair;
-    { detail::as_copy(t.backpropagate(detail::test_expression{}).first) } -> concepts::arithmetic;
-    { detail::as_copy(t.backpropagate(detail::test_expression{}).second) } -> derivative_for<detail::test_expression>;
+    { t.back_propagate(detail::test_expression{}) } -> pair;
+    { detail::as_copy(t.back_propagate(detail::test_expression{}).first) } -> concepts::arithmetic;
+    { detail::as_copy(t.back_propagate(detail::test_expression{}).second) } -> derivative_for<detail::test_expression>;
 };
 static_assert(expression<detail::test_expression>);
 
@@ -83,7 +83,7 @@ concept derivable_unary_operator
     = unary_operator<T>
     and is_complete_v<differentiator<T>>
     and requires(const T& t, const E& e, const V& variable) {
-        { differentiator<T>::backpropagate(e, variable) };
+        { differentiator<T>::back_propagate(e, variable) };
         { differentiator<T>::expression(e, variable) } -> expression;
     };
 
@@ -93,7 +93,7 @@ concept derivable_binary_operator
     and expression<A> and expression<B>
     and is_complete_v<differentiator<T>>
     and requires(const T& t, const A& a, const B& b, const V& variable) {
-        { differentiator<T>::backpropagate(a, b, variable) };
+        { differentiator<T>::back_propagate(a, b, variable) };
         { differentiator<T>::expression(a, b, variable) } -> expression;
     };
 

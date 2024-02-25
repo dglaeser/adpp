@@ -19,7 +19,7 @@ class let : public val<T> {
     using Parent::Parent;
 
     template<concepts::expression... E>
-    constexpr auto backpropagate(const E&... e) const {
+    constexpr auto back_propagate(const E&... e) const {
         return std::make_pair(this->value(), derivatives{double{}, e...});
     }
 

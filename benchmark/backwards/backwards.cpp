@@ -32,7 +32,7 @@ double as_double(const auto& expression) { return expression.value(); }
 
 template<typename E, typename X>
 double derivative_of(E&& expression, X&& x) {
-    return expression.backpropagate(x).second[x];
+    return cppad::backward::derivative_of(expression, wrt(x));
 }
 #endif
 

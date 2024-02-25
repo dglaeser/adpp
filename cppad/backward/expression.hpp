@@ -25,8 +25,8 @@ class expression {
     {}
 
     template<concepts::expression... _E>
-    constexpr auto backpropagate(const _E&... e) const {
-        return _e.backpropagate(e...);
+    constexpr auto back_propagate(const _E&... e) const {
+        return _e.back_propagate(e...);
     }
 
     constexpr decltype(auto) value() const {
@@ -132,8 +132,8 @@ class unary_operator : public expression_base {
     {}
 
     template<concepts::expression... _E>
-    constexpr auto backpropagate(const _E&... e) const {
-        return differentiator<O>::backpropagate(_expression.get(), e...);
+    constexpr auto back_propagate(const _E&... e) const {
+        return differentiator<O>::back_propagate(_expression.get(), e...);
     }
 
     constexpr auto value() const {
@@ -163,8 +163,8 @@ class binary_operator : public expression_base {
     {}
 
     template<concepts::expression... E>
-    constexpr auto backpropagate(const E&... e) const {
-        return differentiator<O>::backpropagate(_a.get(), _b.get(), e...);
+    constexpr auto back_propagate(const E&... e) const {
+        return differentiator<O>::back_propagate(_a.get(), _b.get(), e...);
     }
 
     constexpr auto value() const {
