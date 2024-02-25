@@ -7,6 +7,17 @@
 
 namespace cppad {
 
+namespace order {
+
+template<unsigned int i>
+struct order : public std::integral_constant<unsigned int, i> {};
+
+inline constexpr order<1> first;
+inline constexpr order<2> second;
+inline constexpr order<3> third;
+
+}  // namespace order
+
 template<typename T>
 class storage {
     using stored = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_cvref_t<T>>;

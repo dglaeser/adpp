@@ -54,5 +54,18 @@ int main() {
         expect(eq(derivative_of(e, wrt(b)), std::exp(1 + 3)*3));
     };
 
+    "bw_higher_order_derivative_computation"_test = [] () {
+        int av = 3;
+        int bv = 2;
+        int cv = 2;
+        cppad::backward::var a = av;
+        cppad::backward::var b = bv;
+        cppad::backward::let c = cv;
+        auto expression = a*a*b*c;
+        expect(eq(derivative_of(expression, wrt(a), cppad::order::first), 2*av*bv*cv));
+        expect(eq(derivative_of(expression, wrt(a), cppad::order::second), 2*bv*cv));
+        expect(eq(derivative_of(expression, wrt(a), cppad::order::third), 0));
+    };
+
     return EXIT_SUCCESS;
 }
