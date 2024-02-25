@@ -59,9 +59,8 @@ expression(E&&) -> expression<std::remove_cvref_t<E>>;
 
 
 template<concepts::expression E>
+    requires(std::is_lvalue_reference_v<E>)
 class named_expression {
-    static_assert(std::is_lvalue_reference_v<E>);
-
  public:
     constexpr named_expression(E e, const char* name) noexcept
     : _storage{std::forward<E>(e)}
@@ -122,7 +121,7 @@ struct expression_base {
  protected:
     template<typename Self, concepts::expression E, std::invocable<E> Partial>
         requires(std::constructible_from<std::invoke_result_t<Partial, E>, expression_value_t<E>>)
-    constexpr std::invoke_result_t<Partial, E> partial_to(this Self&& self, E&& e, Partial&& partial) {
+    constexpr std::invoke_result_t<Partial, E> partial_to(this Self&& self, E&& e, Partial&& partial) noexcept {
         using return_type = std::invoke_result_t<Partial, E>;
         using value_type = expression_value_t<E>;
         static_assert(
