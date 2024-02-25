@@ -121,9 +121,7 @@ static_assert(expression<detail::test_expression>);
 template<typename T>
 concept into_expression = requires(const T& t) {
     requires is_complete_v<traits::as_expression<std::remove_cvref_t<T>>>;
-    {
-        traits::as_expression<std::remove_cvref_t<T>>::get(t)
-    };  // -> expression does not work because of self-reference issues in places where we use this
+    { traits::as_expression<std::remove_cvref_t<T>>::get(t) } -> expression;
 };
 
 template<typename T>
@@ -143,9 +141,7 @@ concept derivable_unary_operator
     and is_complete_v<traits::derivative<T>>
     and requires(const T& t, const E& e, const V& variable) {
         { traits::derivative<T>::backpropagate(e, variable) };
-        {
-            traits::derivative<T>::expression(e, variable)
-        };  // -> expression does not work because of self-reference issues in places where we use this
+        { traits::derivative<T>::expression(e, variable) } -> expression;
     };
 
 template<typename T, typename A, typename B, typename V>
@@ -155,9 +151,7 @@ concept derivable_binary_operator
     and is_complete_v<traits::derivative<T>>
     and requires(const T& t, const A& a, const B& b, const V& variable) {
         { traits::derivative<T>::backpropagate(a, b, variable) };
-        {
-            traits::derivative<T>::expression(a, b, variable)
-        };  // -> expression does not work because of self-reference issues in places where we use this
+        { traits::derivative<T>::expression(a, b, variable) } -> expression;
     };
 
 template<typename T, typename A>
