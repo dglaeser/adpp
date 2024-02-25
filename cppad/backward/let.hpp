@@ -20,6 +20,7 @@ class let : public val<T> {
     using base::base;
     constexpr let(let&&) = default;
     constexpr let(const let&) = delete;
+    constexpr let() : base(undefined_value_v<T>) {}
 
     // for better error message when attempting to copy
     template<concepts::arithmetic V, auto _>

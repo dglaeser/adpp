@@ -185,6 +185,33 @@ int main() {
         expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
     };
 
+    "expression_with_constant_stream"_test = [] () {
+        std::ostringstream s;
+        var<double> x;
+        let<double> mu;
+        auto expr = (mu*x).exp();
+        cppad::backward::stream(s, expr, with_names(
+            x |= "x",
+            mu |= "µ"
+        ));
+        expect(eq(s.str(), std::string{"exp(µ*x)"}));
+    };
+
+    "expression_derivative_stream"_test = [] () {
+        std::ostringstream s;
+        auto a = var{1};
+        auto b = var{2};
+        auto c = var{3};
+        auto expr = ((a + b)*c).exp();
+        auto deriv = differentiate(expr, wrt(a));
+        cppad::backward::stream(s, deriv, with_names(
+            a |= "a",
+            b |= "b",
+            c |= "c"
+        ));
+        expect(eq(s.str(), std::string{"(exp((a + b)*c))*((1 + 0)*c + (a + b)*0)"}));
+    };
+
     return EXIT_SUCCESS;
 }
 
