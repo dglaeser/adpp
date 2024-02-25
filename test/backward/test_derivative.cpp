@@ -12,8 +12,8 @@ using boost::ut::eq;
 constexpr auto make_derivatives(const auto& a, const auto& b) {
     static_assert(!std::same_as<decltype(a), decltype(b)>);
     cppad::backward::derivatives derivatives{double{}, a, b};
-    derivatives.add_to_derivative_wrt(a, 2.0);
-    derivatives.add_to_derivative_wrt(b, 42.0);
+    derivatives[a] = 2.0;
+    derivatives[b] = 42.0;
     return derivatives;
 }
 
@@ -32,8 +32,8 @@ int main() {
         cppad::backward::var a = 1;
         cppad::backward::var b = 1;
         cppad::backward::derivatives derivatives{double{}, a, b};
-        derivatives.add_to_derivative_wrt(a, 2.0);
-        derivatives.add_to_derivative_wrt(b, 5.0);
+        derivatives[a] = 2.0;
+        derivatives[b] = 5.0;
         expect(eq(derivatives[a], 2.0));
         expect(eq(derivatives[b], 5.0));
     };

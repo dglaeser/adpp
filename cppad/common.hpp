@@ -11,14 +11,17 @@ namespace cppad {
 #ifndef DOXYGEN
 namespace detail {
 
-    struct test_expression {
-        constexpr double value() const { return 0.0; }
-        constexpr void accumulate_derivatives(auto, auto&) const {}
-    };
-
     struct test_derivatives {
         constexpr double operator[](const auto&) const { return 0; }
+        constexpr double& operator[](const auto&) { return std::declval<double&>(); }
         constexpr void add_to_derivative_wrt(const auto& t, auto value) {}
+    };
+
+    struct test_expression {
+        constexpr double value() const { return 0.0; }
+        constexpr auto backpropagate(const auto&) const {
+            return std::make_pair(double{}, test_derivatives{});
+        }
     };
 
     template<typename T, std::size_t s = sizeof(T)>
@@ -86,6 +89,9 @@ template<typename T> struct undefined_value;
 template<typename T> struct format;
 template<typename T> struct derivative;
 
+template<typename T> struct is_pair : public std::false_type {};
+template<typename A, typename B> struct is_pair<std::pair<A, B>> : public std::true_type {};
+
 }  // namespace traits
 
 
@@ -94,11 +100,23 @@ namespace concepts {
 template<typename T>
 concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
 
-template<typename T, typename D = detail::test_derivatives>
-concept expression = requires(const T& t, D& derivs) {
-    { t.value() } -> arithmetic;
-    //  { t.partial(detail::test_expression{}) } -> arithmetic;
+template<typename T>
+concept pair = traits::is_pair<T>::value;
+
+template<typename T, typename V = detail::test_expression>
+concept derivative_for = requires(const T& t, const V& variable) {
+    { detail::as_copy(t[variable]) } -> arithmetic;
 };
+static_assert(derivative_for<detail::test_derivatives, detail::test_expression>);
+
+template<typename T>
+concept expression = requires(const T& t) {
+    { t.value() } -> arithmetic;
+    { t.backpropagate(detail::test_expression{}) } -> pair;
+    { detail::as_copy(t.backpropagate(detail::test_expression{}).first) } -> concepts::arithmetic;
+    { detail::as_copy(t.backpropagate(detail::test_expression{}).second) } -> derivative_for<detail::test_expression>;
+};
+static_assert(expression<detail::test_expression>);
 
 template<typename T>
 concept into_expression = requires(const T& t) {
@@ -123,8 +141,8 @@ template<typename T, typename E, typename V>
 concept derivable_unary_operator
     = unary_operator<T>
     and is_complete_v<traits::derivative<T>>
-    and requires(const T& t, const E& e, const V& variable, detail::test_derivatives& derivs) {
-        { traits::derivative<T>::accumulate(e, double{}, derivs) };
+    and requires(const T& t, const E& e, const V& variable) {
+        { traits::derivative<T>::backpropagate(e, variable) };
         {
             traits::derivative<T>::expression(e, variable)
         };  // -> expression does not work because of self-reference issues in places where we use this
@@ -135,8 +153,8 @@ concept derivable_binary_operator
     = binary_operator<T>
     and expression<A> and expression<B>
     and is_complete_v<traits::derivative<T>>
-    and requires(const T& t, const A& a, const B& b, const V& variable, detail::test_derivatives& derivs) {
-        { traits::derivative<T>::accumulate(a, b, double{}, derivs) };
+    and requires(const T& t, const A& a, const B& b, const V& variable) {
+        { traits::derivative<T>::backpropagate(a, b, variable) };
         {
             traits::derivative<T>::expression(a, b, variable)
         };  // -> expression does not work because of self-reference issues in places where we use this

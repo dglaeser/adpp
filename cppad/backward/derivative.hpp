@@ -27,12 +27,6 @@ struct derivatives : variadic_accessor<Ts...> {
         return self._values[self.index_of(t)];
     }
 
-    template<typename T> requires(contains_decay_v<T, Ts...>)
-    constexpr void add_to_derivative_wrt(const T& t, concepts::arithmetic auto value) noexcept {
-        if constexpr (contains_decay_v<T, Ts...>)
-            _values[this->index_of(t)] += value;
-    }
-
     template<typename Self, concepts::arithmetic T>
     constexpr decltype(auto) scaled_with(this Self&& self, T factor) noexcept {
         std::ranges::for_each(self._values, [factor] (auto& v) { v *= factor; });

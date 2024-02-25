@@ -29,12 +29,6 @@ class var : public let<T> {
         return *this;
     }
 
-    template<typename Self, concepts::arithmetic _T, typename... V>
-    constexpr void accumulate_derivatives(this Self&& self, _T multiplier, derivatives<V...>& derivs) {
-        if constexpr (contains_decay_v<Self, V...>)
-            derivs.add_to_derivative_wrt(self, multiplier);
-    }
-
     template<typename Self, concepts::expression... E>
     constexpr auto backpropagate(this Self&& self, const E&... e) {
         derivatives derivs{double{}, e...};

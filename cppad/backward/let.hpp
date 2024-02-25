@@ -57,9 +57,6 @@ class let : public val<T> {
  public:
     using Parent::Parent;
 
-    constexpr void accumulate_derivatives(concepts::arithmetic auto, auto& derivs) const
-    {}
-
     template<concepts::expression... E>
     constexpr auto backpropagate(const E&... e) const {
         return std::make_pair(this->value(), derivatives{double{}, e...});
