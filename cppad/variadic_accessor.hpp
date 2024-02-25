@@ -3,6 +3,7 @@
 #include <type_traits>
 
 #include <cppad/common.hpp>
+#include <cppad/concepts.hpp>
 
 namespace cppad {
 
@@ -13,12 +14,15 @@ template<std::size_t I, typename T>
 struct variadic_element {
     using index = index_constant<I>;
 
-    constexpr variadic_element(const T& t) noexcept : _t{t} {}
-    constexpr const T& get(const index&) const noexcept { return _t; }
+    constexpr variadic_element(T t) noexcept : _storage{std::forward<T>(t)} {}
+    constexpr const T& get(const index&) const noexcept { return _storage.get(); }
     constexpr index index_of(const T&) const noexcept { return {}; }
 
+    template<concepts::same_decay_t_as<T> _T>
+    constexpr index index_of() const noexcept { return {}; }
+
  private:
-    const T& _t;
+    storage<T> _storage;
 };
 
 template<typename... Ts>

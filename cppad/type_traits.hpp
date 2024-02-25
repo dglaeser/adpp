@@ -61,16 +61,18 @@ inline constexpr bool is_constant_v = is_constant<std::remove_cvref_t<T>>::value
 
 
 template<typename T>
+struct is_named_expression : public std::false_type {};
+template<typename T>
+inline constexpr bool is_named_expression_v = is_named_expression<std::remove_cvref_t<T>>::value;
+
+
+template<typename T>
 struct is_variable : public std::false_type {};
 template<typename T>
 inline constexpr bool is_variable_v = is_variable<std::remove_cvref_t<T>>::value;
 
-
 template<typename T>
-struct is_named_variable : public std::false_type {};
-template<typename T>
-inline constexpr bool is_named_variable_v = is_named_variable<std::remove_cvref_t<T>>::value;
-
+inline constexpr bool is_leaf_expression = is_constant_v<T> or is_variable_v<T>;
 
 template<typename T>
 struct expression_value;

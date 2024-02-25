@@ -48,7 +48,17 @@ class var : public val<T> {
 
     template<typename Self>
     constexpr auto operator|=(this Self&& self, const char* name) noexcept {
-        return named_expression<Self>{std::forward<Self>(self), name};
+        return named_expression{std::forward<Self>(self), name};
+    }
+
+    template<typename Self, typename... V>
+    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const expression_name_map<V...>& name_map) {
+        if constexpr (expression_name_map<V...>::template is_contained<Self>) {
+            out << name_map.name_of(self);
+        } else {
+            out << self.value();
+        }
+        return out;
     }
 };
 

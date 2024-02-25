@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
 
     "var_name_binding"_test = [] () {
         constexpr auto assert = [] <typename T> (const cppad::backward::named_expression<T>&) {
-            static_assert(std::is_lvalue_reference_v<T>);
             static_assert(cppad::is_variable_v<T>);
         };
 

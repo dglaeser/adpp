@@ -5,6 +5,7 @@
 
 #include <cppad/backward/var.hpp>
 #include <cppad/backward/let.hpp>
+#include <cppad/backward/format.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -160,19 +161,29 @@ int main() {
         expect(eq(de_db.value(), std::exp(1 + 3)*3));
     };
 
-    // "expression_export"_test = [] () {
-    //     std::ostringstream s;
-    //     auto a = var{1};
-    //     auto b = var{2};
-    //     auto c = var{3};
-    //     auto expr = ((a + b)*c).exp();
-    //     expr.export_to(s, naming(
-    //         a |= "a",
-    //         b |= "b",
-    //         c |= "c"
-    //     ));
-    //     expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
-    // };
+    "name_map"_test = [] () {
+        var a = 1;
+        var b = 2;
+        auto map = with_names(a |= "a", b |= "b");
+        static_assert(map.contains(a));
+        static_assert(map.contains(b));
+        expect(eq(std::string{map.name_of(a)}, std::string{"a"}));
+        expect(eq(std::string{map.name_of(b)}, std::string{"b"}));
+    };
+
+    "expression_stream"_test = [] () {
+        std::ostringstream s;
+        auto a = var{1};
+        auto b = var{2};
+        auto c = var{3};
+        auto expr = ((a + b)*c).exp();
+        cppad::backward::stream(s, expr, with_names(
+            a |= "a",
+            b |= "b",
+            c |= "c"
+        ));
+        expect(eq(s.str(), std::string{"exp((a + b)*c)"}));
+    };
 
     return EXIT_SUCCESS;
 }
