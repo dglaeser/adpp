@@ -2,7 +2,7 @@
 
 #include <limits>
 
-#include <cppad/common.hpp>
+#include <cppad/type_traits.hpp>
 
 #include <cppad/backward/val.hpp>
 #include <cppad/backward/let.hpp>
@@ -20,7 +20,7 @@ class var : public val<T> {
     using base::base;
     constexpr var(var&&) = default;
     constexpr var(const var&) = delete;
-    constexpr var() : base(undefined_value<T>) {}
+    constexpr var() : base(undefined_value_v<T>) {}
 
     // for better error message when attempting to copy
     template<concepts::arithmetic V, auto _>
@@ -57,9 +57,9 @@ var(T&&) -> var<std::remove_cvref_t<T>, _>;
 
 }  // namespace cppad::backward
 
-namespace cppad::traits {
+namespace cppad {
 
 template<concepts::arithmetic T, auto _>
 struct is_variable<cppad::backward::var<T, _>> : public std::true_type {};
 
-}  // namespace cppad::traits
+}  // namespace cppad

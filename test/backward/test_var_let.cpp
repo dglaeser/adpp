@@ -35,8 +35,8 @@ int main(int argc, char** argv) {
         static_assert(sizeof(b) == sizeof(int));
         static_assert(!std::same_as<decltype(a), decltype(b)>);
 
-        expect(eq(a.value(), cppad::undefined_value<double>));
-        expect(eq(double(a), cppad::undefined_value<double>));
+        expect(eq(a.value(), cppad::undefined_value_v<double>));
+        expect(eq(double(a), cppad::undefined_value_v<double>));
         expect(eq(b.value(), 5));
         expect(eq(int(b), 5));
         expect(eq(derivative_of(a, wrt(a)), 1.0));
@@ -71,13 +71,13 @@ int main(int argc, char** argv) {
         static_assert(derivative_of(v, wrt(b)) == 0);
     };
 
-    "var_as_expression"_test = [] () {
+    "var_to_expression"_test = [] () {
         static_assert(cppad::concepts::expression<cppad::backward::var<int>>);
         static_assert(cppad::concepts::into_expression<cppad::backward::var<int>>);
 
         const var a = 42.0;
-        static_assert(std::is_same_v<decltype(cppad::as_expression(a)), decltype(a)&>);
-        expect(cppad::is_same_object(a, cppad::as_expression(a)));
+        static_assert(std::is_same_v<decltype(cppad::to_expression(a)), decltype(a)&>);
+        expect(cppad::is_same_object(a, cppad::to_expression(a)));
     };
 
     "let_declaration"_test = [] () {
@@ -99,9 +99,9 @@ int main(int argc, char** argv) {
         expect(eq(derivative_of(a, wrt(b)), 0.0));
     };
 
-    "let_as_expression"_test = [] () {
+    "let_to_expression"_test = [] () {
         double a = 1.0;
-        auto c = cppad::as_expression(a);
+        auto c = cppad::to_expression(a);
         static_assert(std::same_as<decltype(c), let<double>>);
     };
 

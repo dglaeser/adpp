@@ -34,7 +34,7 @@ let(T&&) -> let<std::remove_cvref_t<T>>;
 }  // namespace cppad::backward
 
 
-namespace cppad::traits {
+namespace cppad {
 
 template<concepts::arithmetic T>
 struct is_constant<cppad::backward::let<T>> : public std::true_type {};
@@ -46,4 +46,4 @@ struct as_expression<T> {
     }
 };
 
-}  // namespace cppad::traits
+}  // namespace cppad

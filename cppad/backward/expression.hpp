@@ -9,26 +9,13 @@
 
 
 #include <cppad/common.hpp>
+#include <cppad/backward/operators.hpp>
 #include <cppad/backward/derivative.hpp>
 
 namespace cppad::backward {
 
 template<concepts::unary_operator O, typename E> class unary_operator;
 template<concepts::binary_operator O, typename A, typename B> class binary_operator;
-
-
-namespace operators {
-
-struct exp {
-    template<concepts::arithmetic T>
-    auto operator()(T value) const {
-        using std::exp;
-        return exp(value);
-    }
-};
-
-}  // namespace operators
-
 
 template<concepts::expression E>
 class expression {
@@ -89,7 +76,7 @@ struct expression_base {
         return binary_operator{
             std::plus{},
             std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
+            to_expression(std::forward<Other>(other))
         };
     }
 
@@ -98,7 +85,7 @@ struct expression_base {
         return binary_operator{
             std::minus{},
             std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
+            to_expression(std::forward<Other>(other))
         };
     }
 
@@ -107,7 +94,7 @@ struct expression_base {
         return binary_operator{
             std::multiplies{},
             std::forward<Self>(self),
-            as_expression(std::forward<Other>(other))
+            to_expression(std::forward<Other>(other))
         };
     }
 
@@ -126,7 +113,7 @@ struct expression_base {
         using return_type = std::invoke_result_t<Partial, E>;
         using value_type = expression_value_t<E>;
         static_assert(
-            !traits::is_constant<std::remove_cvref_t<E>>::value,
+            !is_constant_v<std::remove_cvref_t<E>>,
             "Derivative w.r.t. a constant requested"
         );
         if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
@@ -146,7 +133,7 @@ class unary_operator : public expression_base {
 
     template<concepts::expression... _E>
     constexpr auto backpropagate(const _E&... e) const {
-        return traits::derivative<O>::backpropagate(_expression.get(), e...);
+        return differentiator<O>::backpropagate(_expression.get(), e...);
     }
 
     constexpr auto value() const {
@@ -156,7 +143,7 @@ class unary_operator : public expression_base {
     template<concepts::expression _E>
         requires(concepts::derivable_unary_operator<O, E, _E>)
     constexpr auto partial_expression(_E&& e) const {
-        return traits::derivative<O>::expression(_expression.get(), std::forward<_E>(e));
+        return differentiator<O>::expression(_expression.get(), std::forward<_E>(e));
     }
 
  private:
@@ -177,7 +164,7 @@ class binary_operator : public expression_base {
 
     template<concepts::expression... E>
     constexpr auto backpropagate(const E&... e) const {
-        return traits::derivative<O>::backpropagate(_a.get(), _b.get(), e...);
+        return differentiator<O>::backpropagate(_a.get(), _b.get(), e...);
     }
 
     constexpr auto value() const {
@@ -187,7 +174,7 @@ class binary_operator : public expression_base {
     template<concepts::expression E>
         requires(concepts::derivable_binary_operator<O, A, B, E>)
     constexpr auto partial_expression(E&& e) const {
-        return traits::derivative<O>::expression(_a.get(), _b.get(), std::forward<E>(e));
+        return differentiator<O>::expression(_a.get(), _b.get(), std::forward<E>(e));
     }
 
  private:
@@ -200,7 +187,7 @@ binary_operator(O&&, A&&, B&&) -> binary_operator<std::remove_cvref_t<O>, A, B>;
 
 }  // namespace cppad::backward
 
-namespace cppad::traits {
+namespace cppad {
 
 template<concepts::expression V> requires(is_variable_v<V>)
 struct is_variable<cppad::backward::named_expression<V>> : public std::true_type {};
@@ -208,92 +195,7 @@ struct is_variable<cppad::backward::named_expression<V>> : public std::true_type
 template<concepts::expression V> requires(is_variable_v<V>)
 struct is_named_variable<cppad::backward::named_expression<V>> : public std::true_type {};
 
-template<>
-struct derivative<std::plus<void>> {
-    static constexpr auto expression(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial_expression(var) + b.partial_expression(var);
-    }
-
-    static constexpr auto backpropagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
-        auto result = value_a + value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
-    }
-};
-
-template<>
-struct derivative<std::minus<void>> {
-    static constexpr auto expression(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial_expression(var) - b.partial_expression(var);
-    }
-
-    static constexpr auto backpropagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
-        auto result = value_a - value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
-    }
-};
-template<>
-struct derivative<std::multiplies<void>> {
-    static constexpr auto expression(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial_expression(var)*b + a*b.partial_expression(var);
-    }
-
-    static constexpr auto backpropagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.backpropagate(vars...);
-        auto [value_b, derivs_b] = b.backpropagate(vars...);
-        auto result = value_a*value_b;
-        return std::make_pair(
-            result,
-            std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a)
-        );
-    }
-};
-
-template<>
-struct derivative<cppad::backward::operators::exp> {
-    static constexpr auto exp_op = cppad::backward::operators::exp{};
-
-    static constexpr auto expression(
-        const concepts::expression auto& e,
-        const concepts::expression auto& var) {
-        return e.exp()*e.partial_expression(var);
-    }
-
-    static constexpr auto backpropagate(
-        const concepts::expression auto& e,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value, derivs] = e.backpropagate(vars...);
-        auto result = exp_op(value);
-        return std::make_pair(result, std::move(derivs).scaled_with(result));
-    }
-};
-
-}  // namespace cppad::traits
+}  // namespace cppad
 
 namespace std {
 
