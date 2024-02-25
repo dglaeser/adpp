@@ -25,11 +25,11 @@ struct exp {
 
 template<>
 struct differentiator<std::plus<void>> {
-    static constexpr auto expression(
+    static constexpr auto differentiate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto& var) {
-        return a.partial_expression(var) + b.partial_expression(var);
+        return a.differentiate_wrt(var) + b.differentiate_wrt(var);
     }
 
     static constexpr auto back_propagate(
@@ -46,12 +46,12 @@ struct differentiator<std::plus<void>> {
 
 template<>
 struct differentiator<std::minus<void>> {
-    static constexpr auto expression(
+    static constexpr auto differentiate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto& var
     ) {
-        return a.partial_expression(var) - b.partial_expression(var);
+        return a.differentiate_wrt(var) - b.differentiate_wrt(var);
     }
 
     static constexpr auto back_propagate(
@@ -67,12 +67,12 @@ struct differentiator<std::minus<void>> {
 };
 template<>
 struct differentiator<std::multiplies<void>> {
-    static constexpr auto expression(
+    static constexpr auto differentiate(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto& var
     ) {
-        return a.partial_expression(var)*b + a*b.partial_expression(var);
+        return a.differentiate_wrt(var)*b + a*b.differentiate_wrt(var);
     }
 
     static constexpr auto back_propagate(
@@ -94,11 +94,11 @@ template<>
 struct differentiator<cppad::backward::operators::exp> {
     static constexpr auto exp_op = cppad::backward::operators::exp{};
 
-    static constexpr auto expression(
+    static constexpr auto differentiate(
         const concepts::expression auto& e,
         const concepts::expression auto& var
     ) {
-        return e.exp()*e.partial_expression(var);
+        return e.exp()*e.differentiate_wrt(var);
     }
 
     static constexpr auto back_propagate(

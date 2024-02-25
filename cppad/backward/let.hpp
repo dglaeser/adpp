@@ -3,7 +3,7 @@
 #include <limits>
 #include <type_traits>
 
-#include <cppad/common.hpp>
+#include <cppad/concepts.hpp>
 #include <cppad/backward/val.hpp>
 #include <cppad/backward/expression.hpp>
 #include <cppad/backward/derivatives.hpp>
@@ -23,7 +23,7 @@ class let : public val<T> {
         return std::make_pair(this->value(), derivatives{double{}, e...});
     }
 
-    constexpr auto partial_expression(concepts::expression auto&&) const {
+    constexpr auto differentiate_wrt(auto&&) const {
         return let<T>{0};
     }
 };

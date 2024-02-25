@@ -14,13 +14,15 @@ namespace detail {
     struct test_derivatives {
         constexpr double operator[](const auto&) const { return 0; }
         constexpr double& operator[](const auto&) { return std::declval<double&>(); }
-        constexpr void add_to_derivative_wrt(const auto& t, auto value) {}
     };
 
     struct test_expression {
         constexpr double value() const { return 0.0; }
         constexpr auto back_propagate(const auto&) const {
             return std::make_pair(double{}, test_derivatives{});
+        }
+        constexpr auto differentiate_wrt(const auto&) const {
+            return test_expression{};
         }
     };
 
@@ -57,6 +59,7 @@ template<typename T>
 concept expression = requires(const T& t) {
     { t.value() } -> arithmetic;
     { t.back_propagate(detail::test_expression{}) } -> pair;
+    { t.differentiate_wrt(detail::test_expression{}) };  // -> expression cannot be tested due to self-reference
     { detail::as_copy(t.back_propagate(detail::test_expression{}).first) } -> concepts::arithmetic;
     { detail::as_copy(t.back_propagate(detail::test_expression{}).second) } -> derivative_for<detail::test_expression>;
 };
@@ -65,7 +68,7 @@ static_assert(expression<detail::test_expression>);
 template<typename T>
 concept into_expression = requires(const T& t) {
     requires is_complete_v<as_expression<std::remove_cvref_t<T>>>;
-    { as_expression<std::remove_cvref_t<T>>::get(t) } -> expression;
+    { as_expression<std::remove_cvref_t<T>>::get(t) }; // -> expression cannot be tested due to self-reference occurrence
 };
 
 template<typename T>
@@ -84,7 +87,7 @@ concept derivable_unary_operator
     and is_complete_v<differentiator<T>>
     and requires(const T& t, const E& e, const V& variable) {
         { differentiator<T>::back_propagate(e, variable) };
-        { differentiator<T>::expression(e, variable) } -> expression;
+        { differentiator<T>::differentiate(e, variable) };  // -> expression cannot be tested due to self-reference issues
     };
 
 template<typename T, typename A, typename B, typename V>
@@ -94,7 +97,7 @@ concept derivable_binary_operator
     and is_complete_v<differentiator<T>>
     and requires(const T& t, const A& a, const B& b, const V& variable) {
         { differentiator<T>::back_propagate(a, b, variable) };
-        { differentiator<T>::expression(a, b, variable) } -> expression;
+        { differentiator<T>::differentiate(a, b, variable) };  // -> expression cannot be tested due to self-reference issues
     };
 
 }  // namespace concepts

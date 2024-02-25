@@ -7,7 +7,6 @@
 #include <concepts>
 #include <ostream>
 
-
 #include <cppad/common.hpp>
 #include <cppad/backward/operators.hpp>
 #include <cppad/backward/derivatives.hpp>
@@ -33,9 +32,9 @@ class expression {
         return _e.value();
     }
 
-    template<concepts::expression _E>
-    constexpr decltype(auto) partial_expression(_E&& e) const {
-        return _e.partial_expression(std::forward<_E>(e));
+    template<typename _E>
+    constexpr decltype(auto) differentiate_wrt(_E&& e) const {
+        return _e.differentiate_wrt(std::forward<_E>(e));
     }
 
  private:
@@ -140,10 +139,10 @@ class unary_operator : public expression_base {
         return O{}(_expression.get().value());
     }
 
-    template<concepts::expression _E>
+    template<typename _E>
         requires(concepts::derivable_unary_operator<O, E, _E>)
-    constexpr auto partial_expression(_E&& e) const {
-        return differentiator<O>::expression(_expression.get(), std::forward<_E>(e));
+    constexpr auto differentiate_wrt(_E&& e) const {
+        return differentiator<O>::differentiate(_expression.get(), std::forward<_E>(e));
     }
 
  private:
@@ -171,10 +170,10 @@ class binary_operator : public expression_base {
         return O{}(_a.get().value(), _b.get().value());
     }
 
-    template<concepts::expression E>
+    template<typename E>
         requires(concepts::derivable_binary_operator<O, A, B, E>)
-    constexpr auto partial_expression(E&& e) const {
-        return differentiator<O>::expression(_a.get(), _b.get(), std::forward<E>(e));
+    constexpr auto differentiate_wrt(E&& e) const {
+        return differentiator<O>::differentiate(_a.get(), _b.get(), std::forward<E>(e));
     }
 
  private:
@@ -184,6 +183,12 @@ class binary_operator : public expression_base {
 
 template<concepts::ownable O, typename A, typename B>
 binary_operator(O&&, A&&, B&&) -> binary_operator<std::remove_cvref_t<O>, A, B>;
+
+
+template<concepts::expression E, typename V>
+inline constexpr auto differentiate(E&& expression, const std::tuple<V>& var) {
+    return expression.differentiate_wrt(std::get<0>(var));
+}
 
 }  // namespace cppad::backward
 

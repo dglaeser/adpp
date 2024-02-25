@@ -2,8 +2,7 @@
 
 #include <limits>
 
-#include <cppad/type_traits.hpp>
-
+#include <cppad/concepts.hpp>
 #include <cppad/backward/val.hpp>
 #include <cppad/backward/let.hpp>
 #include <cppad/backward/expression.hpp>
@@ -39,8 +38,8 @@ class var : public val<T> {
         return std::make_pair(self.value(), std::move(derivs));
     }
 
-    template<typename Self, concepts::expression E>
-    constexpr auto partial_expression(this Self&&, E&& e) {
+    template<typename Self, typename E>
+    constexpr auto differentiate_wrt(this Self&&, E&& e) {
         if constexpr (concepts::same_decay_t_as<Self, E>)
             return let<T>{1};
         return let<T>{0};
