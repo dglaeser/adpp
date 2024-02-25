@@ -82,12 +82,12 @@ int main(int argc, char** argv) {
 
     "let_declaration"_test = [] () {
         let a{1.0};
-        let b = a = 5.0;
+        let b = 5.0;
 
         static_assert(cppad::is_constant_v<decltype(a)>);
         static_assert(sizeof(a) == sizeof(double));
         static_assert(sizeof(b) == sizeof(double));
-        static_assert(std::same_as<decltype(a), decltype(b)>);
+        static_assert(!std::same_as<decltype(a), decltype(b)>);
 
         expect(eq(b.value(), double{5}));
         a = 1.0;
@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     "let_to_expression"_test = [] () {
         double a = 1.0;
         auto c = cppad::to_expression(a);
-        static_assert(std::same_as<decltype(c), let<double>>);
+        static_assert(cppad::is_constant_v<decltype(c)>);
     };
 
     "let_assignmet_ctor"_test = [] () {

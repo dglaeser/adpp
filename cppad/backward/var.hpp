@@ -42,7 +42,8 @@ class var : public val<T> {
     constexpr auto differentiate_wrt(this Self&&, E&& e) {
         if constexpr (concepts::same_decay_t_as<Self, E>)
             return let<T>{1};
-        return let<T>{0};
+        else
+            return let<T>{0};
     }
 
     template<typename Self>
