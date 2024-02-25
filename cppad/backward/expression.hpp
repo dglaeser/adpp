@@ -10,7 +10,7 @@
 
 #include <cppad/common.hpp>
 #include <cppad/backward/operators.hpp>
-#include <cppad/backward/derivative.hpp>
+#include <cppad/backward/derivatives.hpp>
 
 namespace cppad::backward {
 

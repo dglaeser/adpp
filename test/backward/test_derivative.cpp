@@ -3,7 +3,7 @@
 #include <boost/ut.hpp>
 
 #include <cppad/backward/var.hpp>
-#include <cppad/backward/derivative.hpp>
+#include <cppad/backward/derivatives.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;

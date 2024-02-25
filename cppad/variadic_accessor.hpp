@@ -4,7 +4,6 @@
 
 #include <cppad/common.hpp>
 
-
 namespace cppad {
 
 #ifndef DOXYGEN

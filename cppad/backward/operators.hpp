@@ -6,7 +6,7 @@
 
 #include <cppad/type_traits.hpp>
 #include <cppad/concepts.hpp>
-#include <cppad/backward/derivative.hpp>
+#include <cppad/backward/derivatives.hpp>
 
 namespace cppad {
 
