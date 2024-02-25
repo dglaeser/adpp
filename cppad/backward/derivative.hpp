@@ -33,6 +33,22 @@ struct derivatives : variadic_accessor<Ts...> {
             _values[this->index_of(t)] += value;
     }
 
+    template<typename Self, concepts::arithmetic T>
+    constexpr decltype(auto) scaled_with(this Self&& self, T factor) noexcept {
+        std::ranges::for_each(self._values, [factor] (auto& v) { v *= factor; });
+        return std::forward<Self>(self);
+    }
+
+    template<typename Self>
+    constexpr decltype(auto) operator+(this Self&& self, const derivatives& other) noexcept {
+        std::transform(
+            other._values.begin(), other._values.end(),
+            self._values.begin(), self._values.begin(),
+            std::plus{}
+        );
+        return std::forward<Self>(self);
+    }
+
  private:
     std::array<R, sizeof...(Ts)> _values;
 };
