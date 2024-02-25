@@ -11,8 +11,8 @@
 namespace cppad::backward {
 
 template<concepts::arithmetic T, auto = [] () {}>
-class var : public let<T> {
-    using base = let<T>;
+class var : public val<T> {
+    using base = val<T>;
 
  public:
     using base::base;
