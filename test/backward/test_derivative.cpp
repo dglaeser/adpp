@@ -11,7 +11,7 @@ using boost::ut::eq;
 
 constexpr auto make_derivatives(const auto& a, const auto& b) {
     static_assert(!std::same_as<decltype(a), decltype(b)>);
-    cppad::backward::derivatives derivatives{a, b};
+    cppad::backward::derivatives derivatives{double{}, a, b};
     derivatives.add_to_derivative_wrt(a, 2.0);
     derivatives.add_to_derivative_wrt(b, 42.0);
     return derivatives;
@@ -31,7 +31,7 @@ int main() {
         check_constexpr();
         cppad::backward::var a = 1;
         cppad::backward::var b = 1;
-        cppad::backward::derivatives derivatives{a, b};
+        cppad::backward::derivatives derivatives{double{}, a, b};
         derivatives.add_to_derivative_wrt(a, 2.0);
         derivatives.add_to_derivative_wrt(b, 5.0);
         expect(eq(derivatives[a], 2.0));
@@ -40,9 +40,14 @@ int main() {
 
     "bw_derivative_computation"_test = [] () {
         cppad::backward::var a = 1;
-        cppad::backward::var b = 1;
-        cppad::backward::expression e = (a + b)*(a - b);
+        cppad::backward::var b = 3;
+        cppad::backward::expression e = std::exp(a + b)*(b - 1);
         const auto derivatives = derivatives_of(e, wrt(a, b));
+        expect(eq(derivatives[a], std::exp(1 + 3)*(3 - 1)));
+        expect(eq(derivatives[b], std::exp(1 + 3)*3));
+
+        expect(eq(derivative_of(e, wrt(a)), std::exp(1 + 3)*(3 - 1)));
+        expect(eq(derivative_of(e, wrt(b)), std::exp(1 + 3)*3));
     };
 
     return EXIT_SUCCESS;

@@ -10,10 +10,9 @@ namespace cppad::backward {
 #ifndef DOXYGEN
 namespace detail {
 
-template<std::size_t I, typename T>
+template<concepts::arithmetic R, std::size_t I, typename T>
 struct derivative_element {
     using index = index_constant<I>;
-    using value_type = expression_value_t<T>;
 
     constexpr derivative_element(const T& t) : _t{t} {}
 
@@ -21,36 +20,40 @@ struct derivative_element {
     constexpr auto& get(const index&) noexcept { return _value; }
     constexpr const auto& get(const index&) const noexcept { return _value; }
     constexpr auto get_index_of(const T&) const noexcept { return index{}; }
+    constexpr const T& get_ref(const index& = {}) const noexcept { return _t; }
 
  private:
     const T& _t;
-    value_type _value = value_type{0};
+    R _value = R{0};
 };
 
 template<typename... Ts>
 struct derivative_accessor;
 
-template<std::size_t... I, typename... Ts>
-struct derivative_accessor<std::index_sequence<I...>, Ts...> : derivative_element<I, Ts>... {
+template<concepts::arithmetic R, std::size_t... I, typename... Ts>
+struct derivative_accessor<R, std::index_sequence<I...>, Ts...> : derivative_element<R, I, Ts>... {
     constexpr derivative_accessor(const Ts&... ts)
-    : derivative_element<I, Ts>(ts)...
+    : derivative_element<R, I, Ts>(ts)...
     {}
 
  protected:
-    using derivative_element<I, Ts>::get_index_of...;
-    using derivative_element<I, Ts>::get...;
+    using derivative_element<R, I, Ts>::get_index_of...;
+    using derivative_element<R, I, Ts>::get...;
 };
 
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<typename... Ts>
+template<concepts::arithmetic R, typename... Ts>
     requires(std::conjunction_v<traits::is_variable<Ts>...> and are_unique_v<Ts...>)
-struct derivatives : detail::derivative_accessor<std::make_index_sequence<sizeof...(Ts)>, Ts...> {
+struct derivatives : detail::derivative_accessor<R, std::make_index_sequence<sizeof...(Ts)>, Ts...> {
  private:
-    using base = detail::derivative_accessor<std::make_index_sequence<sizeof...(Ts)>, Ts...>;
+    using base = detail::derivative_accessor<R, std::make_index_sequence<sizeof...(Ts)>, Ts...>;
+
  public:
-    using base::base;
+    constexpr derivatives(R, const Ts&... ts)
+    : base(ts...)
+    {}
 
     template<typename T> requires(is_variable_v<T>)
     constexpr auto operator[](const T& t) const {
@@ -63,14 +66,23 @@ struct derivatives : detail::derivative_accessor<std::make_index_sequence<sizeof
     }
 };
 
-template<typename... Ts>
+template<typename R, typename... Ts>
     requires(std::conjunction_v<std::is_lvalue_reference<Ts>...>)
-derivatives(Ts&&...) -> derivatives<std::remove_cvref_t<Ts>...>;
-
+derivatives(R&&, Ts&&...) -> derivatives<R, std::remove_cvref_t<Ts>...>;
 
 template<concepts::expression E, typename... V>
-constexpr derivatives<V...> derivatives_of(E&& expression, derivatives<V...>&& derivatives) {
-    return std::move(derivatives);
+constexpr auto derivatives_of(E&& expression, const std::tuple<V...>& vars) {
+    using R = expression_value_t<E>;
+    return std::apply([&] <typename... Vs> (Vs&&... vs) {
+        derivatives derivs{R{}, std::forward<Vs>(vs)...};
+        expression.accumulate_derivatives(R{1}, derivs);
+        return derivs;
+    }, vars);
+}
+
+template<concepts::expression E, typename... V> requires(sizeof...(V) == 1)
+constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars) {
+    return derivatives_of(std::forward<E>(expression), vars)[std::get<0>(vars)];
 }
 
 template<typename... V>
@@ -79,7 +91,7 @@ template<typename... V>
         std::conjunction_v<traits::is_variable<std::remove_cvref_t<V>>...>
     )
 constexpr auto wrt(V&&... vars) {
-    return derivatives(std::forward<V>(vars)...);
+    return std::forward_as_tuple(vars...);
 }
 
 }  // namespace cppad::backward

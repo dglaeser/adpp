@@ -29,6 +29,12 @@ class var : public let<T> {
         return *this;
     }
 
+    template<typename Self, concepts::arithmetic _T, typename... V>
+    constexpr void accumulate_derivatives(this Self&& self, _T multiplier, derivatives<V...>& derivs) {
+        if constexpr (contains_decay_v<Self, V...>)
+            derivs.add_to_derivative_wrt(self, multiplier);
+    }
+
     template<typename Self, concepts::expression E>
     constexpr T partial(this Self&&, E&& e) {
         if constexpr (concepts::same_decay_t_as<Self, E>)
