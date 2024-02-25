@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
         expect(eq(double(a), cppad::undefined_value<double>));
         expect(eq(b.value(), 5));
         expect(eq(int(b), 5));
-        expect(eq(a.partial(a), 1.0));
-        expect(eq(a.partial(b), 0.0));
+        expect(eq(derivative_of(a, wrt(a)), 1.0));
+        expect(eq(derivative_of(a, wrt(b)), 0.0));
     };
 
     "var_assignment_ctor"_test = [] {
@@ -67,8 +67,8 @@ int main(int argc, char** argv) {
         constexpr var b = 1;
         static_assert(!std::is_same_v<decltype(v), decltype(b)>);
         static_assert(v.value() == 1);
-        static_assert(v.partial(v) == 1);
-        static_assert(v.partial(b) == 0);
+        static_assert(derivative_of(v, wrt(v)) == 1);
+        static_assert(derivative_of(v, wrt(b)) == 0);
     };
 
     "var_as_expression"_test = [] () {
@@ -95,8 +95,8 @@ int main(int argc, char** argv) {
         expect(eq(double(a), 1.0));
         expect(eq(b.value(), 5.0));
         expect(eq(double(b), 5.0));
-        expect(eq(a.partial(a), 0.0));
-        expect(eq(a.partial(b), 0.0));
+        expect(eq(derivative_of(a, wrt(a)), 0.0));
+        expect(eq(derivative_of(a, wrt(b)), 0.0));
     };
 
     "let_as_expression"_test = [] () {

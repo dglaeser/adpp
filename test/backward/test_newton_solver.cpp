@@ -21,7 +21,7 @@ constexpr double newton_solve() {
     int it = 0;
     auto value = f.value();
     while (value > 1e-6 && it < 100) {
-        x -= value/f.partial(x);
+        x -= value/derivative_of(f, wrt(x));
         value = f.value();
         ++it;
     }

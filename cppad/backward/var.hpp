@@ -36,13 +36,6 @@ class var : public let<T> {
     }
 
     template<typename Self, concepts::expression E>
-    constexpr T partial(this Self&&, E&& e) {
-        if constexpr (concepts::same_decay_t_as<Self, E>)
-            return T{1};
-        return T{0};
-    }
-
-    template<typename Self, concepts::expression E>
     constexpr auto partial_expression(this Self&&, E&& e) {
         if constexpr (concepts::same_decay_t_as<Self, E>)
             return let<T>{1};

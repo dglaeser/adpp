@@ -37,18 +37,15 @@ class expression {
     : _e{std::move(e)}
     {}
 
-    template<concepts::arithmetic T, typename... V>
-    constexpr void accumulate_derivatives(T multiplier, derivatives<V...>& derivs) const {
-        _e.accumulate_derivatives(multiplier, derivs);
+    template<typename Self, concepts::arithmetic T, typename... V>
+    constexpr void accumulate_derivatives(this Self&& self, T multiplier, derivatives<V...>& derivs) {
+        if constexpr (contains_decay_v<Self, V...>)
+            derivs.add_to_derivative_wrt(self, multiplier);
+        self._e.accumulate_derivatives(multiplier, derivs);
     }
 
     constexpr decltype(auto) value() const {
         return _e.value();
-    }
-
-    template<concepts::expression _E>
-    constexpr decltype(auto) partial(_E&& e) const {
-        return _e.partial(std::forward<_E>(e));
     }
 
     template<concepts::expression _E>
@@ -124,6 +121,12 @@ struct expression_base {
         };
     }
 
+    template<typename Self, concepts::arithmetic T, typename... V>
+    constexpr void accumulate_derivatives(this Self&& self, T multiplier, derivatives<V...>& derivs) {
+        if constexpr (contains_decay_v<Self, V...>)
+            derivs.add_to_derivative_wrt(self, multiplier);
+    }
+
  protected:
     template<typename Self, concepts::expression E, std::invocable<E> Partial>
         requires(std::constructible_from<std::invoke_result_t<Partial, E>, expression_value_t<E>>)
@@ -151,17 +154,12 @@ class unary_operator : public expression_base {
 
     template<concepts::arithmetic T, typename... V>
     constexpr void accumulate_derivatives(T multiplier, derivatives<V...>& derivs) const {
+        expression_base::accumulate_derivatives(multiplier, derivs);
         traits::derivative<O>::accumulate(_expression.get(), multiplier, derivs);
     }
 
     constexpr auto value() const {
         return O{}(_expression.get().value());
-    }
-
-    template<concepts::expression _E>
-        requires(concepts::derivable_unary_operator<O, E, _E>)
-    constexpr auto partial(_E&& e) const {
-        return traits::derivative<O>::value(_expression.get(), std::forward<_E>(e));
     }
 
     template<concepts::expression _E>
@@ -188,17 +186,12 @@ class binary_operator : public expression_base {
 
     template<concepts::arithmetic T, typename... V>
     constexpr void accumulate_derivatives(T multiplier, derivatives<V...>& derivs) const {
+        expression_base::accumulate_derivatives(multiplier, derivs);
         traits::derivative<O>::accumulate(_a.get(), _b.get(), multiplier, derivs);
     }
 
     constexpr auto value() const {
         return O{}(_a.get().value(), _b.get().value());
-    }
-
-    template<concepts::expression E>
-        requires(concepts::derivable_binary_operator<O, A, B, E>)
-    constexpr auto partial(E&& e) const {
-        return traits::derivative<O>::value(_a.get(), _b.get(), std::forward<E>(e));
     }
 
     template<concepts::expression E>
@@ -227,14 +220,7 @@ struct is_named_variable<cppad::backward::named_expression<V>> : public std::tru
 
 template<>
 struct derivative<std::plus<void>> {
-    static constexpr auto value(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial(var) + b.partial(var);
-    }
-
-    static constexpr auto expression(
+    static constexpr auto expression( // todo: inline
         const concepts::expression auto& a,
         const concepts::expression auto& b,
         const concepts::expression auto& var) {
@@ -253,13 +239,6 @@ struct derivative<std::plus<void>> {
 
 template<>
 struct derivative<std::minus<void>> {
-    static constexpr auto value(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial(var) - b.partial(var);
-    }
-
     static constexpr auto expression(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
@@ -278,13 +257,6 @@ struct derivative<std::minus<void>> {
 };
 template<>
 struct derivative<std::multiplies<void>> {
-    static constexpr auto value(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var) {
-        return a.partial(var)*b.value() + a.value()*b.partial(var);
-    }
-
     static constexpr auto expression(
         const concepts::expression auto& a,
         const concepts::expression auto& b,
@@ -305,12 +277,6 @@ struct derivative<std::multiplies<void>> {
 template<>
 struct derivative<cppad::backward::operators::exp> {
     static constexpr auto exp_op = cppad::backward::operators::exp{};
-
-    static constexpr auto value(
-        const concepts::expression auto& e,
-        const concepts::expression auto& var) {
-        return exp_op(e.value())*e.partial(var);
-    }
 
     static constexpr auto expression(
         const concepts::expression auto& e,

@@ -33,8 +33,8 @@ int main() {
         const var b{4.0};
         const auto c = a + b;
         expect(eq(c.value(), 6.0));
-        expect(eq(c.partial(a), 1.0));
-        expect(eq(c.partial(b), 1.0));
+        expect(eq(derivative_of(c, wrt(a)), 1.0));
+        expect(eq(derivative_of(c, wrt(b)), 1.0));
     };
 
     "plus_times_operators_one_level_with_constants"_test = [] () {
@@ -42,8 +42,8 @@ int main() {
         const var b{4};
         const auto c = a*let{42} + b*let{48};
         expect(eq(c.value(), 42*2 + 48*4));
-        expect(eq(c.partial(a), 42));
-        expect(eq(c.partial(b), 48));
+        expect(eq(derivative_of(c, wrt(a)), 42));
+        expect(eq(derivative_of(c, wrt(b)), 48));
     };
 
     "plus_times_operators_three_levels_with_constants"_test = [] () {
@@ -52,8 +52,8 @@ int main() {
         const auto c = a*let{42} + b*let{48};
         const auto d = c*a;
         expect(eq(d.value(), (42*2 + 48*4)*2));
-        expect(eq(c.partial(a), 42));
-        expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
+        expect(eq(derivative_of(c, wrt(a)), 42));
+        expect(eq(derivative_of(d, wrt(a)), (42*2 + 48*4) + 42*2));
     };
 
     "plus_times_operators_three_levels_with_arithmetics"_test = [] () {
@@ -62,15 +62,15 @@ int main() {
         const auto c = a*42 + b*48;
         const auto d = c*a;
         expect(eq(d.value(), (42*2 + 48*4)*2));
-        expect(eq(c.partial(a), 42));
-        expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
+        expect(eq(derivative_of(c, wrt(a)), 42));
+        expect(eq(derivative_of(d, wrt(a)), (42*2 + 48*4) + 42*2));
     };
 
     "plus_times_operators_three_levels_single_expression"_test = [] () {
         const var a{2};
         const auto d = (a*let{42} + var{4}*let{48})*a;
         expect(eq(d.value(), (42*2 + 48*4)*2));
-        expect(eq(d.partial(a), (42*2 + 48*4) + 42*2));
+        expect(eq(derivative_of(d, wrt(a)), (42*2 + 48*4) + 42*2));
     };
 
     "plus_times_expression_modified_variable"_test = [] () {
@@ -79,29 +79,29 @@ int main() {
         auto c = a*b;
         a *= 2;
         expect(eq(c.value(), 168));
-        expect(eq(c.partial(a), 2));
+        expect(eq(derivative_of(c, wrt(a)), 2));
 
         a /= 2;
         expect(eq(c.value(), 84));
-        expect(eq(c.partial(a), 2));
+        expect(eq(derivative_of(c, wrt(a)), 2));
 
         a = 5;
         expect(eq(c.value(), 10));
-        expect(eq(c.partial(a), 2));
+        expect(eq(derivative_of(c, wrt(a)), 2));
     };
 
     "exp_expression"_test = [] () {
         var a{3};
         auto e = (a*2).exp();
         expect(eq(e.value(), std::exp(3*2)));
-        expect(eq(e.partial(a), std::exp(3*2)*2));
+        expect(eq(derivative_of(e, wrt(a)), std::exp(3*2)*2));
     };
 
     "exp_expression_with_std_function"_test = [] () {
         var a{3};
         auto e = std::exp(a*2);
         expect(eq(e.value(), std::exp(3*2)));
-        expect(eq(e.partial(a), std::exp(3*2)*2));
+        expect(eq(derivative_of(e, wrt(a)), std::exp(3*2)*2));
     };
 
     "plus_times_expression_at_compile_time"_test = [] () {
@@ -109,8 +109,8 @@ int main() {
         static constexpr var b{2};
         constexpr auto c = (a + b)*b;
         static_assert(c.value() == 6);
-        static_assert(c.partial(a) == 2);
-        static_assert(c.partial(b) == 5);
+        static_assert(derivative_of(c, wrt(a)) == 2);
+        static_assert(derivative_of(c, wrt(b)) == 5);
     };
 
     "expressions_type_equality"_test = [] () {

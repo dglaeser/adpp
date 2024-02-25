@@ -59,10 +59,6 @@ class let : public val<T> {
     constexpr void accumulate_derivatives(concepts::arithmetic auto, auto& derivs) const
     {}
 
-    constexpr T partial(concepts::expression auto&&) const {
-        return T{0};
-    }
-
     constexpr auto partial_expression(concepts::expression auto&&) const {
         return let<T>{0};
     }

@@ -13,8 +13,12 @@ namespace detail {
 
     struct test_expression {
         constexpr double value() const { return 0.0; }
-        template<typename T>
-        constexpr double partial(T&&) const { return 0.0; }
+        constexpr void accumulate_derivatives(auto, auto&) const {}
+    };
+
+    struct test_derivatives {
+        constexpr double operator[](const auto&) const { return 0; }
+        constexpr void add_to_derivative_wrt(const auto& t, auto value) {}
     };
 
     template<typename T, std::size_t s = sizeof(T)>
@@ -90,10 +94,10 @@ namespace concepts {
 template<typename T>
 concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
 
-template<typename T>
-concept expression = requires(const T& t) {
+template<typename T, typename D = detail::test_derivatives>
+concept expression = requires(const T& t, D& derivs) {
     { t.value() } -> arithmetic;
-    { t.partial(detail::test_expression{}) } -> arithmetic;
+    //  { t.partial(detail::test_expression{}) } -> arithmetic;
 };
 
 template<typename T>
@@ -119,8 +123,8 @@ template<typename T, typename E, typename V>
 concept derivable_unary_operator
     = unary_operator<T>
     and is_complete_v<traits::derivative<T>>
-    and requires(const T& t, const E& e, const V& variable) {
-        { detail::as_copy(traits::derivative<T>::value(e, variable)) } -> arithmetic;
+    and requires(const T& t, const E& e, const V& variable, detail::test_derivatives& derivs) {
+        { traits::derivative<T>::accumulate(e, double{}, derivs) };
         {
             traits::derivative<T>::expression(e, variable)
         };  // -> expression does not work because of self-reference issues in places where we use this
@@ -131,8 +135,8 @@ concept derivable_binary_operator
     = binary_operator<T>
     and expression<A> and expression<B>
     and is_complete_v<traits::derivative<T>>
-    and requires(const T& t, const A& a, const B& b, const V& variable) {
-        { detail::as_copy(traits::derivative<T>::value(a, b, variable)) } -> arithmetic;
+    and requires(const T& t, const A& a, const B& b, const V& variable, detail::test_derivatives& derivs) {
+        { traits::derivative<T>::accumulate(a, b, double{}, derivs) };
         {
             traits::derivative<T>::expression(a, b, variable)
         };  // -> expression does not work because of self-reference issues in places where we use this
