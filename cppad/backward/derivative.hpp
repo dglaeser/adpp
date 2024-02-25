@@ -12,9 +12,9 @@ namespace cppad::backward {
 
 template<concepts::arithmetic R, typename... Ts>
     requires(are_unique_v<Ts...>)
-struct derivatives : variadic_accessor<Ts...> {
+struct derivatives : variadic_accessor<const Ts&...> {
  private:
-    using base = variadic_accessor<Ts...>;
+    using base = variadic_accessor<const Ts&...>;
 
  public:
     constexpr derivatives(R, const Ts&... ts) noexcept

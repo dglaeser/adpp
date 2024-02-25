@@ -27,8 +27,8 @@ struct variadic_accessor;
 
 template<std::size_t... I, typename... Ts>
 struct variadic_accessor<std::index_sequence<I...>, Ts...> : variadic_element<I, Ts>... {
-    constexpr variadic_accessor(const Ts&... ts)
-    : variadic_element<I, Ts>(ts)...
+    constexpr variadic_accessor(Ts... ts)
+    : variadic_element<I, Ts>(std::forward<Ts>(ts))...
     {}
 
     using variadic_element<I, Ts>::index_of...;
@@ -45,8 +45,8 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
     using base = detail::variadic_accessor<std::make_index_sequence<sizeof...(Ts)>, Ts...>;
 
  public:
-    constexpr variadic_accessor(const Ts&... ts) noexcept
-    : base(ts...)
+    constexpr variadic_accessor(Ts... ts) noexcept
+    : base(std::forward<Ts>(ts)...)
     {}
 
     template<typename T> requires(contains_decay_v<T, Ts...>)
@@ -56,7 +56,6 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
 };
 
 template<typename... Ts>
-    requires(std::conjunction_v<std::is_lvalue_reference<Ts>...>)
-variadic_accessor(Ts&&...) -> variadic_accessor<std::remove_cvref_t<Ts>...>;
+variadic_accessor(Ts&&...) -> variadic_accessor<Ts...>;
 
 }  // namespace cppad
