@@ -4,8 +4,10 @@
 
 #include <cppad/common.hpp>
 
+#include <cppad/backward/val.hpp>
 #include <cppad/backward/let.hpp>
 #include <cppad/backward/expression.hpp>
+#include <cppad/backward/derivative.hpp>
 
 
 namespace cppad::backward {
