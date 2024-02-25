@@ -13,8 +13,11 @@
 
 namespace cppad::backward {
 
-template<concepts::unary_operator O, typename E> class unary_operator;
-template<concepts::binary_operator O, typename A, typename B> class binary_operator;
+// forward declarations
+template<concepts::unary_operator O, typename E>
+class unary_operator;
+template<concepts::binary_operator O, typename A, typename B>
+class binary_operator;
 
 template<concepts::expression E>
 class expression {
