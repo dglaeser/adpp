@@ -22,9 +22,9 @@ struct derivatives : variadic_accessor<Ts...> {
         std::ranges::fill(_values, R{0});
     }
 
-    template<typename T> requires(contains_decay_v<T, Ts...>)
-    constexpr R operator[](const T& t) const noexcept {
-        return _values[this->index_of(t)];
+    template<typename Self, typename T> requires(contains_decay_v<T, Ts...>)
+    constexpr decltype(auto) operator[](this Self&& self, const T& t) noexcept {
+        return self._values[self.index_of(t)];
     }
 
     template<typename T> requires(contains_decay_v<T, Ts...>)
