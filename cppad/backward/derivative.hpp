@@ -61,9 +61,7 @@ template<concepts::expression E, typename... V>
 constexpr auto derivatives_of(E&& expression, const std::tuple<V...>& vars) {
     using R = expression_value_t<E>;
     return std::apply([&] <typename... Vs> (Vs&&... vs) {
-        derivatives derivs{R{}, std::forward<Vs>(vs)...};
-        expression.accumulate_derivatives(R{1}, derivs);
-        return derivs;
+        return expression.backpropagate(vs...).second;
     }, vars);
 }
 
