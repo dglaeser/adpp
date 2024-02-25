@@ -45,7 +45,7 @@ struct derivative_accessor<R, std::index_sequence<I...>, Ts...> : derivative_ele
 #endif  // DOXYGEN
 
 template<concepts::arithmetic R, typename... Ts>
-    requires(std::conjunction_v<traits::is_variable<Ts>...> and are_unique_v<Ts...>)
+    requires(are_unique_v<Ts...>)
 struct derivatives : detail::derivative_accessor<R, std::make_index_sequence<sizeof...(Ts)>, Ts...> {
  private:
     using base = detail::derivative_accessor<R, std::make_index_sequence<sizeof...(Ts)>, Ts...>;
@@ -55,14 +55,15 @@ struct derivatives : detail::derivative_accessor<R, std::make_index_sequence<siz
     : base(ts...)
     {}
 
-    template<typename T> requires(is_variable_v<T>)
-    constexpr auto operator[](const T& t) const {
+    template<typename T> requires(contains_decay_v<T, Ts...>)
+    constexpr R operator[](const T& t) const {
         return this->get(this->get_index_of(t));
     }
 
-    template<typename T> requires(is_variable_v<T>)
+    template<typename T> requires(contains_decay_v<T, Ts...>)
     constexpr void add_to_derivative_wrt(const T& t, concepts::arithmetic auto value) {
-        this->get(this->get_index_of(t)) += value;
+        if constexpr (contains_decay_v<T, Ts...>)
+            this->get(this->get_index_of(t)) += value;
     }
 };
 
@@ -86,10 +87,7 @@ constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars) {
 }
 
 template<typename... V>
-    requires(
-        std::conjunction_v<std::is_lvalue_reference<V>...> and
-        std::conjunction_v<traits::is_variable<std::remove_cvref_t<V>>...>
-    )
+    requires(std::conjunction_v<std::is_lvalue_reference<V>...>)
 constexpr auto wrt(V&&... vars) {
     return std::forward_as_tuple(vars...);
 }
