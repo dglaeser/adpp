@@ -87,6 +87,64 @@ inline constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars
     return detail::derivative_of_impl<1, i>(std::forward<E>(expression), std::get<0>(vars));
 }
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    concept leaf_expression = is_variable_v<T> or is_constant_v<T>;
+
+    template<typename F, concepts::expression E, typename... V>
+        requires(std::conjunction_v<is_variable<V>...>)
+    inline constexpr auto visit_expression(const F& sub_expr_callback, std::tuple<const V&...>&& vars, const E& e) {
+        if constexpr (leaf_expression<E> && is_variable_v<E>) {
+            if constexpr (contains_decay_v<E, V...>)
+                return std::move(vars);
+            else
+                return std::tuple_cat(std::tuple<const E&>{e}, std::move(vars));
+        } else if constexpr (leaf_expression<E>) {
+            return std::move(vars);
+        } else {
+            return std::apply([&] <typename... SE> (SE&&... sub_expr) {
+                return sub_expr_callback(std::move(vars), std::forward<SE>(sub_expr)...);
+            }, sub_expressions<E>::get(e));
+        }
+    }
+
+    template<typename F, concepts::expression E0, concepts::expression... E, typename... V>
+        requires(std::conjunction_v<is_variable<V>...>)
+    inline constexpr auto concatenate_variables_impl(const F& sub_expr_callback, std::tuple<const V&...>&& vars, const E0& e0, const E&... e) {
+        auto first_processed = visit_expression(sub_expr_callback, std::move(vars), e0);
+        if constexpr (sizeof...(E) == 0)
+            return std::move(first_processed);
+        else
+            return concatenate_variables_impl(sub_expr_callback, std::move(first_processed), e...);
+    }
+
+    template<typename... V, concepts::expression... E>
+        requires(std::conjunction_v<is_variable<V>...>)
+    inline constexpr auto concatenate_variables(std::tuple<const V&...>&& vars, const E&... e) {
+        if constexpr (sizeof...(E) == 0) {
+            return std::move(vars);
+        } else if constexpr (sizeof...(E) == 1) {
+            return visit_expression([] <typename... SE> (auto&& result, SE&&... sub_expr) {
+                return concatenate_variables(std::move(result), std::forward<SE>(sub_expr)...);
+            }, std::move(vars), e...);
+        } else {
+            return concatenate_variables_impl([] <typename... SE> (auto&& result, SE&&... sub_expr) {
+                return concatenate_variables(std::move(result), std::forward<SE>(sub_expr)...);
+            }, std::move(vars), e...);
+        }
+    }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<concepts::expression E>
+inline constexpr auto variables_of(const E& e) {
+    return detail::concatenate_variables(std::tuple{}, e);
+}
+
 template<typename... V>
     requires(std::conjunction_v<std::is_lvalue_reference<V>...>)
 inline constexpr auto wrt(V&&... vars) {
