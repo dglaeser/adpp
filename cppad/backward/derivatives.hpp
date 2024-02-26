@@ -52,7 +52,7 @@ template<typename R, typename... Ts>
 derivatives(R&&, Ts&&...) -> derivatives<R, std::remove_cvref_t<Ts>...>;
 
 template<concepts::expression E, typename... V>
-constexpr auto derivatives_of(E&& expression, const std::tuple<V...>& vars) {
+inline constexpr auto derivatives_of(E&& expression, const std::tuple<V...>& vars) {
     using R = expression_value_t<E>;
     return std::apply([&] <typename... Vs> (Vs&&... vs) {
         return expression.back_propagate(vs...).second;
@@ -62,7 +62,7 @@ constexpr auto derivatives_of(E&& expression, const std::tuple<V...>& vars) {
 // TODO: gradient
 
 template<concepts::expression E, typename... V> requires(sizeof...(V) == 1)
-constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars) {
+inline constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars) {
     return derivatives_of(std::forward<E>(expression), vars)[std::get<0>(vars)];
 }
 
@@ -70,7 +70,7 @@ constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars) {
 namespace detail {
 
 template<int cur, int requested, concepts::expression E, typename V>
-constexpr auto derivative_of_impl(E&& expression, const V& var) {
+inline constexpr auto derivative_of_impl(E&& expression, const V& var) {
     static_assert(cur <= requested);
     if constexpr (cur < requested) {
         return derivative_of_impl<cur + 1, requested>(expression.differentiate_wrt(var), var);
@@ -83,13 +83,13 @@ constexpr auto derivative_of_impl(E&& expression, const V& var) {
 #endif  // DOXYGEN
 
 template<concepts::expression E, typename... V, unsigned int i> requires(sizeof...(V) == 1)
-constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars, const order<i>& order) {
+inline constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars, const order<i>& order) {
     return detail::derivative_of_impl<1, i>(std::forward<E>(expression), std::get<0>(vars));
 }
 
 template<typename... V>
     requires(std::conjunction_v<std::is_lvalue_reference<V>...>)
-constexpr auto wrt(V&&... vars) {
+inline constexpr auto wrt(V&&... vars) {
     return std::forward_as_tuple(vars...);
 }
 
