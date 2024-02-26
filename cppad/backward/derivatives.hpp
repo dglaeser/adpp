@@ -83,7 +83,7 @@ constexpr auto derivative_of_impl(E&& expression, const V& var) {
 #endif  // DOXYGEN
 
 template<concepts::expression E, typename... V, unsigned int i> requires(sizeof...(V) == 1)
-constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars, const order::order<i>& order) {
+constexpr auto derivative_of(E&& expression, const std::tuple<V...>& vars, const order<i>& order) {
     return detail::derivative_of_impl<1, i>(std::forward<E>(expression), std::get<0>(vars));
 }
 

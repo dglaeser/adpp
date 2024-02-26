@@ -7,16 +7,12 @@
 
 namespace cppad {
 
-namespace order {
-
 template<unsigned int i>
 struct order : public std::integral_constant<unsigned int, i> {};
 
-inline constexpr order<1> first;
-inline constexpr order<2> second;
-inline constexpr order<3> third;
-
-}  // namespace order
+inline constexpr order<1> first_order;
+inline constexpr order<2> second_order;
+inline constexpr order<3> third_order;
 
 template<typename T>
 class storage {
