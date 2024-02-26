@@ -6,6 +6,7 @@
 #include <functional>
 #include <concepts>
 #include <ostream>
+#include <tuple>
 
 #include <cppad/common.hpp>
 #include <cppad/backward/operators.hpp>
@@ -69,22 +70,6 @@ struct expression_base {
             operators::exp{},
             std::forward<Self>(self)
         };
-    }
-
- protected:
-    template<typename Self, concepts::expression E, std::invocable<E> Partial>
-        requires(std::constructible_from<std::invoke_result_t<Partial, E>, expression_value_t<E>>)
-    constexpr std::invoke_result_t<Partial, E> partial_to(this Self&& self, E&& e, Partial&& partial) noexcept {
-        using return_type = std::invoke_result_t<Partial, E>;
-        using value_type = expression_value_t<E>;
-        static_assert(
-            !is_constant_v<std::remove_cvref_t<E>>,
-            "Derivative w.r.t. a constant requested"
-        );
-        if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
-            return partial(std::forward<E>(e));
-        else
-            return is_same_object(self, e) ? return_type{value_type{1}} : partial(std::forward<E>(e));
     }
 };
 
@@ -210,6 +195,10 @@ class unary_operator : public expression_base {
         return out;
     }
 
+    constexpr const auto& operand() const {
+        return _expression.get();
+    }
+
  private:
     storage<E> _expression;
 };
@@ -247,6 +236,9 @@ class binary_operator : public expression_base {
         return out;
     }
 
+    constexpr const auto& operand0() const { return _a.get(); }
+    constexpr const auto& operand1() const { return _b.get(); }
+
  private:
     storage<A> _a;
     storage<B> _b;
@@ -271,6 +263,19 @@ struct is_variable<cppad::backward::named_expression<V>> : public std::true_type
 template<concepts::expression V>
 struct is_named_expression<cppad::backward::named_expression<V>> : public std::true_type {};
 
+template<typename O, typename E>
+struct sub_expressions<backward::unary_operator<O, E>> {
+    static constexpr auto get(const backward::unary_operator<O, E>& op) {
+        return std::forward_as_tuple(op.operand());
+    }
+};
+
+template<typename O, typename A, typename B>
+struct sub_expressions<backward::binary_operator<O, A, B>> {
+    static constexpr auto get(const backward::binary_operator<O, A, B>& op) {
+        return std::forward_as_tuple(op.operand0(), op.operand1());
+    }
+};
 }  // namespace cppad
 
 namespace std {

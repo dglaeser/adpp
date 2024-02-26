@@ -80,5 +80,42 @@ int main() {
         static_assert(derivative_of(expression, wrt(a), cppad::third_order) == 0);
     };
 
+    "bw_variables_of_test"_test = [] () {
+        constexpr cppad::backward::var a = 1;
+        constexpr cppad::backward::var b = 3;
+        constexpr cppad::backward::var c = 5;
+        const auto expr = c + (a + b)*b;
+        const auto vars = cppad::backward::variables_of(expr);
+        const auto& ref_a = std::get<const std::remove_cvref_t<decltype(a)>&>(vars);
+        const auto& ref_b = std::get<const std::remove_cvref_t<decltype(b)>&>(vars);
+        const auto& ref_c = std::get<const std::remove_cvref_t<decltype(c)>&>(vars);
+        expect(&a == &ref_a);
+        expect(&b == &ref_b);
+        expect(&c == &ref_c);
+        const auto derivs = derivatives_of(expr, vars);
+        expect(eq(derivs[a], 3));
+        expect(eq(derivs[b], 4 + 3));
+        expect(eq(derivs[c], 1));
+    };
+
+    "bw_gradient_test"_test = [] () {
+        static constexpr cppad::backward::var a = 1;
+        static constexpr cppad::backward::var b = 3;
+        static constexpr cppad::backward::var c = 5;
+        constexpr auto expr = c + (a + b)*b;
+        {
+            const auto grad = gradient_of(expr);
+            expect(eq(grad[a], 3));
+            expect(eq(grad[b], 4 + 3));
+            expect(eq(grad[c], 1));
+        }
+        {
+            constexpr auto grad = gradient_of(expr);
+            static_assert(grad[a] == 3);
+            static_assert(grad[b] == 4 + 3);
+            static_assert(grad[c] == 1);
+        }
+    };
+
     return EXIT_SUCCESS;
 }
