@@ -70,22 +70,6 @@ struct expression_base {
             std::forward<Self>(self)
         };
     }
-
- protected:
-    template<typename Self, concepts::expression E, std::invocable<E> Partial>
-        requires(std::constructible_from<std::invoke_result_t<Partial, E>, expression_value_t<E>>)
-    constexpr std::invoke_result_t<Partial, E> partial_to(this Self&& self, E&& e, Partial&& partial) noexcept {
-        using return_type = std::invoke_result_t<Partial, E>;
-        using value_type = expression_value_t<E>;
-        static_assert(
-            !is_constant_v<std::remove_cvref_t<E>>,
-            "Derivative w.r.t. a constant requested"
-        );
-        if constexpr (!std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<E>>)
-            return partial(std::forward<E>(e));
-        else
-            return is_same_object(self, e) ? return_type{value_type{1}} : partial(std::forward<E>(e));
-    }
 };
 
 
