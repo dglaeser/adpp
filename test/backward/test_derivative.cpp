@@ -54,5 +54,31 @@ int main() {
         expect(eq(derivative_of(e, wrt(b)), std::exp(1 + 3)*3));
     };
 
+    "bw_higher_order_derivative_computation"_test = [] () {
+        int av = 3;
+        int bv = 2;
+        int cv = 2;
+        cppad::backward::var a = av;
+        cppad::backward::var b = bv;
+        cppad::backward::let c = cv;
+        auto expression = a*a*b*c;
+        expect(eq(derivative_of(expression, wrt(a), cppad::first_order), 2*av*bv*cv));
+        expect(eq(derivative_of(expression, wrt(a), cppad::second_order), 2*bv*cv));
+        expect(eq(derivative_of(expression, wrt(a), cppad::third_order), 0));
+    };
+
+    "bw_higher_order_derivative_computation_at_compile_time"_test = [] () {
+        static constexpr int av = 3;
+        static constexpr int bv = 2;
+        static constexpr int cv = 2;
+        static constexpr cppad::backward::var a = av;
+        static constexpr cppad::backward::var b = bv;
+        static constexpr cppad::backward::let c = cv;
+        constexpr auto expression = a*a*b*c;
+        static_assert(derivative_of(expression, wrt(a), cppad::first_order) == 2*av*bv*cv);
+        static_assert(derivative_of(expression, wrt(a), cppad::second_order) == 2*bv*cv);
+        static_assert(derivative_of(expression, wrt(a), cppad::third_order) == 0);
+    };
+
     return EXIT_SUCCESS;
 }
