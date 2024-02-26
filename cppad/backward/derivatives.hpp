@@ -145,6 +145,11 @@ inline constexpr auto variables_of(const E& e) {
     return detail::concatenate_variables(std::tuple{}, e);
 }
 
+template<concepts::expression E>
+inline constexpr auto gradient_of(const E& e) {
+    return derivatives_of(e, variables_of(e));
+}
+
 template<typename... V>
     requires(std::conjunction_v<std::is_lvalue_reference<V>...>)
 inline constexpr auto wrt(V&&... vars) {

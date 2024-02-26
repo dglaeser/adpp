@@ -98,5 +98,24 @@ int main() {
         expect(eq(derivs[c], 1));
     };
 
+    "bw_gradient_test"_test = [] () {
+        static constexpr cppad::backward::var a = 1;
+        static constexpr cppad::backward::var b = 3;
+        static constexpr cppad::backward::var c = 5;
+        constexpr auto expr = c + (a + b)*b;
+        {
+            const auto grad = gradient_of(expr);
+            expect(eq(grad[a], 3));
+            expect(eq(grad[b], 4 + 3));
+            expect(eq(grad[c], 1));
+        }
+        {
+            constexpr auto grad = gradient_of(expr);
+            static_assert(grad[a] == 3);
+            static_assert(grad[b] == 4 + 3);
+            static_assert(grad[c] == 1);
+        }
+    };
+
     return EXIT_SUCCESS;
 }
