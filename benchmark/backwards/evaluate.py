@@ -11,4 +11,4 @@ print("autodiff binary size: {:.2f} MB".format(autodiff_size/1e6))
 print("   cppad binary size: {:.2f} MB".format(cppad_size/1e6))
 print("              ratios: {:.2f}".format(autodiff_size/cppad_size))
 
-subprocess.run(["hyperfine", "--warmup", "10", "./backward_autodiff", "./backward_cppad"], check=True)
+subprocess.run(["hyperfine", "--warmup", "10", "./backward_autodiff 2.0 4.0", "./backward_cppad 2.0 4.0"], check=True)

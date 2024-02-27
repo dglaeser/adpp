@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include <iostream>
 #include <utility>
 
@@ -56,8 +57,11 @@ double derivative(E&& expression, const auto& x, const auto& y, double xv, doubl
 #endif
 
 int main(int argc, char** argv) {
-    double xv = 2.0;
-    double yv = 4.0;
+    if (argc < 3)
+        throw std::runtime_error("Expected two input arguments (x, y)");
+
+    double xv = std::atof(argv[1]);
+    double yv = std::atof(argv[1]);
     auto x = make_var(xv);
     auto y = make_var(yv);
 
