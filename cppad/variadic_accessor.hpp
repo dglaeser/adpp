@@ -14,12 +14,17 @@ template<std::size_t I, typename T>
 struct variadic_element {
     using index = index_constant<I>;
 
-    constexpr variadic_element(T t) noexcept : _storage{std::forward<T>(t)} {}
-    constexpr const T& get(const index&) const noexcept { return _storage.get(); }
-    constexpr index index_of(const T&) const noexcept { return {}; }
+    constexpr variadic_element(T t) noexcept
+    : _storage{std::forward<T>(t)}
+    {}
 
     template<concepts::same_decay_t_as<T> _T>
     constexpr index index_of() const noexcept { return {}; }
+    constexpr index index_of(const T&) const noexcept { return {}; }
+
+    constexpr const std::remove_cvref_t<T>& get(const index&) const noexcept {
+        return _storage.get();
+    }
 
  private:
     storage<T> _storage;
