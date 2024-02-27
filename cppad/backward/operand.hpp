@@ -9,6 +9,7 @@
 
 #include <cppad/backward/concepts.hpp>
 #include <cppad/backward/operators.hpp>
+#include <cppad/backward/derivative.hpp>
 
 namespace cppad::backward {
 
@@ -78,6 +79,11 @@ struct val : operand {
         return _value.get();
     }
 
+    template<typename Self, typename B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
+        return std::make_pair(self.evaluate_at(bindings), derivatives{T{}, vars...});
+    }
+
  private:
     storage<T> _value;
 };
@@ -102,6 +108,11 @@ class unary_operator : public operand  {
     template<typename B>
     constexpr decltype(auto) evaluate_at(const B& bindings) const noexcept {
         return O{}(_expression.get().evaluate_at(bindings));
+    }
+
+    template<typename B, typename... V>
+    constexpr auto back_propagate(const B& bindings, const V&... vars) const {
+        return differentiator<O>::back_propagate(bindings, _expression.get(), vars...);
     }
 
     constexpr const auto& operand() const {
@@ -130,6 +141,11 @@ class binary_operator : public operand {
             _a.get().evaluate_at(bindings),
             _b.get().evaluate_at(bindings)
         );
+    }
+
+    template<typename _B, typename... V>
+    constexpr auto back_propagate(const _B& bindings, const V&... vars) const {
+        return differentiator<O>::back_propagate(bindings, _a.get(), _b.get(), vars...);
     }
 
     constexpr const auto& operand0() const { return _a.get(); }

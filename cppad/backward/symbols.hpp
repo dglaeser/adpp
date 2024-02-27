@@ -9,6 +9,7 @@
 
 #include <cppad/backward/concepts.hpp>
 #include <cppad/backward/operand.hpp>
+#include <cppad/backward/derivative.hpp>
 
 namespace cppad::backward {
 
@@ -66,6 +67,15 @@ template<typename T = dtype::any, auto = [] () {}>
 struct var : symbol<T> {
     using symbol<T>::operator=;
 
+    template<typename Self, typename B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
+        using value_type = std::remove_cvref_t<decltype(bindings[self])>;
+        derivatives derivs{value_type{}, vars...};
+        if constexpr (contains_decay_v<Self, V...>)
+            derivs[self] = 1.0;
+        return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
+    }
+
     // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>
     constexpr var& operator=(const var<_T, __>&) = delete;
@@ -74,6 +84,12 @@ struct var : symbol<T> {
 template<typename T = dtype::any, auto = [] () {}>
 struct let : symbol<T> {
     using symbol<T>::operator=;
+
+    template<typename Self, typename B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
+        using value_type = std::remove_cvref_t<decltype(bindings[self])>;
+        return std::make_pair(self.evaluate_at(bindings), derivatives{value_type{}, vars...});
+    }
 
     // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>

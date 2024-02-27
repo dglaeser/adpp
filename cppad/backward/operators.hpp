@@ -7,6 +7,7 @@
 
 #include <cppad/type_traits.hpp>
 #include <cppad/concepts.hpp>
+#include <cppad/backward/bindings.hpp>
 
 namespace cppad {
 
@@ -20,7 +21,7 @@ struct exp {
     }
 };
 
-}  // namespace operators
+}  // namespace backward::operators
 
 
 template<>
@@ -40,6 +41,19 @@ struct differentiator<std::plus<void>> {
     ) {
         auto [value_a, derivs_a] = a.back_propagate(vars...);
         auto [value_b, derivs_b] = b.back_propagate(vars...);
+        auto result = value_a + value_b;
+        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
+    }
+
+    template<typename... V>
+    static constexpr auto back_propagate(
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
         auto result = value_a + value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
     }
@@ -79,6 +93,19 @@ struct differentiator<std::minus<void>> {
         auto result = value_a - value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
+
+    template<typename... V>
+    static constexpr auto back_propagate(
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
+        auto result = value_a - value_b;
+        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
+    }
 };
 
 template<>
@@ -112,6 +139,22 @@ struct differentiator<std::multiplies<void>> {
     ) {
         auto [value_a, derivs_a] = a.back_propagate(vars...);
         auto [value_b, derivs_b] = b.back_propagate(vars...);
+        auto result = value_a*value_b;
+        return std::make_pair(
+            result,
+            std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a)
+        );
+    }
+
+    template<typename... V>
+    static constexpr auto back_propagate(
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
+    ) {
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
         auto result = value_a*value_b;
         return std::make_pair(
             result,
@@ -158,6 +201,17 @@ struct differentiator<cppad::backward::operators::exp> {
         const concepts::expression auto&... vars
     ) {
         auto [value, derivs] = e.back_propagate(vars...);
+        auto result = exp_op(value);
+        return std::make_pair(result, std::move(derivs).scaled_with(result));
+    }
+
+    template<typename... V>
+    static constexpr auto back_propagate(
+        const backward::bindings<V...>& bindings,
+        const auto& e,
+        const auto&... vars
+    ) {
+        auto [value, derivs] = e.back_propagate(bindings, vars...);
         auto result = exp_op(value);
         return std::make_pair(result, std::move(derivs).scaled_with(result));
     }
