@@ -64,5 +64,12 @@ int main(int argc, char** argv) {
         ));
     };
 
+    "compile_time_expression_evaluate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        constexpr auto formula = (a + b)*a;
+        static_assert(evaluate(formula, at(a = 2.0, b = 4.0)) == 12.0);
+    };
+
     return EXIT_SUCCESS;
 }
