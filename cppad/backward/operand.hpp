@@ -73,6 +73,11 @@ struct val : operand {
             return self._value.get();
     }
 
+    template<typename B>
+    constexpr decltype(auto) evaluate_at(B&&) const noexcept {
+        return _value.get();
+    }
+
  private:
     storage<T> _value;
 };
@@ -86,6 +91,11 @@ class unary_operator {
     constexpr unary_operator(O&& op, E e) noexcept
     : _expression{std::forward<E>(e)}
     {}
+
+    template<typename B>
+    constexpr decltype(auto) evaluate_at(B&& bindings) const noexcept {
+        return O{}(_expression.get().evaluate_at(std::forward<B>(bindings)));
+    }
 
     constexpr const auto& operand() const {
         return _expression.get();

@@ -55,6 +55,11 @@ struct symbol : operand {
     constexpr auto operator=(this Self&& self, V&& value) noexcept {
         return self.bind(std::forward<V>(value));
     }
+
+    template<typename Self, typename B>
+    constexpr decltype(auto) evaluate_at(this Self&& self, B&& bindings) noexcept {
+        return bindings[self];
+    }
 };
 
 template<typename T = dtype::any, auto = [] () {}>

@@ -1,0 +1,86 @@
+#pragma once
+
+#include <type_traits>
+
+#include <cppad/concepts.hpp>
+#include <cppad/variadic_accessor.hpp>
+#include <cppad/backward/concepts.hpp>
+
+namespace cppad::backward {
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename... B>
+    inline constexpr bool are_binders = std::conjunction_v<traits::is_value_binder<std::remove_cvref_t<B>>...>;
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<typename... B>
+    requires(are_unique_v<B...> and detail::are_binders<B...>)
+struct bindings : variadic_accessor<B...> {
+ private:
+    using base = variadic_accessor<B...>;
+
+    template<typename T>
+    struct always_false : public std::false_type {};
+
+    template<typename T, typename... Bs>
+    struct binder_type_for ;
+
+    template<typename T, typename B0, typename... Bs>
+    struct binder_type_for<T, B0, Bs...> {
+        using type = std::conditional_t<
+            concepts::same_decay_t_as<T, typename std::remove_cvref_t<B0>::symbol_type>,
+            B0,
+            typename binder_type_for<T, Bs...>::type
+        >;
+    };
+
+    template<typename T>
+    struct binder_type_for<T> {
+        using type = void;
+    };
+
+ public:
+    template<typename T>
+    static constexpr bool contains_bindings_for = std::disjunction_v<
+        std::is_same<std::remove_cvref_t<T>, typename std::remove_cvref_t<B>::symbol_type>...
+    >;
+
+    template<typename T> requires(sizeof...(B) > 0 and contains_bindings_for<T>)
+    using binder_type = binder_type_for<T, B...>::type;
+
+    constexpr bindings(B... binders) noexcept
+    : base(binders...)
+    {}
+
+    template<typename Self, typename T>
+        requires(contains_bindings_for<T>)
+    constexpr decltype(auto) operator[](this Self&& self, const T&) noexcept {
+        return self.get(self.template index_of<binder_type<T>>()).unwrap();
+    }
+};
+
+template<typename... B>
+bindings(B&&...) -> bindings<B...>;
+
+template<typename T, typename... B>
+concept expression = requires(const T& t, B&&... b) {
+    { t.evaluate_at(bindings{std::forward<B>(b)...}) };
+};
+
+template<typename E, typename... B>
+    requires(expression<E, B...>)
+inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
+    return e.evaluate_at(b);
+}
+
+template<typename... B>
+    requires(detail::are_binders<B...>)
+inline constexpr auto at(B&&... b) {
+    return bindings{std::forward<B>(b)...};
+}
+
+}  // namespace cppad
