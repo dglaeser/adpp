@@ -18,7 +18,7 @@ struct value_binder {
 
     template<typename Self>
     constexpr decltype(auto) unwrap(this Self&& self) {
-        if constexpr (!std::is_lvalue_reference_v<S>)
+        if constexpr (!std::is_lvalue_reference_v<Self>)
             return std::move(self._value).get();
         else
             return self._value.get();
@@ -44,7 +44,7 @@ struct var {
     }
 
     template<typename V>
-    constexpr auto operator=(V&& value) noexcept {
+    constexpr auto operator=(V&& value) const noexcept {
         return bind(std::forward<V>(value));
     }
 };
