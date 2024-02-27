@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ostream>
 #include <utility>
 #include <type_traits>
 
@@ -59,6 +60,12 @@ struct symbol : operand {
     template<typename Self, typename B>
     constexpr decltype(auto) evaluate_at(this Self&& self, const B& bindings) noexcept {
         return bindings[self];
+    }
+
+    template<typename Self, typename... V>
+    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
+        out << name_bindings[self];
+        return out;
     }
 };
 

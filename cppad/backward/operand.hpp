@@ -10,6 +10,7 @@
 #include <cppad/backward/concepts.hpp>
 #include <cppad/backward/operators.hpp>
 #include <cppad/backward/derivative.hpp>
+#include <cppad/backward/bindings.hpp>
 
 namespace cppad::backward {
 
@@ -88,6 +89,12 @@ struct val : operand {
         return val<T>{0};
     }
 
+    template<typename... V>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<V...>&) const {
+        out << _value.get();
+        return out;
+    }
+
  private:
     storage<T> _value;
 };
@@ -122,6 +129,12 @@ class unary_operator : public operand  {
     template<typename V>
     constexpr auto differentiate_wrt(V&& var) const {
         return differentiator<O>::differentiate(_expression.get(), std::forward<V>(var));
+    }
+
+    template<typename... V>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<V...>& name_bindings) const {
+        formatter<O>::format(out, _expression.get(), name_bindings);
+        return out;
     }
 
     constexpr const auto& operand() const {
@@ -160,6 +173,12 @@ class binary_operator : public operand {
     template<typename V>
     constexpr auto differentiate_wrt(V&& var) const {
         return differentiator<O>::differentiate(_a.get(), _b.get(), std::forward<V>(var));
+    }
+
+    template<typename... V>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<V...>& name_bindings) const {
+        formatter<O>::format(out, _a.get(), _b.get(), name_bindings);
+        return out;
     }
 
     constexpr const auto& operand0() const { return _a.get(); }

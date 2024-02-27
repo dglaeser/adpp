@@ -63,8 +63,8 @@ template<>
 struct formatter<std::plus<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         a.stream(out, name_map);
@@ -112,8 +112,8 @@ template<>
 struct formatter<std::minus<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         a.stream(out, name_map);
@@ -167,8 +167,8 @@ template<>
 struct formatter<std::multiplies<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         constexpr bool use_braces_around_a = !is_leaf_expression<decltype(a)>;
@@ -219,7 +219,7 @@ struct differentiator<cppad::backward::operators::exp> {
 
 template<>
 struct formatter<cppad::backward::operators::exp> {
-    static constexpr void format(std::ostream& out, const concepts::expression auto& a, const auto& name_map) {
+    static constexpr void format(std::ostream& out, const auto& a, const auto& name_map) {
         out << "exp(";
         a.stream(out, name_map);
         out << ")";

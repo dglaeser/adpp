@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <concepts>
 #include <type_traits>
 
 #include <cppad/concepts.hpp>
@@ -73,6 +74,12 @@ bindings(B&&...) -> bindings<B...>;
 template<typename... B>
     requires(detail::are_binders<B...>)
 inline constexpr auto at(B&&... b) {
+    return bindings{std::forward<B>(b)...};
+}
+
+template<typename... B>
+    requires(detail::are_binders<B...>)
+inline constexpr auto with(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
 
