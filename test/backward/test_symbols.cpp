@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include <type_traits>
 
 #include <boost/ut.hpp>
@@ -7,8 +6,6 @@
 #include <cppad/backward/symbols.hpp>
 
 using boost::ut::operator""_test;
-using boost::ut::expect;
-using boost::ut::eq;
 
 using cppad::backward::var;
 using cppad::backward::let;
