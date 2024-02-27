@@ -3,6 +3,7 @@
 #include <tuple>
 #include <type_traits>
 
+#include <cppad/common.hpp>
 #include <cppad/backward/bindings.hpp>
 #include <cppad/backward/expression_tree.hpp>
 
@@ -32,6 +33,27 @@ template<typename E, typename... V, typename... B>
     requires(sizeof...(V) == 1 && detail::derivable_expression<E, bindings<B...>, V...>)
 inline constexpr auto derivative_of(const E& expression, const std::tuple<V...>& vars, const bindings<B...>& bindings) {
     return derivatives_of(expression, vars, bindings)[std::get<0>(vars)];
+}
+
+#ifndef DOXYGEN
+namespace detail {
+
+template<int cur, int requested, typename E, typename V, typename... B>
+inline constexpr auto derivative_of_impl(E&& expression, const V& var, const bindings<B...>& bindings) {
+    static_assert(cur <= requested);
+    if constexpr (cur < requested) {
+        return derivative_of_impl<cur + 1, requested>(expression.differentiate_wrt(var), var, bindings);
+    } else {
+        return expression.back_propagate(bindings, var).second[var];
+    }
+}
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<typename E, typename V, typename... B, unsigned int i>
+inline constexpr auto derivative_of(const E& expression, const std::tuple<V>& vars, const bindings<B...>& bindings, const order<i>& order) {
+    return detail::derivative_of_impl<1, i>(expression, std::get<0>(vars), bindings);
 }
 
 template<typename E, typename... B>

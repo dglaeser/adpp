@@ -51,6 +51,20 @@ int main(int argc, char** argv) {
         static_assert(5.0*3.0 == gradient[b]);
     };
 
+    "higher_order_derivatives"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        static constexpr let mu;
+        constexpr auto expr = a*a*a + b*b*2 + mu;
+        static_assert(3.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::first_order));
+        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::second_order));
+        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::third_order));
+
+        static_assert(8.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::first_order));
+        static_assert(4.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::second_order));
+        static_assert(0.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::third_order));
+    };
+
     "derivative_expression"_test = [] () {
         static constexpr var a;
         static constexpr var b;
@@ -70,7 +84,7 @@ int main(int argc, char** argv) {
         }
     };
 
-    "derivative_of_complex_expression"_test = [] () {
+    "derivative_expression_complex"_test = [] () {
         var a;
         var b;
         let mu;

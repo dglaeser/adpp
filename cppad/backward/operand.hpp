@@ -81,7 +81,7 @@ struct val : operand {
 
     template<typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
-        return std::make_pair(self.evaluate_at(bindings), derivatives{T{}, vars...});
+        return std::make_pair(self.evaluate_at(bindings), derivatives{std::remove_cvref_t<T>{}, vars...});
     }
 
     constexpr auto differentiate_wrt(auto&&) const {
