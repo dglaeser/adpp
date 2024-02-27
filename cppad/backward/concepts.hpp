@@ -25,8 +25,7 @@ concept into_operand = is_complete_v<traits::into_operand<std::remove_cvref_t<T>
 template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
-    typename T::value_type;
-    { t.unwrap() } -> std::convertible_to<typename T::value_type>;
+    { t.unwrap() };
 };
 
 template<into_operand T>
