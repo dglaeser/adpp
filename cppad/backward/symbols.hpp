@@ -57,7 +57,7 @@ struct symbol : operand {
     }
 
     template<typename Self, typename B>
-    constexpr decltype(auto) evaluate_at(this Self&& self, B&& bindings) noexcept {
+    constexpr decltype(auto) evaluate_at(this Self&& self, const B& bindings) noexcept {
         return bindings[self];
     }
 };

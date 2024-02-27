@@ -86,15 +86,15 @@ template<typename T>
 val(T&&) -> val<T>;
 
 template<typename O, typename E>
-class unary_operator {
+class unary_operator : public operand  {
  public:
     constexpr unary_operator(O&& op, E e) noexcept
     : _expression{std::forward<E>(e)}
     {}
 
     template<typename B>
-    constexpr decltype(auto) evaluate_at(B&& bindings) const noexcept {
-        return O{}(_expression.get().evaluate_at(std::forward<B>(bindings)));
+    constexpr decltype(auto) evaluate_at(const B& bindings) const noexcept {
+        return O{}(_expression.get().evaluate_at(bindings));
     }
 
     constexpr const auto& operand() const {
@@ -110,12 +110,20 @@ unary_operator(O&&, E&&) -> unary_operator<std::remove_cvref_t<O>, E>;
 
 
 template<typename O, typename A, typename B>
-class binary_operator {
+class binary_operator : public operand {
  public:
     constexpr binary_operator(O&&, A a, B b) noexcept
     : _a{std::forward<A>(a)}
     , _b{std::forward<B>(b)}
     {}
+
+    template<typename _B>
+    constexpr decltype(auto) evaluate_at(const _B& bindings) const noexcept {
+        return O{}(
+            _a.get().evaluate_at(bindings),
+            _b.get().evaluate_at(bindings)
+        );
+    }
 
     constexpr const auto& operand0() const { return _a.get(); }
     constexpr const auto& operand1() const { return _b.get(); }

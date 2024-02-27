@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <type_traits>
 
 #include <cppad/concepts.hpp>
@@ -56,7 +57,7 @@ struct bindings : variadic_accessor<B...> {
     using binder_type = binder_type_for<T, B...>::type;
 
     constexpr bindings(B... binders) noexcept
-    : base(binders...)
+    : base(std::forward<B>(binders)...)
     {}
 
     template<typename Self, typename T>
