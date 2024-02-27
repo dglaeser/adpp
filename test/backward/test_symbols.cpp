@@ -32,14 +32,20 @@ int main(int argc, char** argv) {
     "var_binder_owned_value"_test = [] () {
         var a;
         value_binder b = a.bind(1.0);
+        value_binder c = a = 1.0;
         static_assert(!holds_reference(b));
+        static_assert(!holds_reference(c));
+        static_assert(std::is_same_v<decltype(b), decltype(c)>);
     };
 
     "var_binder_referenced_value"_test = [] () {
         var a;
         double value = 1.0;
         value_binder b = a.bind(value);
+        value_binder c = a = value;
         static_assert(holds_reference(b));
+        static_assert(holds_reference(c));
+        static_assert(std::is_same_v<decltype(b), decltype(c)>);
     };
 
     return EXIT_SUCCESS;

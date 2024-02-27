@@ -42,11 +42,11 @@ struct var {
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
+
+    template<typename V>
+    constexpr auto operator=(V&& value) noexcept {
+        return bind(std::forward<V>(value));
+    }
 };
 
 }  // namespace cppad::backward
-
-namespace cppad {
-
-
-}  // namespace cppad
