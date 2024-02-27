@@ -66,7 +66,7 @@ template<typename T = dtype::any, auto = [] () {}>
 struct var : symbol<T> {
     using symbol<T>::operator=;
 
-    // for better compiler error messages
+    // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>
     constexpr var& operator=(const var<_T, __>&) = delete;
 };
@@ -75,7 +75,7 @@ template<typename T = dtype::any, auto = [] () {}>
 struct let : symbol<T> {
     using symbol<T>::operator=;
 
-    // for better compiler error messages
+    // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>
     constexpr let& operator=(const let<_T, __>&) = delete;
 };
