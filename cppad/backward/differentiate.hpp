@@ -39,4 +39,4 @@ inline constexpr auto wrt(V&&... vars) {
     return std::forward_as_tuple(vars...);
 }
 
-}  // namespace cppad
+}  // namespace cppad::backward

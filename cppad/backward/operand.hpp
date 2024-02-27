@@ -175,6 +175,15 @@ struct sub_expressions<binary_operator<O, A, B>> {
     }
 };
 
+template<typename T>
+    requires(std::derived_from<std::remove_cvref_t<T>, operand>)
+struct into_operand<T> {
+    template<typename _T> requires(concepts::same_decay_t_as<T, _T>)
+    static constexpr decltype(auto) get(_T&& t) noexcept {
+        return std::forward<_T>(t);
+    }
+};
+
 }  // namespace traits
 }  // namespace cppad::backward
 

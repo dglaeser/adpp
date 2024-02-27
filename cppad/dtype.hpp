@@ -14,9 +14,9 @@ template<typename T, typename Arg>
 struct accepts;
 
 template<typename Arg> struct accepts<any, Arg> : public std::true_type {};
-template<typename Arg> struct accepts<real, Arg> : public std::bool_constant<std::is_floating_point_v<Arg>> {};
-template<typename Arg> struct accepts<integral, Arg> : public std::bool_constant<std::is_integral_v<Arg>> {};
-template<concepts::arithmetic T, typename Arg> struct accepts<T, Arg> : public std::is_same<T, Arg> {};
+template<typename Arg> struct accepts<real, Arg> : public std::bool_constant<std::is_floating_point_v<std::remove_cvref_t<Arg>>> {};
+template<typename Arg> struct accepts<integral, Arg> : public std::bool_constant<std::is_integral_v<std::remove_cvref_t<Arg>>> {};
+template<concepts::arithmetic T, typename Arg> struct accepts<T, Arg> : public std::is_same<T, std::remove_cvref_t<Arg>> {};
 
 }  // namespace dtype
 
