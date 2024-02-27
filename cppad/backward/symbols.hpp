@@ -32,11 +32,11 @@ template<typename S, typename V>
     requires(std::is_lvalue_reference_v<S>)
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
-template<typename T = dtype::any, auto = [] () {}>
-struct var {
-    constexpr var() = default;
-    constexpr var(var&&) = default;
-    constexpr var(const var&) = delete;
+template<typename T>
+struct symbol {
+    constexpr symbol() = default;
+    constexpr symbol(symbol&&) = default;
+    constexpr symbol(const symbol&) = delete;
 
     template<typename Self, typename V>
         requires(concepts::accepts<T, V>)
@@ -44,15 +44,20 @@ struct var {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
 
-    template<typename V>
+    template<typename Self, typename V>
         requires(concepts::accepts<T, V>)
-    constexpr auto operator=(V&& value) const noexcept {
-        return bind(std::forward<V>(value));
+    constexpr auto operator=(this Self&& self, V&& value) noexcept {
+        return self.bind(std::forward<V>(value));
     }
+};
+
+template<typename T = dtype::any, auto = [] () {}>
+struct var : symbol<T> {
+    using symbol<T>::operator=;
 
     // for better compiler error messages
-    template<typename _T, auto _>
-    constexpr var& operator=(const var<_T, _>&) = delete;
+    template<typename _T, auto __>
+    constexpr var& operator=(const var<_T, __>&) = delete;
 };
 
 }  // namespace cppad::backward
