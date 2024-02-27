@@ -45,13 +45,23 @@ int main(int argc, char** argv) {
         static_assert(result == 2.0);
     };
 
-    "exp_evaluate"_test = [] () {
+    "exp_expression_evaluate"_test = [] () {
         var a;
         let b;
         auto exp_a = a.exp();
         auto exp_b = std::exp(b);
         expect(eq(evaluate(exp_a, at(a = 2.0)), std::exp(2.0)));
         expect(eq(evaluate(exp_b, at(b = 4.0)), std::exp(4.0)));
+    };
+
+    "composite_expression_evaluate"_test = [] () {
+        var a;
+        let b;
+        auto result = std::exp((a + b)*a);
+        expect(eq(
+            evaluate(result, at(a = 2.0, b = 4.0)),
+            std::exp((2.0 + 4.0)*2.0)
+        ));
     };
 
     return EXIT_SUCCESS;
