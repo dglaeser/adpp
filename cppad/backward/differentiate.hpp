@@ -27,6 +27,12 @@ inline constexpr auto derivatives_of(const E& expression, const std::tuple<V...>
     }, vars);
 }
 
+template<typename E, typename... V, typename... B>
+    requires(sizeof...(V) == 1 && detail::derivable_expression<E, bindings<B...>, V...>)
+inline constexpr auto derivative_of(const E& expression, const std::tuple<V...>& vars, const bindings<B...>& bindings) {
+    return derivatives_of(expression, vars, bindings)[std::get<0>(vars)];
+}
+
 template<typename... V>
     requires(std::conjunction_v<std::is_lvalue_reference<V>...>)
 inline constexpr auto wrt(V&&... vars) {

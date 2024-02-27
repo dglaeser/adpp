@@ -33,5 +33,12 @@ int main(int argc, char** argv) {
         expect(eq(derivs[b], std::exp((1.0 + 2.0)*2.0)*(2.0 + 3.0)));
     };
 
+    "derivative_wrt_single_var"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        constexpr auto expr = (a + b)*b;
+        static_assert(2.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0)));
+    };
+
     return EXIT_SUCCESS;
 }
