@@ -7,11 +7,33 @@
 #include <cppad/variadic_accessor.hpp>
 #include <cppad/backward/concepts.hpp>
 #include <cppad/backward/bindings.hpp>
+#include <cppad/backward/expression_tree.hpp>
 
 namespace cppad::backward {
 
 #ifndef DOXYGEN
 namespace detail {
+
+    template<typename T, typename... B>
+    struct bindings_contain {
+        static constexpr bool value = bindings<B...>::template contains_bindings_for<T>;
+    };
+
+    template<typename T, typename... B>
+    struct bindings_contain_all_leaves;
+
+    template<typename... T, typename... B>
+    struct bindings_contain_all_leaves<std::tuple<T...>, B...> {
+        static constexpr bool value = std::conjunction_v<bindings_contain<T, B...>...>;
+    };
+
+    template<typename E, typename... B>
+    concept bindings_for = traversable_expression<std::remove_cvref_t<E>> and bindings_contain_all_leaves<
+        std::remove_cvref_t<decltype(
+            leaf_symbols_of(std::declval<const E&>())
+        )>,
+        B...
+    >::value;
 
     template<typename T, typename... B>
     concept expression = requires(const T& t, B&&... b) {
@@ -22,6 +44,7 @@ namespace detail {
 #endif  // DOXYGEN
 
 template<typename E>
+    requires(detail::traversable_expression<E> or traits::is_leaf_expression<E>::value)
 struct expression {
  public:
     constexpr expression(E&& e) noexcept
@@ -63,7 +86,7 @@ struct sub_expressions<expression<E>> {
 }  // namespace traits
 
 template<typename E, typename... B>
-    requires(detail::expression<E, B...>)
+    requires(detail::bindings_for<E, B...> and detail::expression<E, B...>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
     return e.evaluate_at(b);
 }
