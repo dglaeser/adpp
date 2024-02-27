@@ -36,7 +36,7 @@ template<typename T = dtype::any, auto = [] () {}>
 struct var {
     constexpr var() = default;
     constexpr var(var&&) = default;
-    var(const var&) = delete;
+    constexpr var(const var&) = delete;
 
     template<typename Self, typename V>
         requires(concepts::accepts<T, V>)
