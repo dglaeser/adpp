@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include <cppad/common.hpp>
+#include <cppad/concepts.hpp>
 #include <cppad/variadic_accessor.hpp>
 
 namespace cppad::backward {
