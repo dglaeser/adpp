@@ -13,6 +13,7 @@ template<concepts::arithmetic R, typename... Ts>
 struct derivatives : variadic_accessor<const Ts&...> {
  private:
     using base = variadic_accessor<const Ts&...>;
+    static constexpr std::size_t N = sizeof...(Ts);
 
  public:
     using value_type = R;
@@ -33,18 +34,38 @@ struct derivatives : variadic_accessor<const Ts&...> {
         return std::forward<Self>(self);
     }
 
-    template<typename Self>
-    constexpr decltype(auto) operator+(this Self&& self, const derivatives& other) noexcept {
-        std::transform(
-            other._values.begin(), other._values.end(),
-            self._values.begin(), self._values.begin(),
-            std::plus{}
-        );
-        return std::forward<Self>(self);
+    template<typename Self, concepts::arithmetic T>
+    constexpr decltype(auto) operator+(this Self&& self, derivatives<T, Ts...>&& other) noexcept {
+        using result_type = std::common_type_t<R, T>;
+        if constexpr (std::is_same_v<result_type, R>) {
+            const auto& other_values = other.as_array();
+            std::transform(
+                other_values.begin(), other_values.end(),
+                self._values.begin(), self._values.begin(),
+                std::plus{}
+            );
+            return std::forward<Self>(self);
+        } else {
+            auto& other_values = other.as_array();
+            std::transform(
+                self._values.begin(), self._values.end(),
+                other_values.begin(), other_values.begin(),
+                std::plus{}
+            );
+            return std::move(other);
+        }
+    }
+
+    constexpr const auto& as_array() const {
+        return _values;
+    }
+
+    constexpr auto& as_array() {
+        return _values;
     }
 
  private:
-    std::array<value_type, sizeof...(Ts)> _values;
+    std::array<value_type, N> _values;
 };
 
 template<typename R, typename... Ts>
