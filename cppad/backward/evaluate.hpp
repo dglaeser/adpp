@@ -24,6 +24,9 @@ struct bindings : variadic_accessor<B...> {
     using base = variadic_accessor<B...>;
 
     template<typename T>
+    using symbol_type_of = typename std::remove_cvref_t<T>::symbol_type;
+
+    template<typename T>
     struct always_false : public std::false_type {};
 
     template<typename T, typename... Bs>
@@ -32,7 +35,7 @@ struct bindings : variadic_accessor<B...> {
     template<typename T, typename B0, typename... Bs>
     struct binder_type_for<T, B0, Bs...> {
         using type = std::conditional_t<
-            concepts::same_decay_t_as<T, typename std::remove_cvref_t<B0>::symbol_type>,
+            concepts::same_decay_t_as<T, symbol_type_of<B0>>,
             B0,
             typename binder_type_for<T, Bs...>::type
         >;
@@ -46,7 +49,7 @@ struct bindings : variadic_accessor<B...> {
  public:
     template<typename T>
     static constexpr bool contains_bindings_for = std::disjunction_v<
-        std::is_same<std::remove_cvref_t<T>, typename std::remove_cvref_t<B>::symbol_type>...
+        std::is_same<std::remove_cvref_t<T>, symbol_type_of<B>>...
     >;
 
     template<typename T> requires(sizeof...(B) > 0 and contains_bindings_for<T>)
