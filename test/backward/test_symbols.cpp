@@ -116,5 +116,12 @@ int main(int argc, char** argv) {
         static_assert(b.unwrap() == 42);
     };
 
+    "let_binder_constrained_on_scalar_type"_test = [] () {
+        constexpr let<int> a;
+        constexpr auto b = a = 42;
+        static_assert(!holds_reference(b));
+        static_assert(b.unwrap() == 42);
+    };
+
     return EXIT_SUCCESS;
 }
