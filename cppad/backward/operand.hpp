@@ -42,20 +42,20 @@ struct operand {
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator+(T t, E&& e) noexcept {
-    return as_operand(t).operator+(e);
+constexpr decltype(auto) operator+(T t, E&& expression) noexcept {
+    return as_operand(t).operator+(expression);
 }
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator-(T t, E&& e) noexcept {
-    return as_operand(t).operator-(e);
+constexpr decltype(auto) operator-(T t, E&& expression) noexcept {
+    return as_operand(t).operator-(expression);
 }
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator*(T t, E&& e) noexcept {
-    return as_operand(t).operator*(e);
+constexpr decltype(auto) operator*(T t, E&& expression) noexcept {
+    return as_operand(t).operator*(expression);
 }
 
 template<typename T>
@@ -119,3 +119,13 @@ template<concepts::ownable O, typename A, typename B>
 binary_operator(O&&, A&&, B&&) -> binary_operator<std::remove_cvref_t<O>, A, B>;
 
 }  // namespace cppad::backward
+
+namespace std {
+
+template<typename T>
+    requires(std::derived_from<std::remove_cvref_t<T>, cppad::backward::operand>)
+constexpr auto exp(T&& t) {
+    return std::forward<T>(t).exp();
+}
+
+}  // namespace std
