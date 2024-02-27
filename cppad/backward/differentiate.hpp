@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <cppad/backward/bindings.hpp>
+#include <cppad/backward/expression_tree.hpp>
 
 namespace cppad::backward {
 
@@ -31,6 +32,11 @@ template<typename E, typename... V, typename... B>
     requires(sizeof...(V) == 1 && detail::derivable_expression<E, bindings<B...>, V...>)
 inline constexpr auto derivative_of(const E& expression, const std::tuple<V...>& vars, const bindings<B...>& bindings) {
     return derivatives_of(expression, vars, bindings)[std::get<0>(vars)];
+}
+
+template<typename E, typename... B>
+inline constexpr auto grad(const E& expression, const bindings<B...>& bindings) {
+    return derivatives_of(expression, leaf_variables_of(expression), bindings);
 }
 
 template<typename... V>

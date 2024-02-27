@@ -40,5 +40,15 @@ int main(int argc, char** argv) {
         static_assert(2.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0)));
     };
 
+    "expression_gradient"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        static constexpr let mu;
+        constexpr auto expr = (a + b)*b*mu;
+        constexpr auto gradient = grad(expr, at(a = 1.0, b = 2.0, mu = 3.0));
+        static_assert(2.0*3.0 == gradient[a]);
+        static_assert(5.0*3.0 == gradient[b]);
+    };
+
     return EXIT_SUCCESS;
 }
