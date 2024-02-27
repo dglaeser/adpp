@@ -13,6 +13,9 @@ using boost::ut::eq;
 using cppad::backward::var;
 using cppad::backward::value_binder;
 
+using cppad::dtype::real;
+using cppad::dtype::integral;
+
 template<typename S, typename V>
 constexpr bool holds_reference(const value_binder<S, V>&) {
     return std::is_lvalue_reference_v<V>;
@@ -50,6 +53,20 @@ int main(int argc, char** argv) {
         static_assert(std::is_same_v<decltype(b), decltype(c)>);
         static_assert(b.unwrap() == 42.0);
         static_assert(c.unwrap() == 42.0);
+    };
+
+    "var_binder_constrained_on_real_numbers"_test = [] () {
+        constexpr var<real> a;
+        constexpr auto b = a = 22.0;
+        static_assert(!holds_reference(b));
+        static_assert(b.unwrap() == 22.0);
+    };
+
+    "var_binder_constrained_on_integer_numbers"_test = [] () {
+        constexpr var<integral> a;
+        constexpr auto b = a = 42;
+        static_assert(!holds_reference(b));
+        static_assert(b.unwrap() == 42);
     };
 
     return EXIT_SUCCESS;

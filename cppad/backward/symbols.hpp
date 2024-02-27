@@ -39,14 +39,20 @@ struct var {
     var(const var&) = delete;
 
     template<typename Self, typename V>
+        requires(concepts::accepts<T, V>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
 
     template<typename V>
+        requires(concepts::accepts<T, V>)
     constexpr auto operator=(V&& value) const noexcept {
         return bind(std::forward<V>(value));
     }
+
+    // for better compiler error messages
+    template<typename _T, auto _>
+    constexpr var& operator=(const var<_T, _>&) = delete;
 };
 
 }  // namespace cppad::backward
