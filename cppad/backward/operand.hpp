@@ -85,6 +85,13 @@ struct val : operand {
 template<typename T>
 val(T&&) -> val<T>;
 
+namespace traits {
+
+template<typename T>
+struct is_leaf_expression<val<T>> : public std::true_type {};
+
+}  // namespace traits
+
 template<typename O, typename E>
 class unary_operator : public operand  {
  public:
@@ -136,6 +143,23 @@ class binary_operator : public operand {
 template<concepts::ownable O, typename A, typename B>
 binary_operator(O&&, A&&, B&&) -> binary_operator<std::remove_cvref_t<O>, A, B>;
 
+namespace traits {
+
+template<typename O, typename E>
+struct sub_expressions<unary_operator<O, E>> {
+    static constexpr auto get(const unary_operator<O, E>& op) {
+        return std::forward_as_tuple(op.operand());
+    }
+};
+
+template<typename O, typename A, typename B>
+struct sub_expressions<binary_operator<O, A, B>> {
+    static constexpr auto get(const binary_operator<O, A, B>& op) {
+        return std::forward_as_tuple(op.operand0(), op.operand1());
+    }
+};
+
+}  // namespace traits
 }  // namespace cppad::backward
 
 namespace std {

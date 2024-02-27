@@ -82,6 +82,14 @@ struct let : symbol<T> {
 
 namespace traits {
 
+template<typename T, auto _> struct is_leaf_expression<var<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_symbol<var<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_var<var<T, _>> : public std::true_type {};
+
+template<typename T, auto _> struct is_leaf_expression<let<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_let<let<T, _>> : public std::true_type {};
+
 template<concepts::arithmetic T>
 struct into_operand<T> {
     template<concepts::same_decay_t_as<T> _T>
