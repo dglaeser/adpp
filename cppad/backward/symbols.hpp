@@ -76,6 +76,14 @@ struct var : symbol<T> {
         return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
     }
 
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&& self, V&& var) {
+        if constexpr (concepts::same_decay_t_as<Self, V>)
+            return val<int>{1};
+        else
+            return val<int>{0};
+    }
+
     // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>
     constexpr var& operator=(const var<_T, __>&) = delete;
@@ -89,6 +97,10 @@ struct let : symbol<T> {
     constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
         using value_type = std::remove_cvref_t<decltype(bindings[self])>;
         return std::make_pair(self.evaluate_at(bindings), derivatives{value_type{}, vars...});
+    }
+
+    constexpr auto differentiate_wrt(auto&&) const {
+        return val<int>{0};
     }
 
     // for better compiler error messages about symbols being unique (not copyable)

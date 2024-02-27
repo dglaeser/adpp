@@ -3,6 +3,7 @@
 #include <boost/ut.hpp>
 
 #include <cppad/backward/symbols.hpp>
+#include <cppad/backward/evaluate.hpp>
 #include <cppad/backward/differentiate.hpp>
 
 using boost::ut::operator""_test;
@@ -48,6 +49,53 @@ int main(int argc, char** argv) {
         constexpr auto gradient = grad(expr, at(a = 1.0, b = 2.0, mu = 3.0));
         static_assert(2.0*3.0 == gradient[a]);
         static_assert(5.0*3.0 == gradient[b]);
+    };
+
+    "derivative_expression"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        static constexpr let mu;
+        static constexpr auto expr = (a + b)*b*mu;
+        {
+            constexpr auto derivative = differentiate(expr, wrt(a));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 6.0);
+        }
+        {
+            constexpr auto derivative = differentiate(expr, wrt(b));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 6.0 + 9.0);
+        }
+        {
+            constexpr auto derivative = differentiate(expr, wrt(mu));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 0.0);
+        }
+    };
+
+    "derivative_of_complex_expression"_test = [] () {
+        var a;
+        var b;
+        let mu;
+        auto expr = std::exp((a + b)*b)*mu;
+        {
+            auto derivative = differentiate(expr, wrt(a));
+            expect(eq(
+                evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
+                std::exp((1.0 + 2.0)*2.0)*3.0*2.0
+            ));
+        }
+        {
+            auto derivative = differentiate(expr, wrt(b));
+            expect(eq(
+                evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
+                std::exp((1.0 + 2.0)*2.0)*3.0*(1.0 + 2.0 + 2.0)
+            ));
+        }
+        {
+            auto derivative = differentiate(expr, wrt(mu));
+            expect(eq(
+                evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
+                0.0
+            ));
+        }
     };
 
     return EXIT_SUCCESS;

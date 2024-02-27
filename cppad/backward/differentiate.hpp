@@ -45,4 +45,9 @@ inline constexpr auto wrt(V&&... vars) {
     return std::forward_as_tuple(vars...);
 }
 
+template<typename E, typename V>
+inline constexpr auto differentiate(const E& expression, const std::tuple<V>& var) {
+    return expression.differentiate_wrt(std::get<0>(var));
+}
+
 }  // namespace cppad::backward

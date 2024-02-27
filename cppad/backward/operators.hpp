@@ -27,9 +27,9 @@ struct exp {
 template<>
 struct differentiator<std::plus<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var) + b.differentiate_wrt(var);
     }
@@ -76,9 +76,9 @@ struct formatter<std::plus<void>> {
 template<>
 struct differentiator<std::minus<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var) - b.differentiate_wrt(var);
     }
@@ -125,9 +125,9 @@ struct formatter<std::minus<void>> {
 template<>
 struct differentiator<std::multiplies<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var)*b + a*b.differentiate_wrt(var);
     }
@@ -190,8 +190,8 @@ struct differentiator<cppad::backward::operators::exp> {
     static constexpr auto exp_op = cppad::backward::operators::exp{};
 
     static constexpr auto differentiate(
-        const concepts::expression auto& e,
-        const concepts::expression auto& var
+        const auto& e,
+        const auto& var
     ) {
         return e.exp()*e.differentiate_wrt(var);
     }

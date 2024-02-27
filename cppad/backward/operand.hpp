@@ -84,6 +84,10 @@ struct val : operand {
         return std::make_pair(self.evaluate_at(bindings), derivatives{T{}, vars...});
     }
 
+    constexpr auto differentiate_wrt(auto&&) const {
+        return val<T>{0};
+    }
+
  private:
     storage<T> _value;
 };
@@ -113,6 +117,11 @@ class unary_operator : public operand  {
     template<typename B, typename... V>
     constexpr auto back_propagate(const B& bindings, const V&... vars) const {
         return differentiator<O>::back_propagate(bindings, _expression.get(), vars...);
+    }
+
+    template<typename V>
+    constexpr auto differentiate_wrt(V&& var) const {
+        return differentiator<O>::differentiate(_expression.get(), std::forward<V>(var));
     }
 
     constexpr const auto& operand() const {
@@ -146,6 +155,11 @@ class binary_operator : public operand {
     template<typename _B, typename... V>
     constexpr auto back_propagate(const _B& bindings, const V&... vars) const {
         return differentiator<O>::back_propagate(bindings, _a.get(), _b.get(), vars...);
+    }
+
+    template<typename V>
+    constexpr auto differentiate_wrt(V&& var) const {
+        return differentiator<O>::differentiate(_a.get(), _b.get(), std::forward<V>(var));
     }
 
     constexpr const auto& operand0() const { return _a.get(); }
