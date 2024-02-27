@@ -60,4 +60,13 @@ struct var : symbol<T> {
     constexpr var& operator=(const var<_T, __>&) = delete;
 };
 
+template<typename T = dtype::any, auto = [] () {}>
+struct let : symbol<T> {
+    using symbol<T>::operator=;
+
+    // for better compiler error messages
+    template<typename _T, auto __>
+    constexpr let& operator=(const let<_T, __>&) = delete;
+};
+
 }  // namespace cppad::backward
