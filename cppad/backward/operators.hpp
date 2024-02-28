@@ -10,9 +10,9 @@
 #include <cppad/backward/concepts.hpp>
 #include <cppad/backward/bindings.hpp>
 
-namespace cppad {
+namespace cppad::backward {
 
-namespace backward::operators {
+namespace operators {
 
 struct exp {
     template<concepts::arithmetic T>
@@ -22,10 +22,10 @@ struct exp {
     }
 };
 
-}  // namespace backward::operators
+}  // namespace operators
 
+namespace traits {
 
-// TODO: put in backward namespace?
 template<>
 struct differentiator<std::plus<void>> {
     static constexpr auto differentiate(
@@ -179,4 +179,5 @@ struct formatter<cppad::backward::operators::exp> {
     }
 };
 
-}  // namespace cppad
+}  // namespace traits
+}  // namespace cppad::backward

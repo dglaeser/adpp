@@ -9,12 +9,13 @@ namespace traits {
 
 template<typename T> struct into_operand;
 template<typename T> struct sub_expressions;
+template<typename T> struct differentiator;
+template<typename T> struct formatter;
 template<typename T> struct is_leaf_expression : public std::false_type {};
 template<typename T> struct is_value_binder : public std::false_type {};
 template<typename T> struct is_symbol : public std::false_type {};
 template<typename T> struct is_var : public std::false_type {};
 template<typename T> struct is_let : public std::false_type {};
-
 }  // namespace traits
 
 template<typename T>
