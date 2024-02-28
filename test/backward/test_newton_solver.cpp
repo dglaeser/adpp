@@ -3,8 +3,9 @@
 #include <iostream>
 #include <boost/ut.hpp>
 
-#include <cppad/backward/var.hpp>
-#include <cppad/backward/let.hpp>
+#include <cppad/backward/symbols.hpp>
+#include <cppad/backward/evaluate.hpp>
+#include <cppad/backward/differentiate.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -15,18 +16,19 @@ using cppad::backward::let;
 using cppad::backward::expression;
 
 constexpr double newton_solve() {
-    var x = 10.0;
+    var x;
     expression f = x*x*2.0 - 4.0;
 
     int it = 0;
-    auto value = f.value();
-    while (value > 1e-6 && it < 100) {
-        x -= value/derivative_of(f, wrt(x));
-        value = f.value();
+    double solution = 10.0;
+    double residual = evaluate(f, at(x = solution));
+    while (residual > 1e-6 && it < 100) {
+        solution -= residual/derivative_of(f, wrt(x), at(x = solution));
+        residual = evaluate(f, at(x = solution));
         ++it;
     }
 
-    return value;
+    return residual;
 }
 
 int main() {
@@ -40,4 +42,3 @@ int main() {
 
     return EXIT_SUCCESS;
 }
-

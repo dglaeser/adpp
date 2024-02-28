@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <ostream>
 #include <type_traits>
 
 #include <cppad/concepts.hpp>
@@ -54,6 +55,21 @@ struct expression {
     template<typename B>
     constexpr decltype(auto) evaluate_at(const B& bindings) const {
         return _e.evaluate_at(bindings);
+    }
+
+    template<typename... Args>
+    constexpr decltype(auto) back_propagate(Args&&... args) const {
+        return _e.back_propagate(std::forward<Args>(args)...);
+    }
+
+    template<typename V>
+    constexpr decltype(auto) differentiate_wrt(const V& var) const {
+        return _e.differentiate_wrt(var);
+    }
+
+    template<typename... Args>
+    constexpr std::ostream& stream(std::ostream& s, Args&&... args) const {
+        return _e.stream(s, std::forward<Args>(args)...);
     }
 
     operator const E&() const {

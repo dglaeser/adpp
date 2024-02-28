@@ -86,7 +86,7 @@ struct val : operand {
     }
 
     constexpr auto differentiate_wrt(auto&&) const {
-        return val<T>{0};
+        return val<T>{T{0}};
     }
 
     template<typename... V>

@@ -34,17 +34,6 @@ struct differentiator<std::plus<void>> {
         return a.differentiate_wrt(var) + b.differentiate_wrt(var);
     }
 
-    static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
-        auto result = value_a + value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
-    }
-
     template<typename... V>
     static constexpr auto back_propagate(
         const backward::bindings<V...>& bindings,
@@ -83,17 +72,6 @@ struct differentiator<std::minus<void>> {
         return a.differentiate_wrt(var) - b.differentiate_wrt(var);
     }
 
-    static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
-        auto result = value_a - value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
-    }
-
     template<typename... V>
     static constexpr auto back_propagate(
         const backward::bindings<V...>& bindings,
@@ -130,20 +108,6 @@ struct differentiator<std::multiplies<void>> {
         const auto& var
     ) {
         return a.differentiate_wrt(var)*b + a*b.differentiate_wrt(var);
-    }
-
-    static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
-        auto result = value_a*value_b;
-        return std::make_pair(
-            result,
-            std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a)
-        );
     }
 
     template<typename... V>
@@ -194,15 +158,6 @@ struct differentiator<cppad::backward::operators::exp> {
         const auto& var
     ) {
         return e.exp()*e.differentiate_wrt(var);
-    }
-
-    static constexpr auto back_propagate(
-        const concepts::expression auto& e,
-        const concepts::expression auto&... vars
-    ) {
-        auto [value, derivs] = e.back_propagate(vars...);
-        auto result = exp_op(value);
-        return std::make_pair(result, std::move(derivs).scaled_with(result));
     }
 
     template<typename... V>
