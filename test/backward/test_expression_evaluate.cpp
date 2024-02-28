@@ -65,6 +65,16 @@ int main(int argc, char** argv) {
         ));
     };
 
+    "composite_expression_evaluate_via_operator()"_test = [] () {
+        var a;
+        let b;
+        expression result = std::exp((a + b)*a);
+        expect(eq(
+            result(a = 2.0, b = 4.0),
+            std::exp((2.0 + 4.0)*2.0)
+        ));
+    };
+
     "composite_expression_evaluate_additional_vars"_test = [] () {
         var a;
         let b;

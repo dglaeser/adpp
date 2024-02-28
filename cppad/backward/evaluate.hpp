@@ -52,6 +52,11 @@ struct expression {
     : _e{std::move(e)}
     {}
 
+    template<typename... B>
+    constexpr decltype(auto) operator()(B&&... bindings) const {
+        return evaluate_at(at(std::forward<B>(bindings)...));
+    }
+
     template<typename B>
     constexpr decltype(auto) evaluate_at(const B& bindings) const {
         return _e.evaluate_at(bindings);
