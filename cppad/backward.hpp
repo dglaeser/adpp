@@ -1,7 +1,6 @@
 #pragma once
 
-#include <cppad/backward/var.hpp>
-#include <cppad/backward/let.hpp>
-#include <cppad/backward/expression.hpp>
-#include <cppad/backward/derivatives.hpp>
-#include <cppad/backward/format.hpp>
+#include <cppad/backward/symbols.hpp>
+#include <cppad/backward/evaluate.hpp>
+#include <cppad/backward/differentiate.hpp>
+#include <cppad/backward/stream.hpp>

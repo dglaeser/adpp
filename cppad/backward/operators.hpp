@@ -7,7 +7,7 @@
 
 #include <cppad/type_traits.hpp>
 #include <cppad/concepts.hpp>
-#include <cppad/backward/derivatives.hpp>
+#include <cppad/backward/bindings.hpp>
 
 namespace cppad {
 
@@ -21,26 +21,28 @@ struct exp {
     }
 };
 
-}  // namespace operators
+}  // namespace backward::operators
 
 
 template<>
 struct differentiator<std::plus<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var) + b.differentiate_wrt(var);
     }
 
+    template<typename... V>
     static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
         auto result = value_a + value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
     }
@@ -50,8 +52,8 @@ template<>
 struct formatter<std::plus<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         a.stream(out, name_map);
@@ -63,20 +65,22 @@ struct formatter<std::plus<void>> {
 template<>
 struct differentiator<std::minus<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var) - b.differentiate_wrt(var);
     }
 
+    template<typename... V>
     static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
         auto result = value_a - value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
@@ -86,8 +90,8 @@ template<>
 struct formatter<std::minus<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         a.stream(out, name_map);
@@ -99,20 +103,22 @@ struct formatter<std::minus<void>> {
 template<>
 struct differentiator<std::multiplies<void>> {
     static constexpr auto differentiate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto& var
+        const auto& a,
+        const auto& b,
+        const auto& var
     ) {
         return a.differentiate_wrt(var)*b + a*b.differentiate_wrt(var);
     }
 
+    template<typename... V>
     static constexpr auto back_propagate(
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
-        const concepts::expression auto&... vars
+        const backward::bindings<V...>& bindings,
+        const auto& a,
+        const auto& b,
+        const auto&... vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(vars...);
-        auto [value_b, derivs_b] = b.back_propagate(vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
         auto result = value_a*value_b;
         return std::make_pair(
             result,
@@ -125,8 +131,8 @@ template<>
 struct formatter<std::multiplies<void>> {
     static constexpr void format(
         std::ostream& out,
-        const concepts::expression auto& a,
-        const concepts::expression auto& b,
+        const auto& a,
+        const auto& b,
         const auto& name_map
     ) {
         constexpr bool use_braces_around_a = !is_leaf_expression<decltype(a)>;
@@ -148,17 +154,19 @@ struct differentiator<cppad::backward::operators::exp> {
     static constexpr auto exp_op = cppad::backward::operators::exp{};
 
     static constexpr auto differentiate(
-        const concepts::expression auto& e,
-        const concepts::expression auto& var
+        const auto& e,
+        const auto& var
     ) {
         return e.exp()*e.differentiate_wrt(var);
     }
 
+    template<typename... V>
     static constexpr auto back_propagate(
-        const concepts::expression auto& e,
-        const concepts::expression auto&... vars
+        const backward::bindings<V...>& bindings,
+        const auto& e,
+        const auto&... vars
     ) {
-        auto [value, derivs] = e.back_propagate(vars...);
+        auto [value, derivs] = e.back_propagate(bindings, vars...);
         auto result = exp_op(value);
         return std::make_pair(result, std::move(derivs).scaled_with(result));
     }
@@ -166,7 +174,7 @@ struct differentiator<cppad::backward::operators::exp> {
 
 template<>
 struct formatter<cppad::backward::operators::exp> {
-    static constexpr void format(std::ostream& out, const concepts::expression auto& a, const auto& name_map) {
+    static constexpr void format(std::ostream& out, const auto& a, const auto& name_map) {
         out << "exp(";
         a.stream(out, name_map);
         out << ")";

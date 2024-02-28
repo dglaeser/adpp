@@ -1,7 +1,6 @@
+#include <stdexcept>
 #include <iostream>
 #include <utility>
-
-#include <cppad/backward/var.hpp>
 
 #define ADD_2(x) x + x
 #define ADD_4(x) ADD_2(x) + ADD_2(x)
@@ -16,38 +15,65 @@
 #if USE_AUTODIFF
 #include <autodiff/reverse/var.hpp>
 
-autodiff::var make_var(auto&& v) { return std::move(v); }
-autodiff::var result_of(auto&& expression) { return std::move(expression); }
-double as_double(const auto& expression) { return double(expression); }
+autodiff::var make_var(auto&& v) {
+    return {std::move(v)};
+}
 
-template<typename E, typename X>
-double derivative_of(E&& expression, X&& x) {
-    auto [de_dx] = derivatives(std::forward<E>(expression), wrt(std::forward<X>(x)));
+autodiff::var as_expr(auto&& expression) {
+    return {std::move(expression)};
+}
+
+double result_of(const auto& expression, const auto&...) {
+    return double(expression);
+}
+
+template<typename E>
+double derivative(E&& expression, const auto& x, const auto& y, double xv, double yv) {
+    auto [de_dx] = derivatives(std::forward<E>(expression), wrt(x));
     return de_dx;
 }
 #else
-auto make_var(auto&& v) { return cppad::backward::var(std::move(v)); }
-auto result_of(auto&& expression) { return std::move(expression); }
-double as_double(const auto& expression) { return expression.value(); }
+#include <cppad/backward/symbols.hpp>
+#include <cppad/backward/evaluate.hpp>
+#include <cppad/backward/differentiate.hpp>
 
-template<typename E, typename X>
-double derivative_of(E&& expression, X&& x) {
-    return cppad::backward::derivative_of(expression, wrt(x));
+template<auto _ = [] () {}>
+auto make_var(auto&&) {
+    return cppad::backward::var<double, _>{};
+}
+
+auto as_expr(auto&& expression) {
+    return std::move(expression);
+}
+
+double result_of(const auto& expression, const auto& x, const auto& y, double xv, double yv) {
+    return cppad::backward::evaluate(expression, at(x = xv, y = yv));
+}
+
+template<typename E>
+double derivative(E&& expression, const auto& x, const auto& y, double xv, double yv) {
+    return derivative_of(expression, wrt(x), at(x = xv, y = yv));
 }
 #endif
 
 int main(int argc, char** argv) {
-    auto x = make_var(2.0);
-    auto y = make_var(4.0);
+    if (argc < 3)
+        throw std::runtime_error("Expected two input arguments (x, y)");
+
+    double xv = std::atof(argv[1]);
+    double yv = std::atof(argv[1]);
+    auto x = make_var(xv);
+    auto y = make_var(yv);
 
     constexpr std::size_t N = 10000;
     std::array<double, N> values;
     std::array<double, N> derivs;
     for (unsigned int i = 0; i < N; ++i) {
-        auto r = result_of(GENERATE_EXPRESSION(x, y));
-        auto dr_dx = derivative_of(r, x);
+        auto expression = as_expr(GENERATE_EXPRESSION(x, y));
+        auto r = result_of(expression, x, y, xv, yv);
+        auto dr_dx = derivative(expression, x, y, xv, yv);
 
-        values[i] = as_double(r);
+        values[i] = r;
         derivs[i] = dr_dx;
     }
 
