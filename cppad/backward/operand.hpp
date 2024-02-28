@@ -82,10 +82,13 @@ struct val : operand {
 
     template<typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
+        static_assert(!contains_decay_v<Self, V...>, "Derivative w.r.t. constant value requested");
         return std::make_pair(self.evaluate_at(bindings), derivatives{std::remove_cvref_t<T>{}, vars...});
     }
 
-    constexpr auto differentiate_wrt(auto&&) const {
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&& self, V&&) {
+        static_assert(!concepts::same_decay_t_as<Self, V>, "Derivative w.r.t. constant value requested");
         return val<T>{T{0}};
     }
 
