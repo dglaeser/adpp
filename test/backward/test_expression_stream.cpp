@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
         expect(eq(std::string{s.str()}, std::string{"(exp(a + b))*(c) + (b)*(a + b)"}));
     };
 
-    // this is still wrong!
+    // TODO: fix expression simplification issue
     // "expression_derivative_stream"_test = [] () {
     //     let a;
     //     let b;

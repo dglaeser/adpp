@@ -62,17 +62,6 @@ struct symbol : operand {
         return bindings[self];
     }
 
-    template<typename Self, typename... V>
-    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
-        out << name_bindings[self];
-        return out;
-    }
-};
-
-template<typename T = dtype::any, auto = [] () {}>
-struct var : symbol<T> {
-    using symbol<T>::operator=;
-
     template<typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
         using value_type = std::remove_cvref_t<decltype(bindings[self])>;
@@ -90,6 +79,17 @@ struct var : symbol<T> {
             return val<int>{0};
     }
 
+    template<typename Self, typename... V>
+    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
+        out << name_bindings[self];
+        return out;
+    }
+};
+
+template<typename T = dtype::any, auto = [] () {}>
+struct var : symbol<T> {
+    using symbol<T>::operator=;
+
     // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>
     constexpr var& operator=(const var<_T, __>&) = delete;
@@ -98,16 +98,6 @@ struct var : symbol<T> {
 template<typename T = dtype::any, auto = [] () {}>
 struct let : symbol<T> {
     using symbol<T>::operator=;
-
-    template<typename Self, typename B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
-        using value_type = std::remove_cvref_t<decltype(bindings[self])>;
-        return std::make_pair(self.evaluate_at(bindings), derivatives{value_type{}, vars...});
-    }
-
-    constexpr auto differentiate_wrt(auto&&) const {
-        return val<int>{0};
-    }
 
     // for better compiler error messages about symbols being unique (not copyable)
     template<typename _T, auto __>

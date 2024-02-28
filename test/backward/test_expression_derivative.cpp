@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         }
         {
             constexpr auto derivative = differentiate(expr, wrt(mu));
-            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 0.0);
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 6.0);
         }
     };
 
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
             auto derivative = differentiate(expr, wrt(mu));
             expect(eq(
                 evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
-                0.0
+                std::exp((1.0 + 2.0)*2.0)
             ));
         }
     };
