@@ -72,9 +72,6 @@ template<typename T>
 inline constexpr bool is_variable_v = is_variable<std::remove_cvref_t<T>>::value;
 
 template<typename T>
-inline constexpr bool is_leaf_expression = is_constant_v<T> or is_variable_v<T>;
-
-template<typename T>
 struct expression_value;
 template<typename T>
 using expression_value_t = expression_value<std::remove_cvref_t<T>>::type;
@@ -104,10 +101,6 @@ inline constexpr decltype(auto) format(T&& t) noexcept {
 
 template<typename T>
 struct differentiator;
-
-
-template<typename T>
-struct sub_expressions;
 
 
 template<typename T>

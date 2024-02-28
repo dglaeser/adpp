@@ -44,20 +44,20 @@ struct operand {
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator+(T t, E&& expression) noexcept {
-    return as_operand(t).operator+(expression);
+constexpr decltype(auto) operator+(T&& t, E&& expression) noexcept {
+    return as_operand(std::forward<T>(t)).operator+(expression);
 }
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator-(T t, E&& expression) noexcept {
-    return as_operand(t).operator-(expression);
+constexpr decltype(auto) operator-(T&& t, E&& expression) noexcept {
+    return as_operand(std::forward<T>(t)).operator-(expression);
 }
 
 template<concepts::arithmetic T, typename E>
     requires(std::derived_from<std::remove_cvref_t<E>, operand>)
-constexpr decltype(auto) operator*(T t, E&& expression) noexcept {
-    return as_operand(t).operator*(expression);
+constexpr decltype(auto) operator*(T&& t, E&& expression) noexcept {
+    return as_operand(std::forward<T>(t)).operator*(expression);
 }
 
 template<typename T>

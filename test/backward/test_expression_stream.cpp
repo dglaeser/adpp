@@ -30,10 +30,20 @@ int main(int argc, char** argv) {
         auto expr = std::exp(a + b)*c + b*(a + b);
         std::ostringstream s;
         stream(s, expr, with(a = "a", b = "b", c = "c"));
-        expect(eq(std::string{s.str()}, std::string{"(exp(a + b))*(c) + (b)*(a + b)"}));
+        expect(eq(std::string{s.str()}, std::string{"exp(a + b)*c + b*(a + b)"}));
     };
 
-    // TODO: fix expression simplification issue
+    "expression_no_braces_stream"_test = [] () {
+        let a;
+        let b;
+        let c;
+        auto expr = a + b + c;
+        std::ostringstream s;
+        stream(s, expr, with(a = "a", b = "b", c = "c"));
+        expect(eq(std::string{s.str()}, std::string{"a + b + c"}));
+    };
+
+    // TODO(?): this would require simplifications of expressions
     // "expression_derivative_stream"_test = [] () {
     //     let a;
     //     let b;

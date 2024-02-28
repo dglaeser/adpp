@@ -5,8 +5,9 @@
 #include <functional>
 #include <ostream>
 
-#include <cppad/type_traits.hpp>
 #include <cppad/concepts.hpp>
+#include <cppad/type_traits.hpp>
+#include <cppad/backward/concepts.hpp>
 #include <cppad/backward/bindings.hpp>
 
 namespace cppad {
@@ -24,6 +25,7 @@ struct exp {
 }  // namespace backward::operators
 
 
+// TODO: put in backward namespace?
 template<>
 struct differentiator<std::plus<void>> {
     static constexpr auto differentiate(
@@ -129,20 +131,16 @@ struct differentiator<std::multiplies<void>> {
 
 template<>
 struct formatter<std::multiplies<void>> {
-    static constexpr void format(
-        std::ostream& out,
-        const auto& a,
-        const auto& b,
-        const auto& name_map
-    ) {
-        constexpr bool use_braces_around_a = !is_leaf_expression<decltype(a)>;
+    template<typename A, typename B>
+    static constexpr void format(std::ostream& out, const A& a, const B& b, const auto& name_map) {
+        constexpr bool use_braces_around_a = backward::sub_expressions_size_v<A> > 1;
         if constexpr (use_braces_around_a) out << "(";
         a.stream(out, name_map);
         if constexpr (use_braces_around_a) out << ")";
 
         out << "*";
 
-        constexpr bool use_braces_around_b = !is_leaf_expression<decltype(b)>;
+        constexpr bool use_braces_around_b = backward::sub_expressions_size_v<B> > 1;
         if constexpr (use_braces_around_b) out << "(";
         b.stream(out, name_map);
         if constexpr (use_braces_around_b) out << ")";

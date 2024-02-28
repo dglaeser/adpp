@@ -18,7 +18,7 @@ namespace detail {
     concept tuple_like = is_tuple<std::remove_cvref_t<T>>::value;
 
     template<typename T>
-    concept traversable_expression = traits::is_leaf_expression<T>::value or (
+    concept traversable_expression = is_leaf_expression_v<T> or (
         is_complete_v<traits::sub_expressions<T>> and requires(const T& t) {
             { traits::sub_expressions<T>::get(t) } -> detail::tuple_like;
         }
@@ -27,7 +27,7 @@ namespace detail {
     template<typename Filter, typename F, traversable_expression E, typename... L>
         requires(std::conjunction_v<traits::is_leaf_expression<L>...>)
     inline constexpr auto visit_expression(const F& sub_expr_callback, std::tuple<const L&...>&& leaves, const E& e) {
-        if constexpr (traits::is_leaf_expression<E>::value) {
+        if constexpr (is_leaf_expression_v<E>) {
             if constexpr (!traits::is_symbol<E>::value || contains_decay_v<E, L...> || !Filter::template include<E>)
                 return std::move(leaves);
             else
