@@ -84,6 +84,26 @@ int main(int argc, char** argv) {
         }
     };
 
+    "derivative_expression_disappearing_variable"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        static constexpr let mu;
+        static constexpr auto expr = 2*a + b*mu;
+        // we still have to provide all variables
+        {
+            constexpr auto derivative = differentiate(expr, wrt(a));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 2.0);
+        }
+        {
+            constexpr auto derivative = differentiate(expr, wrt(b));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 3.0);
+        }
+        {
+            constexpr auto derivative = differentiate(expr, wrt(mu));
+            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 2.0);
+        }
+    };
+
     "derivative_expression_complex"_test = [] () {
         var a;
         var b;
