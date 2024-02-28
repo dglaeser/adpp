@@ -33,6 +33,9 @@ inline constexpr decltype(auto) as_operand(T&& t) noexcept {
     return traits::into_operand<std::remove_cvref_t<T>>::get(std::forward<T>(t));
 }
 
+template<typename T>
+inline constexpr bool is_leaf_expression_v = traits::is_leaf_expression<std::remove_cvref_t<T>>::value;
+
 namespace traits {
 
 template<binder T> struct is_value_binder<T> : public std::true_type {};
