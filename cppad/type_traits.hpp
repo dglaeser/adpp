@@ -104,10 +104,6 @@ struct differentiator;
 
 
 template<typename T>
-struct sub_expressions;
-
-
-template<typename T>
 struct is_pair : public std::false_type {};
 template<typename A, typename B>
 struct is_pair<std::pair<A, B>> : public std::true_type {};

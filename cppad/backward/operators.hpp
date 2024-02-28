@@ -25,6 +25,7 @@ struct exp {
 }  // namespace backward::operators
 
 
+// TODO: put in backward namespace?
 template<>
 struct differentiator<std::plus<void>> {
     static constexpr auto differentiate(
@@ -132,15 +133,14 @@ template<>
 struct formatter<std::multiplies<void>> {
     template<typename A, typename B>
     static constexpr void format(std::ostream& out, const A& a, const B& b, const auto& name_map) {
-        constexpr bool use_braces_around_a = !backward::is_leaf_expression_v<A>;
+        constexpr bool use_braces_around_a = backward::sub_expressions_size_v<A> > 1;
         if constexpr (use_braces_around_a) out << "(";
         a.stream(out, name_map);
         if constexpr (use_braces_around_a) out << ")";
 
         out << "*";
 
-        constexpr bool use_braces_around_b = !backward::is_leaf_expression_v<B>;
-
+        constexpr bool use_braces_around_b = backward::sub_expressions_size_v<B> > 1;
         if constexpr (use_braces_around_b) out << "(";
         b.stream(out, name_map);
         if constexpr (use_braces_around_b) out << ")";
