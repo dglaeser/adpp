@@ -53,7 +53,4 @@ struct is_complete : public std::bool_constant<!decltype(detail::is_incomplete(s
 template<typename T>
 inline constexpr bool is_complete_v = is_complete<T>::value;
 
-template<typename T> struct formatter;
-template<typename T> struct differentiator;
-
 }  // namespace cppad
