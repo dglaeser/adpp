@@ -53,61 +53,7 @@ struct is_complete : public std::bool_constant<!decltype(detail::is_incomplete(s
 template<typename T>
 inline constexpr bool is_complete_v = is_complete<T>::value;
 
-
-template<typename T>
-struct is_constant : public std::false_type {};
-template<typename T>
-inline constexpr bool is_constant_v = is_constant<std::remove_cvref_t<T>>::value;
-
-
-template<typename T>
-struct is_named_expression : public std::false_type {};
-template<typename T>
-inline constexpr bool is_named_expression_v = is_named_expression<std::remove_cvref_t<T>>::value;
-
-
-template<typename T>
-struct is_variable : public std::false_type {};
-template<typename T>
-inline constexpr bool is_variable_v = is_variable<std::remove_cvref_t<T>>::value;
-
-template<typename T>
-struct expression_value;
-template<typename T>
-using expression_value_t = expression_value<std::remove_cvref_t<T>>::type;
-
-
-template<typename T>
-struct as_expression;
-template<typename T>
-inline constexpr decltype(auto) to_expression(T&& t) noexcept {
-    return as_expression<std::remove_cvref_t<T>>::get(std::forward<T>(t));
-}
-
-
-template<typename T>
-struct undefined_value;
-template<typename T>
-inline constexpr auto undefined_value_v = undefined_value<T>::value;
-
-
-template<typename T>
-struct formatter;
-template<typename T>
-inline constexpr decltype(auto) format(T&& t) noexcept {
-    return formatter<std::remove_cvref_t<T>>(std::forward<T>(t));
-}
-
-
-template<typename T>
-struct differentiator;
-
-
-template<typename T>
-struct is_pair : public std::false_type {};
-template<typename A, typename B>
-struct is_pair<std::pair<A, B>> : public std::true_type {};
-template<typename T>
-inline constexpr bool is_pair_v = is_pair<T>::value;
+template<typename T> struct formatter;
+template<typename T> struct differentiator;
 
 }  // namespace cppad
