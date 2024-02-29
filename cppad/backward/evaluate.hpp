@@ -46,9 +46,9 @@ namespace detail {
 
 template<typename E>
     requires(detail::traversable_expression<E> or traits::is_leaf_expression<E>::value)
-struct expression {
+struct function {
  public:
-    constexpr expression(E&& e) noexcept
+    constexpr function(E&& e) noexcept
     : _e{std::move(e)}
     {}
 
@@ -91,18 +91,18 @@ struct expression {
 };
 
 template<typename E>
-expression(E&&) -> expression<std::remove_cvref_t<E>>;
+function(E&&) -> function<std::remove_cvref_t<E>>;
 
 namespace traits {
 
 template<typename E>
-struct is_leaf_expression<expression<E>>
+struct is_leaf_expression<function<E>>
 : public is_leaf_expression<std::remove_cvref_t<E>> {};
 
 template<typename E>
     requires(!traits::is_leaf_expression<E>::value)
-struct sub_expressions<expression<E>> {
-    static constexpr decltype(auto) get(const expression<E>& e) {
+struct sub_expressions<function<E>> {
+    static constexpr decltype(auto) get(const function<E>& e) {
         return sub_expressions<std::remove_cvref_t<E>>::get(
             static_cast<const std::remove_cvref_t<E>&>(e)
         );

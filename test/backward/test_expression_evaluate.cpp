@@ -11,7 +11,7 @@ using boost::ut::eq;
 
 using cppad::backward::var;
 using cppad::backward::let;
-using cppad::backward::expression;
+using cppad::backward::function;
 
 
 int main(int argc, char** argv) {
@@ -58,9 +58,9 @@ int main(int argc, char** argv) {
     "composite_expression_evaluate"_test = [] () {
         var a;
         let b;
-        expression result = std::exp((a + b)*a);
+        function f = std::exp((a + b)*a);
         expect(eq(
-            evaluate(result, at(a = 2.0, b = 4.0)),
+            evaluate(f, at(a = 2.0, b = 4.0)),
             std::exp((2.0 + 4.0)*2.0)
         ));
     };
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     "composite_expression_evaluate_via_operator()"_test = [] () {
         var a;
         let b;
-        expression result = std::exp((a + b)*a);
+        function result = std::exp((a + b)*a);
         expect(eq(
             result(a = 2.0, b = 4.0),
             std::exp((2.0 + 4.0)*2.0)
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
         var a;
         let b;
         var c;
-        expression result = std::exp((a + b)*a);
+        function result = std::exp((a + b)*a);
         expect(eq(
             evaluate(result, at(a = 2.0, b = 4.0, c = 10.0)),
             std::exp((2.0 + 4.0)*2.0)
