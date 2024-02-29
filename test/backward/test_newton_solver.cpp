@@ -13,18 +13,21 @@ using boost::ut::eq;
 
 using cppad::backward::var;
 using cppad::backward::let;
-using cppad::backward::expression;
+
+using cppad::backward::bind;
+using cppad::backward::function;
 
 constexpr double newton_solve() {
     var x;
-    expression f = x*x*2.0 - 4.0;
+    function f = x*x*2.0 - 4.0;
 
-    int it = 0;
     double solution = 10.0;
-    double residual = evaluate(f, at(x = solution));
-    while (residual > 1e-6 && it < 100) {
-        solution -= residual/derivative_of(f, wrt(x), at(x = solution));
-        residual = evaluate(f, at(x = solution));
+    const auto args = bind(x = solution);
+    double residual = f(args);
+
+    int it = 0; while (residual > 1e-6 && it < 100) {
+        solution -= residual/derivative_of(f, wrt(x), args);
+        residual = f(args);
         ++it;
     }
 

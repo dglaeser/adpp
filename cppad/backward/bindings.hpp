@@ -83,4 +83,10 @@ inline constexpr auto with(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
 
+template<typename... B>
+    requires(detail::are_binders<B...>)
+inline constexpr auto bind(B&&... b) {
+    return bindings{std::forward<B>(b)...};
+}
+
 }  // namespace cppad
