@@ -75,6 +75,15 @@ int main() {
         ));
     };
 
+    // TODO: bound symbols for other syntax?
+    // "composite_expression_evaluate_with_bound_symbols"_test = [] () {
+    //     bound_var a = 1.0;
+    //     bound_let b = 1.0;
+    //     expression result = std::exp((a + b)*a);
+    //     result.value()
+    //     result.derivative_wrt(a)
+    // };
+
     "composite_expression_evaluate_additional_vars"_test = [] () {
         var a;
         let b;

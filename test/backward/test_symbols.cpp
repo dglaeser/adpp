@@ -4,6 +4,7 @@
 #include <boost/ut.hpp>
 
 #include <adpp/backward/symbols.hpp>
+#include <adpp/backward/evaluate.hpp>
 
 using boost::ut::operator""_test;
 
@@ -13,6 +14,9 @@ using adpp::backward::value_binder;
 
 using adpp::dtype::real;
 using adpp::dtype::integral;
+
+using adpp::backward::vec_var;
+
 
 template<typename S, typename V>
 constexpr bool holds_reference(const value_binder<S, V>&) {
@@ -118,6 +122,13 @@ int main() {
         constexpr auto b = a = 42;
         static_assert(!holds_reference(b));
         static_assert(b.unwrap() == 42);
+    };
+
+    "var_vec"_test = [] () {
+        var a;
+        vec_var<3> v;
+        auto expr = v*a;
+        // auto result = evaluate(expr, at(a = 1, v = std::array{1, 2, 3}));
     };
 
     return EXIT_SUCCESS;
