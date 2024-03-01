@@ -19,7 +19,7 @@ constexpr bool holds_reference(const value_binder<S, V>&) {
     return std::is_lvalue_reference_v<V>;
 }
 
-int main(int argc, char** argv) {
+int main() {
 
     "var_instances_are_unique"_test = [] () {
         var a;

@@ -14,7 +14,7 @@ using cppad::backward::let;
 using cppad::backward::function;
 
 
-int main(int argc, char** argv) {
+int main() {
 
     "var_bindings"_test = [] () {
         constexpr var a;

@@ -13,7 +13,7 @@ using boost::ut::eq;
 
 using cppad::backward::let;
 
-int main(int argc, char** argv) {
+int main() {
 
     "expression_simple_stream"_test = [] () {
         let a;

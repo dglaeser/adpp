@@ -10,21 +10,21 @@ using cppad::backward::var;
 using cppad::backward::let;
 
 
-int main(int argc, char** argv) {
+int main() {
 
     "var_times_scalar"_test = [] () {
         var a;
         {
-            auto op_right = a*1;
-            auto op_left = 1*a;
+            [[maybe_unused]] auto op_right = a*1;
+            [[maybe_unused]] auto op_left = 1*a;
         }
         {
-            auto op_right = a + 1;
-            auto op_left = 1 + a;
+            [[maybe_unused]] auto op_right = a + 1;
+            [[maybe_unused]] auto op_left = 1 + a;
         }
         {
-            auto op_right = a - 1;
-            auto op_left = 1 - a;
+            [[maybe_unused]] auto op_right = a - 1;
+            [[maybe_unused]] auto op_left = 1 - a;
         }
     };
 

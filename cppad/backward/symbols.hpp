@@ -72,7 +72,7 @@ struct symbol : operand {
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&& self, V&& var) {
+    constexpr auto differentiate_wrt(this Self&&, V&&) {
         if constexpr (concepts::same_decay_t_as<Self, V>)
             return val<int>{1};
         else
