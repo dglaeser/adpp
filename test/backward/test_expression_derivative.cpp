@@ -14,7 +14,7 @@ using cppad::backward::var;
 using cppad::backward::let;
 
 
-int main(int argc, char** argv) {
+int main() {
 
     "derivatives"_test = [] () {
         static constexpr var a;

@@ -23,7 +23,6 @@ namespace detail {
 template<typename E, typename... V, typename... B>
     requires(detail::derivable_expression<E, bindings<B...>, V...>)
 inline constexpr auto derivatives_of(const E& expression, const std::tuple<V...>& vars, const bindings<B...>& bindings) {
-    using R = std::remove_cvref_t<decltype(expression.evaluate_at(bindings))>;
     return std::apply([&] <typename... Vs> (Vs&&... vs) {
         return expression.back_propagate(bindings, vs...).second;
     }, vars);
@@ -52,7 +51,7 @@ inline constexpr auto derivative_of_impl(E&& expression, const V& var, const bin
 #endif  // DOXYGEN
 
 template<typename E, typename V, typename... B, unsigned int i>
-inline constexpr auto derivative_of(const E& expression, const std::tuple<V>& vars, const bindings<B...>& bindings, const order<i>& order) {
+inline constexpr auto derivative_of(const E& expression, const std::tuple<V>& vars, const bindings<B...>& bindings, const order<i>&) {
     return detail::derivative_of_impl<1, i>(expression, std::get<0>(vars), bindings);
 }
 

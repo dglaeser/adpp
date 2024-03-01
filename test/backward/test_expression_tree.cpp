@@ -11,7 +11,7 @@ using boost::ut::operator""_test;
 using cppad::backward::var;
 using cppad::backward::let;
 
-int main(int argc, char** argv) {
+int main() {
 
     "leaf_expressions_of_var"_test = [] () {
         static constexpr var a;

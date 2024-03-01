@@ -87,7 +87,7 @@ struct val : operand {
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&& self, V&&) {
+    constexpr auto differentiate_wrt(this Self&&, V&&) {
         static_assert(!concepts::same_decay_t_as<Self, V>, "Derivative w.r.t. constant value requested");
         return val<T>{T{0}};
     }
@@ -115,7 +115,7 @@ struct is_leaf_expression<val<T>> : public std::true_type {};
 template<typename O, typename E>
 class unary_operator : public operand  {
  public:
-    constexpr unary_operator(O&& op, E e) noexcept
+    constexpr unary_operator(O&&, E e) noexcept
     : _expression{std::forward<E>(e)}
     {}
 
