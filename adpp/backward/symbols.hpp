@@ -4,15 +4,15 @@
 #include <utility>
 #include <type_traits>
 
-#include <cppad/dtype.hpp>
-#include <cppad/common.hpp>
-#include <cppad/concepts.hpp>
+#include <adpp/dtype.hpp>
+#include <adpp/common.hpp>
+#include <adpp/concepts.hpp>
 
-#include <cppad/backward/concepts.hpp>
-#include <cppad/backward/operand.hpp>
-#include <cppad/backward/derivative.hpp>
+#include <adpp/backward/concepts.hpp>
+#include <adpp/backward/operand.hpp>
+#include <adpp/backward/derivative.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 template<typename S, typename V>
 struct value_binder {
@@ -139,4 +139,4 @@ struct into_operand<let<T, _>> {
 };
 
 }  // namespace traits
-}  // namespace cppad::backward
+}  // namespace adpp::backward

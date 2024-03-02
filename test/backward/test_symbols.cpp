@@ -3,16 +3,16 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/backward/symbols.hpp>
+#include <adpp/backward/symbols.hpp>
 
 using boost::ut::operator""_test;
 
-using cppad::backward::var;
-using cppad::backward::let;
-using cppad::backward::value_binder;
+using adpp::backward::var;
+using adpp::backward::let;
+using adpp::backward::value_binder;
 
-using cppad::dtype::real;
-using cppad::dtype::integral;
+using adpp::dtype::real;
+using adpp::dtype::integral;
 
 template<typename S, typename V>
 constexpr bool holds_reference(const value_binder<S, V>&) {

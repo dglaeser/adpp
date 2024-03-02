@@ -1,5 +1,5 @@
-cppad_add_benchmark(backward_autodiff backwards.cpp)
-cppad_add_benchmark(backward_cppad backwards.cpp)
+adpp_add_benchmark(backward_autodiff backwards.cpp)
+adpp_add_benchmark(backward_adpp backwards.cpp)
 
 target_compile_definitions(backward_autodiff PRIVATE USE_AUTODIFF=1)
-target_compile_definitions(backward_cppad PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(backward_adpp PRIVATE USE_AUTODIFF=0)

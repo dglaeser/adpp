@@ -2,9 +2,9 @@
 
 #include <type_traits>
 
-#include <cppad/concepts.hpp>
+#include <adpp/concepts.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 namespace traits {
 
 template<typename T> struct into_operand;
@@ -63,4 +63,4 @@ namespace traits {
 template<binder T> struct is_value_binder<T> : public std::true_type {};
 
 }  // namespace traits
-}  // namespace cppad
+}  // namespace adpp

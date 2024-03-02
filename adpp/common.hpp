@@ -5,7 +5,7 @@
 #include <utility>
 #include <memory>
 
-namespace cppad {
+namespace adpp {
 
 template<unsigned int i>
 struct order : public std::integral_constant<unsigned int, i> {};
@@ -52,4 +52,4 @@ constexpr bool is_same_object(A&& a, B&& b) {
     return false;
 }
 
-}  // namespace cppad
+}  // namespace adpp

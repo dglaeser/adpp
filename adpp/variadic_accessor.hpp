@@ -2,10 +2,10 @@
 
 #include <type_traits>
 
-#include <cppad/common.hpp>
-#include <cppad/concepts.hpp>
+#include <adpp/common.hpp>
+#include <adpp/concepts.hpp>
 
-namespace cppad {
+namespace adpp {
 
 #ifndef DOXYGEN
 namespace detail {
@@ -66,4 +66,4 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
 template<typename... Ts>
 variadic_accessor(Ts&&...) -> variadic_accessor<Ts...>;
 
-}  // namespace cppad
+}  // namespace adpp

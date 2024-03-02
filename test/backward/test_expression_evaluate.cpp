@@ -2,16 +2,16 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/backward/symbols.hpp>
-#include <cppad/backward/evaluate.hpp>
+#include <adpp/backward/symbols.hpp>
+#include <adpp/backward/evaluate.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
-using cppad::backward::var;
-using cppad::backward::let;
-using cppad::backward::function;
+using adpp::backward::var;
+using adpp::backward::let;
+using adpp::backward::function;
 
 
 int main() {

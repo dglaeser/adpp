@@ -1,9 +1,9 @@
 #pragma once
 
 #include <type_traits>
-#include <cppad/concepts.hpp>
+#include <adpp/concepts.hpp>
 
-namespace cppad {
+namespace adpp {
 namespace dtype {
 
 struct any {};
@@ -26,4 +26,4 @@ template<typename T, typename Arg>
 concept accepts = is_complete_v<dtype::accepts<T, Arg>> and dtype::accepts<T, Arg>::value;
 
 }  // namespace concepts
-}  // namespace cppad
+}  // namespace adpp

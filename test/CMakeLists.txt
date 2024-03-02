@@ -6,12 +6,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(ut)
 
-function (cppad_add_test NAME SOURCE)
+function (adpp_add_test NAME SOURCE)
     add_executable(${NAME} ${SOURCE})
-    target_link_libraries(${NAME} PRIVATE cppad::cppad Boost::ut)
+    target_link_libraries(${NAME} PRIVATE adpp::adpp Boost::ut)
     add_test(NAME ${NAME} COMMAND ./${NAME})
 endfunction ()
 
 add_subdirectory(backward)
 
-cppad_add_test(test_common test_common.cpp)
+adpp_add_test(test_common test_common.cpp)

@@ -33,13 +33,13 @@ double derivative(E&& expression, const auto& x, const auto& y, double xv, doubl
     return de_dx;
 }
 #else
-#include <cppad/backward/symbols.hpp>
-#include <cppad/backward/evaluate.hpp>
-#include <cppad/backward/differentiate.hpp>
+#include <adpp/backward/symbols.hpp>
+#include <adpp/backward/evaluate.hpp>
+#include <adpp/backward/differentiate.hpp>
 
 template<auto _ = [] () {}>
 auto make_var(auto&&) {
-    return cppad::backward::var<double, _>{};
+    return adpp::backward::var<double, _>{};
 }
 
 auto as_expr(auto&& expression) {
@@ -47,7 +47,7 @@ auto as_expr(auto&& expression) {
 }
 
 double result_of(const auto& expression, const auto& x, const auto& y, double xv, double yv) {
-    return cppad::backward::evaluate(expression, at(x = xv, y = yv));
+    return adpp::backward::evaluate(expression, at(x = xv, y = yv));
 }
 
 template<typename E>

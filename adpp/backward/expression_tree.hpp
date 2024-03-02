@@ -3,9 +3,9 @@
 #include <utility>
 #include <type_traits>
 
-#include <cppad/backward/concepts.hpp>
+#include <adpp/backward/concepts.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 #ifndef DOXYGEN
 namespace detail {
@@ -88,4 +88,4 @@ inline constexpr auto leaf_variables_of(const E& e) {
     return detail::concatenate_leaf_expressions<detail::var_filter>(std::tuple{}, e);
 }
 
-}  // namespace cppad
+}  // namespace adpp
