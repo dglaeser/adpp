@@ -4,13 +4,13 @@
 #include <ostream>
 #include <type_traits>
 
-#include <cppad/concepts.hpp>
-#include <cppad/variadic_accessor.hpp>
-#include <cppad/backward/concepts.hpp>
-#include <cppad/backward/bindings.hpp>
-#include <cppad/backward/expression_tree.hpp>
+#include <adpp/concepts.hpp>
+#include <adpp/variadic_accessor.hpp>
+#include <adpp/backward/concepts.hpp>
+#include <adpp/backward/bindings.hpp>
+#include <adpp/backward/expression_tree.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 #ifndef DOXYGEN
 namespace detail {
@@ -117,4 +117,4 @@ inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
     return e.evaluate_at(b);
 }
 
-}  // namespace cppad
+}  // namespace adpp

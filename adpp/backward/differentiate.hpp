@@ -3,11 +3,11 @@
 #include <tuple>
 #include <type_traits>
 
-#include <cppad/common.hpp>
-#include <cppad/backward/bindings.hpp>
-#include <cppad/backward/expression_tree.hpp>
+#include <adpp/common.hpp>
+#include <adpp/backward/bindings.hpp>
+#include <adpp/backward/expression_tree.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 #ifndef DOXYGEN
 namespace detail {
@@ -71,4 +71,4 @@ inline constexpr auto differentiate(const E& expression, const std::tuple<V>& va
     return expression.differentiate_wrt(std::get<0>(var));
 }
 
-}  // namespace cppad::backward
+}  // namespace adpp::backward

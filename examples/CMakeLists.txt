@@ -1,1 +1,1 @@
-cppad_add_test(example_add_and_multiply add_and_multiply.cpp)
+adpp_add_test(example_add_and_multiply add_and_multiply.cpp)

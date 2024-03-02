@@ -4,9 +4,9 @@
 #include <utility>
 #include <concepts>
 
-#include <cppad/type_traits.hpp>
+#include <adpp/type_traits.hpp>
 
-namespace cppad::concepts {
+namespace adpp::concepts {
 
 template<typename T>
 concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
@@ -17,4 +17,4 @@ concept same_decay_t_as = std::same_as<std::decay_t<A>, std::decay_t<B>>;
 template<typename T>
 concept ownable = is_ownable<T>::value;
 
-}  // namespace cppad::concepts
+}  // namespace adpp::concepts

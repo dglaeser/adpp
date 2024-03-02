@@ -2,16 +2,16 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/backward/symbols.hpp>
-#include <cppad/backward/evaluate.hpp>
-#include <cppad/backward/differentiate.hpp>
+#include <adpp/backward/symbols.hpp>
+#include <adpp/backward/evaluate.hpp>
+#include <adpp/backward/differentiate.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
-using cppad::backward::var;
-using cppad::backward::let;
+using adpp::backward::var;
+using adpp::backward::let;
 
 
 int main() {
@@ -56,13 +56,13 @@ int main() {
         static constexpr var b;
         static constexpr let mu;
         constexpr auto expr = a*a*a + b*b*2 + mu;
-        static_assert(3.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::first_order));
-        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::second_order));
-        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), cppad::third_order));
+        static_assert(3.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::first_order));
+        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::second_order));
+        static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::third_order));
 
-        static_assert(8.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::first_order));
-        static_assert(4.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::second_order));
-        static_assert(0.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), cppad::third_order));
+        static_assert(8.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), adpp::first_order));
+        static_assert(4.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), adpp::second_order));
+        static_assert(0.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), adpp::third_order));
     };
 
     "derivative_expression"_test = [] () {

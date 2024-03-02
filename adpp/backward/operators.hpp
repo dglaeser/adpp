@@ -5,12 +5,12 @@
 #include <functional>
 #include <ostream>
 
-#include <cppad/concepts.hpp>
-#include <cppad/type_traits.hpp>
-#include <cppad/backward/concepts.hpp>
-#include <cppad/backward/bindings.hpp>
+#include <adpp/concepts.hpp>
+#include <adpp/type_traits.hpp>
+#include <adpp/backward/concepts.hpp>
+#include <adpp/backward/bindings.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 namespace operators {
 
@@ -148,8 +148,8 @@ struct formatter<std::multiplies<void>> {
 };
 
 template<>
-struct differentiator<cppad::backward::operators::exp> {
-    static constexpr auto exp_op = cppad::backward::operators::exp{};
+struct differentiator<adpp::backward::operators::exp> {
+    static constexpr auto exp_op = adpp::backward::operators::exp{};
 
     static constexpr auto differentiate(
         const auto& e,
@@ -171,7 +171,7 @@ struct differentiator<cppad::backward::operators::exp> {
 };
 
 template<>
-struct formatter<cppad::backward::operators::exp> {
+struct formatter<adpp::backward::operators::exp> {
     static constexpr void format(std::ostream& out, const auto& a, const auto& name_map) {
         out << "exp(";
         a.stream(out, name_map);
@@ -180,4 +180,4 @@ struct formatter<cppad::backward::operators::exp> {
 };
 
 }  // namespace traits
-}  // namespace cppad::backward
+}  // namespace adpp::backward

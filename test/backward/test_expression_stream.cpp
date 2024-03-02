@@ -3,15 +3,15 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/backward/symbols.hpp>
-#include <cppad/backward/differentiate.hpp>
-#include <cppad/backward/stream.hpp>
+#include <adpp/backward/symbols.hpp>
+#include <adpp/backward/differentiate.hpp>
+#include <adpp/backward/stream.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
-using cppad::backward::let;
+using adpp::backward::let;
 
 int main() {
 

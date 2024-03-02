@@ -4,7 +4,7 @@
 #include <utility>
 
 
-namespace cppad {
+namespace adpp {
 
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
@@ -53,4 +53,4 @@ struct is_complete : public std::bool_constant<!decltype(detail::is_incomplete(s
 template<typename T>
 inline constexpr bool is_complete_v = is_complete<T>::value;
 
-}  // namespace cppad
+}  // namespace adpp

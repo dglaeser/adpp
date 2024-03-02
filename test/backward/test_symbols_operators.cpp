@@ -2,12 +2,12 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/backward/symbols.hpp>
+#include <adpp/backward/symbols.hpp>
 
 using boost::ut::operator""_test;
 
-using cppad::backward::var;
-using cppad::backward::let;
+using adpp::backward::var;
+using adpp::backward::let;
 
 
 int main() {

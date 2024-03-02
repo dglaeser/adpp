@@ -4,15 +4,15 @@
 #include <type_traits>
 #include <functional>
 
-#include <cppad/type_traits.hpp>
-#include <cppad/concepts.hpp>
+#include <adpp/type_traits.hpp>
+#include <adpp/concepts.hpp>
 
-#include <cppad/backward/concepts.hpp>
-#include <cppad/backward/operators.hpp>
-#include <cppad/backward/derivative.hpp>
-#include <cppad/backward/bindings.hpp>
+#include <adpp/backward/concepts.hpp>
+#include <adpp/backward/operators.hpp>
+#include <adpp/backward/derivative.hpp>
+#include <adpp/backward/bindings.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 // forward declarations
 template<typename O, typename E>
@@ -221,12 +221,12 @@ struct into_operand<T> {
 };
 
 }  // namespace traits
-}  // namespace cppad::backward
+}  // namespace adpp::backward
 
 namespace std {
 
 template<typename T>
-    requires(std::derived_from<std::remove_cvref_t<T>, cppad::backward::operand>)
+    requires(std::derived_from<std::remove_cvref_t<T>, adpp::backward::operand>)
 constexpr auto exp(T&& t) {
     return std::forward<T>(t).exp();
 }

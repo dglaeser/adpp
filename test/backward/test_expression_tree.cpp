@@ -2,14 +2,14 @@
 
 #include <boost/ut.hpp>
 
-#include <cppad/common.hpp>
-#include <cppad/backward/symbols.hpp>
-#include <cppad/backward/expression_tree.hpp>
+#include <adpp/common.hpp>
+#include <adpp/backward/symbols.hpp>
+#include <adpp/backward/expression_tree.hpp>
 
 using boost::ut::operator""_test;
 
-using cppad::backward::var;
-using cppad::backward::let;
+using adpp::backward::var;
+using adpp::backward::let;
 
 int main() {
 
@@ -17,7 +17,7 @@ int main() {
         static constexpr var a;
         constexpr auto leaves = leaf_symbols_of(a);
         static_assert(std::tuple_size_v<decltype(leaves)> == 1);
-        static_assert(cppad::is_same_object(a, std::get<0>(leaves)));
+        static_assert(adpp::is_same_object(a, std::get<0>(leaves)));
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(std::get<0>(leaves))>,
             std::remove_cvref_t<decltype(a)>
@@ -28,7 +28,7 @@ int main() {
         static constexpr let a;
         constexpr auto leaves = leaf_symbols_of(a);
         static_assert(std::tuple_size_v<decltype(leaves)> == 1);
-        static_assert(cppad::is_same_object(a, std::get<0>(leaves)));
+        static_assert(adpp::is_same_object(a, std::get<0>(leaves)));
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(std::get<0>(leaves))>,
             std::remove_cvref_t<decltype(a)>
@@ -42,9 +42,9 @@ int main() {
         constexpr auto formula = (a + b)*c - 1.0;
         constexpr auto leaves = leaf_symbols_of(formula);
         static_assert(std::tuple_size_v<decltype(leaves)> == 3);
-        static_assert(cppad::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
-        static_assert(cppad::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
-        static_assert(cppad::is_same_object(std::get<const std::remove_cvref_t<decltype(c)>&>(leaves), c));
+        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
+        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
+        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(c)>&>(leaves), c));
     };
 
     "leaf_variables_of"_test = [] () {
@@ -54,8 +54,8 @@ int main() {
         constexpr auto formula = (a + b)*c - 1.0;
         constexpr auto leaves = leaf_variables_of(formula);
         static_assert(std::tuple_size_v<decltype(leaves)> == 2);
-        static_assert(cppad::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
-        static_assert(cppad::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
+        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
+        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
     };
 
     return EXIT_SUCCESS;

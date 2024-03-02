@@ -4,11 +4,11 @@
 #include <concepts>
 #include <type_traits>
 
-#include <cppad/concepts.hpp>
-#include <cppad/variadic_accessor.hpp>
-#include <cppad/backward/concepts.hpp>
+#include <adpp/concepts.hpp>
+#include <adpp/variadic_accessor.hpp>
+#include <adpp/backward/concepts.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 #ifndef DOXYGEN
 namespace detail {
@@ -89,4 +89,4 @@ inline constexpr auto bind(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
 
-}  // namespace cppad
+}  // namespace adpp

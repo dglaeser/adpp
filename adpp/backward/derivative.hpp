@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <type_traits>
 
-#include <cppad/concepts.hpp>
-#include <cppad/variadic_accessor.hpp>
+#include <adpp/concepts.hpp>
+#include <adpp/variadic_accessor.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 template<concepts::arithmetic R, typename... Ts>
     requires(are_unique_v<Ts...>)
@@ -72,4 +72,4 @@ template<typename R, typename... Ts>
     requires(std::conjunction_v<std::is_lvalue_reference<Ts>...>)
 derivatives(R&&, Ts&&...) -> derivatives<std::remove_cvref_t<R>, std::remove_cvref_t<Ts>...>;
 
-}  // namespace cppad::backward
+}  // namespace adpp::backward

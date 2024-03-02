@@ -2,9 +2,9 @@
 
 #include <ostream>
 
-#include <cppad/backward/bindings.hpp>
+#include <adpp/backward/bindings.hpp>
 
-namespace cppad::backward {
+namespace adpp::backward {
 
 template<typename E, typename... V>
 inline constexpr std::ostream& stream(std::ostream& out, E&& expression, const bindings<V...>& name_bindings) {
@@ -12,4 +12,4 @@ inline constexpr std::ostream& stream(std::ostream& out, E&& expression, const b
     return out;
 }
 
-}  // namespace cppad::backward
+}  // namespace adpp::backward
