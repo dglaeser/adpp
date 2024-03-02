@@ -104,6 +104,38 @@ struct let : symbol<T> {
     constexpr let& operator=(const let<_T, __>&) = delete;
 };
 
+template<std::size_t N, typename T = dtype::any>
+class vec_var : public symbol<dtype::array<T, N>> {
+    template<std::size_t I, typename partial, auto _ = [] () {}>
+    struct tuple_creator;
+
+    template<std::size_t I, typename partial, auto _>
+        requires(I == N - 1)
+    struct tuple_creator<I, partial, _> {
+        using type = partial;
+    };
+
+    template<std::size_t I, typename partial, auto _>
+        requires(I < N - 1)
+    struct tuple_creator<I, partial, _> {
+        using type = std::remove_cvref_t<decltype(
+            std::tuple_cat(std::declval<partial>(), std::declval<std::tuple<var<T, _>>>())
+        )>;
+    };
+
+
+    using tuple = typename tuple_creator<0, std::tuple<>>::type;
+ public:
+    using symbol<dtype::array<T, N>>::operator=;
+
+    constexpr const auto& vars() const {
+        return _values;
+    }
+
+ private:
+    tuple _values;
+};
+
 namespace traits {
 
 template<typename T, auto _> struct is_leaf_expression<var<T, _>> : public std::true_type {};
@@ -113,6 +145,12 @@ template<typename T, auto _> struct is_var<var<T, _>> : public std::true_type {}
 template<typename T, auto _> struct is_leaf_expression<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_let<let<T, _>> : public std::true_type {};
+
+template<std::size_t N, typename T> struct sub_expressions<vec_var<N, T>> {
+    static constexpr const auto& get(const vec_var<N, T>& v) {
+        return v.vars();
+    }
+};
 
 template<concepts::arithmetic T>
 struct into_operand<T> {
