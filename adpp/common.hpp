@@ -44,12 +44,4 @@ private:
 template<typename T>
 storage(T&&) -> storage<T>;
 
-
-template<typename A, typename B>
-constexpr bool is_same_object(A&& a, B&& b) {
-    if constexpr (std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>)
-        return std::addressof(a) == std::addressof(b);
-    return false;
-}
-
 }  // namespace adpp
