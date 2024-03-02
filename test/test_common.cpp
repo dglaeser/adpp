@@ -1,5 +1,7 @@
 #include <cstdlib>
 #include <type_traits>
+#include <algorithm>
+#include <array>
 
 #include <boost/ut.hpp>
 #include <adpp/common.hpp>
@@ -51,6 +53,19 @@ int main() {
 
         value *= 2;
         expect(eq(stored.get(), 84.0));
+    };
+
+    "for_each_n"_test = [] () {
+        std::array vec{0, 1, 2, 3, 4};
+        std::array cpy = vec;
+        std::ranges::fill(cpy, 0.0);
+
+        expect(!std::ranges::equal(vec, cpy));
+        adpp::for_each_n<vec.size()>([&] <auto i> (adpp::index_constant<i>) {
+            std::cout << "v[" << i << "] = " << vec[i] << std::endl;
+            cpy[i] = vec[i];
+        });
+        expect(std::ranges::equal(vec, cpy));
     };
 
     return EXIT_SUCCESS;

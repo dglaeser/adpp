@@ -5,6 +5,8 @@
 #include <utility>
 #include <memory>
 
+#include <adpp/type_traits.hpp>
+
 namespace adpp {
 
 template<unsigned int i>
@@ -43,5 +45,25 @@ private:
 
 template<typename T>
 storage(T&&) -> storage<T>;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+     template<std::size_t cur, std::size_t max, typename F>
+     inline constexpr void for_each_n_impl(F&& f) {
+        if constexpr (cur < max) {
+            f(index_constant<cur>{});
+            for_each_n_impl<cur+1, max>(std::forward<F>(f));
+        }
+     }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<std::size_t i, typename F>
+inline constexpr void for_each_n(F&& function) {
+    detail::for_each_n_impl<0, i>(std::forward<F>(function));
+}
 
 }  // namespace adpp
