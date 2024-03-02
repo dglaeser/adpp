@@ -1,0 +1,38 @@
+name: test-suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches:
+    - main
+    - 'releases/**'
+  schedule:
+    - cron: '30 22 * * 0,3'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    container: dglaeser/compiler-images:${{ matrix.compiler }}
+    strategy:
+      matrix:
+          compiler: [gcc-14, clang-18]
+    steps:
+      - name: checkout-repository
+        uses: actions/checkout@v2
+
+      # install of make can be omitted once the container provides it per default
+      - name: build-tests
+        run: |
+          apt update && apt install make
+          echo "Using C compiler ${C_COMPILER}"
+          echo "Using C++ compiler ${CXX_COMPILER}"
+          cmake -DCMAKE_C_COMPILER=${C_COMPILER} \
+                -DCMAKE_CXX_COMPILER=${CXX_COMPILER} \
+                -B build
+          cmake --build build
+
+      - name: run-tests
+        run: cd build && ctest --output-on-failure
