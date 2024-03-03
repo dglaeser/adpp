@@ -1,5 +1,7 @@
 #include <cstdlib>
 #include <type_traits>
+#include <algorithm>
+#include <array>
 
 #include <boost/ut.hpp>
 #include <adpp/common.hpp>
@@ -51,6 +53,34 @@ int main() {
 
         value *= 2;
         expect(eq(stored.get(), 84.0));
+    };
+
+    "index_reduce"_test = [] () {
+        std::array vec{0, 1, 2, 3, 4};
+        {
+            int sum = adpp::recursive_reduce(adpp::index_range<0, 1>{}, [&] <auto i> (adpp::index_constant<i>, int current) {
+                return current + i;
+            }, int{0});
+            expect(eq(sum, 0));
+        }
+        {
+            int sum = adpp::recursive_reduce(adpp::index_range<0, 3>{}, [&] <auto i> (adpp::index_constant<i>, int current) {
+                return current + i;
+            }, int{0});
+            expect(eq(sum, 3));
+        }
+        {
+            int sum = adpp::recursive_reduce(adpp::index_range<3, 5>{}, [&] <auto i> (adpp::index_constant<i>, int current) {
+                return current + i;
+            }, int{0});
+            expect(eq(sum, 7));
+        }
+        {
+            int sum = adpp::recursive_reduce(adpp::index_range<0, vec.size()>{}, [&] <auto i> (adpp::index_constant<i>, int current) {
+                return current + i;
+            }, int{0});
+            expect(eq(sum, 10));
+        }
     };
 
     return EXIT_SUCCESS;

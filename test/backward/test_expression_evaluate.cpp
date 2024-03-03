@@ -1,7 +1,9 @@
 #include <cstdlib>
+#include <array>
 
 #include <boost/ut.hpp>
 
+#include <adpp/common.hpp>
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/evaluate.hpp>
 
@@ -92,6 +94,58 @@ int main() {
         constexpr auto formula = (a + b)*a;
         static_assert(evaluate(formula, at(a = 2.0, b = 4.0)) == 12.0);
     };
+
+    "expression_from_index_reduce"_test = [] () {
+        static constexpr std::array vec{0, 1, 2, 3, 4};
+        constexpr function f = adpp::recursive_reduce(
+            adpp::index_range<0, vec.size()>{},
+            [&] <auto i> (adpp::index_constant<i>, auto&& current) {
+                return std::move(current) + vec[i];
+            },
+            adpp::backward::val{0}
+        );
+        static_assert(f() == 10);
+    };
+
+    "expression_from_index_reduce_runtime"_test = [] () {
+        std::array vec{0, 1, 2, 3, 4};
+        function f = adpp::recursive_reduce(
+            adpp::index_range<0, vec.size()>{},
+            [&] <auto i> (adpp::index_constant<i>, auto&& current) {
+                return std::move(current) + vec[i];
+            },
+            adpp::backward::val{0}
+        );
+        expect(eq(f(), 10));
+    };
+
+    "expression_template_from_index_reduce"_test = [] () {
+        static constexpr std::array vec{0, 1, 2, 3, 4};
+        static constexpr let initial;
+        constexpr function f = adpp::recursive_reduce(
+            adpp::index_range<0, vec.size()>{},
+            [&] <auto i, typename T> (adpp::index_constant<i>, T&& current) {
+                return std::forward<T>(current) + vec[i];
+            },
+            initial
+        );
+        static_assert(f(initial = 0) == 10);
+    };
+
+    "expression_template_from_index_reduce_runtime"_test = [] () {
+        std::array vec{0, 1, 2, 3, 4};
+        let initial;
+        function f = adpp::recursive_reduce(
+            adpp::index_range<0, vec.size()>{},
+            [&] <auto i, typename T> (adpp::index_constant<i>, T&& current) {
+                return std::forward<T>(current) + vec[i];
+            },
+            initial
+        );
+        expect(eq(f(initial = 0), 10));
+    };
+
+    // TODO: vector scalar product?
 
     return EXIT_SUCCESS;
 }
