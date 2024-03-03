@@ -9,6 +9,8 @@ namespace adpp {
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
 
+template<std::size_t begin, std::size_t end> requires(begin <= end)
+struct index_range {};
 
 template<typename T>
 struct is_ownable : public std::bool_constant<!std::is_lvalue_reference_v<T>> {};

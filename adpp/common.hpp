@@ -5,6 +5,8 @@
 #include <utility>
 #include <memory>
 
+#include <adpp/type_traits.hpp>
+
 namespace adpp {
 
 template<unsigned int i>
@@ -43,5 +45,34 @@ private:
 
 template<typename T>
 storage(T&&) -> storage<T>;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<std::size_t cur, std::size_t max, typename Op, typename T>
+    inline constexpr decltype(auto) index_reduce(Op&& op, T&& current) {
+        if constexpr (cur < max) {
+            const auto process = [&] <typename N> (N&& next) {
+                return index_reduce<cur+1, max>(std::forward<Op>(op), std::forward<N>(next));
+            };
+            return process(op(index_constant<cur>{}, std::forward<T>(current)));
+        } else {
+            return std::forward<T>(current);
+        }
+    }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+// TODO: Should be in detail? provided lambda requires forwarding operands, otherwise
+//       operators take args be reference which eventually will dangle...
+template<std::size_t begin, std::size_t end, typename Operator, typename T>
+inline constexpr decltype(auto) recursive_reduce(index_range<begin, end>, Operator&& op, T&& initial) {
+    if constexpr (begin < end)
+        return detail::index_reduce<begin, end>(std::forward<Operator>(op), std::forward<T>(initial));
+    else
+        return std::forward<T>(initial);
+}
 
 }  // namespace adpp
