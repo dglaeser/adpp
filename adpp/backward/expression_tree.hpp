@@ -19,8 +19,9 @@ namespace detail {
 
     template<typename T>
     concept traversable_expression = is_leaf_expression_v<T> or (
-        is_complete_v<traits::sub_expressions<T>> and requires(const T& t) {
-            { traits::sub_expressions<T>::get(t) } -> detail::tuple_like;
+        is_complete_v<traits::sub_expressions<std::remove_cvref_t<T>>> and requires(const T& t) {
+            typename traits::sub_expressions<std::remove_cvref_t<T>>::operands;
+            { traits::sub_expressions<std::remove_cvref_t<T>>::get(t) } -> tuple_like;
         }
     );
 
@@ -75,8 +76,47 @@ namespace detail {
         static constexpr bool include = traits::is_var<std::remove_cvref_t<T>>::value;
     };
 
+    template<typename...>
+    struct leaf_symbols_impl;
+
+    template<typename E, typename... Ts> requires(is_leaf_expression_v<E>)
+    struct leaf_symbols_impl<E, std::tuple<Ts...>> {
+        using type = std::conditional_t<
+            traits::is_symbol<std::remove_cvref_t<E>>::value,
+            typename unique_tuple<std::tuple<Ts...>, E>::type,
+            std::tuple<Ts...>
+        >;
+    };
+
+    template<typename E, typename... Ts> requires(!is_leaf_expression_v<E>)
+    struct leaf_symbols_impl<E, std::tuple<Ts...>> {
+        using type = typename leaf_symbols_impl<
+            typename traits::sub_expressions<std::remove_cvref_t<E>>::operands,
+            std::tuple<Ts...>
+        >::type;
+    };
+
+    template<typename E0, typename... Es, typename... Ts>
+    struct leaf_symbols_impl<std::tuple<E0, Es...>, std::tuple<Ts...>> {
+        using type = typename unique_tuple<
+            typename merged_tuple<
+                typename leaf_symbols_impl<E0, std::tuple<Ts...>>::type,
+                typename leaf_symbols_impl<Es..., std::tuple<Ts...>>::type
+            >::type
+        >::type;
+    };
+
+    template<typename... Ts>
+    struct leaf_symbols_impl<std::tuple<Ts...>> : std::type_identity<std::tuple<Ts...>> {};
+
 }  // namespace detail
 #endif  // DOXYGEN
+
+template<detail::traversable_expression E>
+struct leaf_symbols : detail::leaf_symbols_impl<E, std::tuple<>> {};
+
+template<detail::traversable_expression E>
+using leaf_symbols_t = typename leaf_symbols<E>::type;
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_symbols_of(const E& e) {

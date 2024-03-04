@@ -29,12 +29,8 @@ namespace detail {
     };
 
     template<typename E, typename... B>
-    concept bindings_for = traversable_expression<std::remove_cvref_t<E>> and bindings_contain_all_leaves<
-        std::remove_cvref_t<decltype(
-            leaf_symbols_of(std::declval<const E&>())
-        )>,
-        B...
-    >::value;
+    concept bindings_for = traversable_expression<std::remove_cvref_t<E>>
+        and bindings_contain_all_leaves<leaf_symbols_t<E>, B...>::value;
 
     template<typename T, typename... B>
     concept expression = requires(const T& t, B&&... b) {
@@ -102,6 +98,8 @@ struct is_leaf_expression<function<E>>
 template<typename E>
     requires(!traits::is_leaf_expression<E>::value)
 struct sub_expressions<function<E>> {
+    using operands = typename sub_expressions<std::remove_cvref_t<E>>::operands;
+
     static constexpr decltype(auto) get(const function<E>& e) {
         return sub_expressions<std::remove_cvref_t<E>>::get(
             static_cast<const std::remove_cvref_t<E>&>(e)
