@@ -115,7 +115,7 @@ struct is_leaf_expression<val<T>> : public std::true_type {};
 template<typename O, typename E>
 class unary_operator : public operand  {
  public:
-    using operands = std::tuple<std::remove_cvref_t<E>>;
+    using operand_type = std::remove_cvref_t<E>;
 
     constexpr unary_operator(O&&, E e) noexcept
     : _expression{std::forward<E>(e)}
@@ -142,7 +142,7 @@ class unary_operator : public operand  {
         return out;
     }
 
-    constexpr const std::remove_cvref_t<E>& operand() const {
+    constexpr const operand_type& operand() const {
         return _expression.get();
     }
 
@@ -156,11 +156,9 @@ unary_operator(O&&, E&&) -> unary_operator<std::remove_cvref_t<O>, E>;
 
 template<typename O, typename A, typename B>
 class binary_operator : public operand {
-    using _A = std::remove_cvref_t<A>;
-    using _B = std::remove_cvref_t<B>;
-
  public:
-    using operands = std::tuple<_A, _B>;
+    using first_type = std::remove_cvref_t<A>;
+    using second_type = std::remove_cvref_t<B>;
 
     constexpr binary_operator(O&&, A a, B b) noexcept
     : _a{std::forward<A>(a)}
@@ -191,8 +189,8 @@ class binary_operator : public operand {
         return out;
     }
 
-    constexpr const _A& operand0() const { return _a.get(); }
-    constexpr const _B& operand1() const { return _b.get(); }
+    constexpr const first_type& first() const { return _a.get(); }
+    constexpr const second_type& second() const { return _b.get(); }
 
  private:
     storage<A> _a;
@@ -206,7 +204,7 @@ namespace traits {
 
 template<typename O, typename E>
 struct sub_expressions<unary_operator<O, E>> {
-    using operands = typename unary_operator<O, E>::operands;
+    using operands = std::tuple<typename unary_operator<O, E>::operand_type>;
 
     static constexpr auto get(const unary_operator<O, E>& op) {
         return std::forward_as_tuple(op.operand());
@@ -215,10 +213,13 @@ struct sub_expressions<unary_operator<O, E>> {
 
 template<typename O, typename A, typename B>
 struct sub_expressions<binary_operator<O, A, B>> {
-    using operands = typename binary_operator<O, A, B>::operands;
+    using operands = std::tuple<
+        typename binary_operator<O, A, B>::first_type,
+        typename binary_operator<O, A, B>::second_type
+    >;
 
     static constexpr auto get(const binary_operator<O, A, B>& op) {
-        return std::forward_as_tuple(op.operand0(), op.operand1());
+        return std::forward_as_tuple(op.first(), op.second());
     }
 };
 
