@@ -47,6 +47,76 @@ inline constexpr bool are_unique_v = are_unique<Ts...>::value;
 #ifndef DOXYGEN
 namespace detail {
 
+    template<typename T, typename... Ts>
+    struct unique_tuple {
+        using type = std::conditional_t<
+            is_any_of_v<T, Ts...>,
+            typename unique_tuple<Ts...>::type,
+            typename unique_tuple<std::tuple<T>, Ts...>::type
+        >;
+    };
+
+    template<typename T>
+    struct unique_tuple<T> : public std::type_identity<std::tuple<T>> {};
+
+    template<typename... Ts>
+    struct unique_tuple<std::tuple<Ts...>> : public std::type_identity<std::tuple<Ts...>> {};
+
+    template<typename... Ts, typename T, typename... Rest>
+    struct unique_tuple<std::tuple<Ts...>, T, Rest...> {
+        using type = std::conditional_t<
+            is_any_of_v<T, Ts...>,
+            typename unique_tuple<std::tuple<Ts...>, Rest...>::type,
+            typename unique_tuple<std::tuple<Ts..., T>, Rest...>::type
+        >;
+    };
+
+    template<typename A, typename B>
+    struct merged_tuple;
+
+    template<typename... As, typename... Bs>
+    struct merged_tuple<std::tuple<As...>, std::tuple<Bs...>> {
+        using type = std::tuple<As..., Bs...>;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<typename T, typename... Ts>
+struct unique_tuple : detail::unique_tuple<T, Ts...> {};
+template<typename A, typename... Ts>
+using unique_tuple_t = typename unique_tuple<A, Ts...>::type;
+
+template<typename A, typename... Ts>
+struct merged_tuple : detail::merged_tuple<A, Ts...> {};
+template<typename A, typename... Ts>
+using merged_tuple_t = typename merged_tuple<A, Ts...>::type;
+
+template<template<typename> typename filter, typename... Ts>
+struct filtered_tuple {
+    template<typename...> struct closure;
+    template<typename T, typename... rest, typename... current>
+    struct closure<std::tuple<T, rest...>, std::tuple<current...>> {
+        using type = std::conditional_t<
+            filter<T>::value,
+            typename closure<rest..., merged_tuple_t<std::tuple<T>, std::tuple<current...>>>::type,
+            typename closure<rest..., std::tuple<current...>>::type
+        >;
+    };
+    template<typename... current>
+    struct closure<std::tuple<>, std::tuple<current...>> {
+        using type = std::tuple<current...>;
+    };
+
+    using type = typename closure<std::tuple<Ts...>, std::tuple<>>::type;
+};
+template<template<typename> typename filter, typename... Ts>
+using filtered_tuple_t = typename filtered_tuple<filter, Ts...>::type;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
     template<typename T, std::size_t s = sizeof(T)>
     std::false_type is_incomplete(T*);
     std::true_type is_incomplete(...);
