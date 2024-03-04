@@ -17,7 +17,13 @@ inline constexpr bool is_ownable_v = is_ownable<T>::value;
 
 
 template<typename T, typename... Ts>
-struct contains_decay : public std::bool_constant<std::disjunction_v<std::is_same<std::decay_t<T>, Ts>...>> {};
+struct any_of : public std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
+template<typename T, typename... Ts>
+inline constexpr bool is_any_of_v = any_of<T, Ts...>::value;
+
+
+template<typename T, typename... Ts>
+struct contains_decay : public any_of<std::decay_t<T>, Ts...> {};
 template<typename T, typename... Ts>
 inline constexpr bool contains_decay_v = contains_decay<T, Ts...>::value;
 
