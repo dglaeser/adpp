@@ -1,5 +1,5 @@
-adpp_add_benchmark(backward_autodiff backwards.cpp)
-adpp_add_benchmark(backward_adpp backwards.cpp)
+adpp_add_benchmark(deep_expression deep_expression.cpp)
+adpp_add_benchmark(deep_expression_autodiff deep_expression.cpp)
 
-target_compile_definitions(backward_autodiff PRIVATE USE_AUTODIFF=1)
-target_compile_definitions(backward_adpp PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(deep_expression PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(deep_expression_autodiff PRIVATE USE_AUTODIFF=1)
