@@ -60,7 +60,7 @@ inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
 
 
 template<typename T, typename... Ts>
-struct contains_decay : is_any_of<std::decay_t<T>, Ts...> {};
+struct contains_decay : is_any_of<std::decay_t<T>, std::decay_t<Ts>...> {};
 template<typename T, typename... Ts>
 inline constexpr bool contains_decay_v = contains_decay<T, Ts...>::value;
 
