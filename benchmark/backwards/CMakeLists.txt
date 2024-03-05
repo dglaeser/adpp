@@ -1,3 +1,4 @@
+adpp_add_benchmark(deep_gradient deep_gradient.cpp)
 adpp_add_benchmark(deep_expression deep_expression.cpp)
 adpp_add_benchmark(deep_expression_autodiff deep_expression.cpp)
 
