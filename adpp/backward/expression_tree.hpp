@@ -83,7 +83,7 @@ namespace detail {
     struct leaf_symbols_impl<E, std::tuple<Ts...>> {
         using type = std::conditional_t<
             traits::is_symbol<std::remove_cvref_t<E>>::value,
-            typename unique_tuple<std::tuple<Ts...>, E>::type,
+            typename unique_tuple<std::tuple<Ts...>, std::remove_cvref_t<E>>::type,
             std::tuple<Ts...>
         >;
     };
@@ -117,6 +117,12 @@ struct leaf_symbols : detail::leaf_symbols_impl<E, std::tuple<>> {};
 
 template<detail::traversable_expression E>
 using leaf_symbols_t = typename leaf_symbols<E>::type;
+
+template<detail::traversable_expression E>
+struct leaf_vars : filtered_tuple<typename decayed_arg<traits::is_var>::type, leaf_symbols_t<E>> {};
+
+template<detail::traversable_expression E>
+using leaf_vars_t = typename leaf_vars<E>::type;
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_symbols_of(const E& e) {

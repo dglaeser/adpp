@@ -9,6 +9,11 @@ namespace adpp {
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
 
+template<template<typename> typename trait>
+struct decayed_arg {
+    template<typename T>
+    struct type : trait<std::decay_t<T>> {};
+};
 
 template<typename T>
 struct is_ownable : public std::bool_constant<!std::is_lvalue_reference_v<T>> {};
@@ -17,13 +22,15 @@ inline constexpr bool is_ownable_v = is_ownable<T>::value;
 
 
 template<typename T, typename... Ts>
-struct any_of : public std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
+struct is_any_of : public std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
 template<typename T, typename... Ts>
-inline constexpr bool is_any_of_v = any_of<T, Ts...>::value;
+struct is_any_of<T, std::tuple<Ts...>> : public is_any_of<T, Ts...> {};
+template<typename T, typename... Ts>
+inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
 
 
 template<typename T, typename... Ts>
-struct contains_decay : public any_of<std::decay_t<T>, Ts...> {};
+struct contains_decay : public is_any_of<std::decay_t<T>, Ts...> {};
 template<typename T, typename... Ts>
 inline constexpr bool contains_decay_v = contains_decay<T, Ts...>::value;
 
@@ -92,24 +99,32 @@ struct merged_tuple : detail::merged_tuple<A, Ts...> {};
 template<typename A, typename... Ts>
 using merged_tuple_t = typename merged_tuple<A, Ts...>::type;
 
-template<template<typename> typename filter, typename... Ts>
-struct filtered_tuple {
-    template<typename...> struct closure;
-    template<typename T, typename... rest, typename... current>
-    struct closure<std::tuple<T, rest...>, std::tuple<current...>> {
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<template<typename> typename filter, typename...>
+    struct filtered_tuple_impl;
+    template<template<typename> typename filter, typename T, typename... rest, typename... current>
+    struct filtered_tuple_impl<filter, std::tuple<T, rest...>, std::tuple<current...>> {
         using type = std::conditional_t<
             filter<T>::value,
-            typename closure<rest..., merged_tuple_t<std::tuple<T>, std::tuple<current...>>>::type,
-            typename closure<rest..., std::tuple<current...>>::type
+            typename filtered_tuple_impl<filter, std::tuple<rest...>, merged_tuple_t<std::tuple<T>, std::tuple<current...>>>::type,
+            typename filtered_tuple_impl<filter, std::tuple<rest...>, std::tuple<current...>>::type
         >;
     };
-    template<typename... current>
-    struct closure<std::tuple<>, std::tuple<current...>> {
+    template<template<typename> typename filter, typename... current>
+    struct filtered_tuple_impl<filter, std::tuple<>, std::tuple<current...>> {
         using type = std::tuple<current...>;
     };
 
-    using type = typename closure<std::tuple<Ts...>, std::tuple<>>::type;
-};
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<template<typename> typename filter, typename... Ts>
+struct filtered_tuple : detail::filtered_tuple_impl<filter, std::tuple<Ts...>, std::tuple<>> {};
+template<template<typename> typename filter, typename... Ts>
+struct filtered_tuple<filter, std::tuple<Ts...>> : detail::filtered_tuple_impl<filter, std::tuple<Ts...>, std::tuple<>> {};
 template<template<typename> typename filter, typename... Ts>
 using filtered_tuple_t = typename filtered_tuple<filter, Ts...>::type;
 
