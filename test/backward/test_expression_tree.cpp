@@ -18,6 +18,7 @@ int main() {
 
         using leaves_t = adpp::backward::leaf_symbols_t<decltype(a)>;
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
+        static_assert(adpp::type_size_v<leaves_t> == 1);
 
         constexpr auto leaves = leaf_symbols_of(a);
         static_assert(std::tuple_size_v<decltype(leaves)> == 1);
@@ -33,6 +34,7 @@ int main() {
 
         using leaves_t = adpp::backward::leaf_symbols_t<decltype(a)>;
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
+        static_assert(adpp::type_size_v<leaves_t> == 1);
 
         constexpr auto leaves = leaf_symbols_of(a);
         static_assert(std::tuple_size_v<decltype(leaves)> == 1);
@@ -53,6 +55,7 @@ int main() {
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_t>);
+        static_assert(adpp::type_size_v<leaves_t> == 3);
 
         constexpr auto leaves = leaf_symbols_of(formula);
         static_assert(std::tuple_size_v<decltype(leaves)> == 3);
@@ -71,6 +74,7 @@ int main() {
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_t>);
         static_assert(!adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_t>);
+        static_assert(adpp::type_size_v<leaves_t> == 2);
 
         constexpr auto leaves = leaf_variables_of(formula);
         static_assert(std::tuple_size_v<decltype(leaves)> == 2);
