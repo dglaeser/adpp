@@ -9,11 +9,17 @@ namespace adpp {
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
 
+
 template<template<typename> typename trait>
 struct decayed_arg {
     template<typename T>
     struct type : trait<std::decay_t<T>> {};
 };
+
+
+template<typename... Ts>
+struct type_list {};
+
 
 template<typename T>
 struct is_ownable : public std::bool_constant<!std::is_lvalue_reference_v<T>> {};
@@ -24,7 +30,7 @@ inline constexpr bool is_ownable_v = is_ownable<T>::value;
 template<typename T, typename... Ts>
 struct is_any_of : public std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
 template<typename T, typename... Ts>
-struct is_any_of<T, std::tuple<Ts...>> : public is_any_of<T, Ts...> {};
+struct is_any_of<T, type_list<Ts...>> : public is_any_of<T, Ts...> {};
 template<typename T, typename... Ts>
 inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
 
@@ -59,22 +65,22 @@ namespace detail {
         using type = std::conditional_t<
             is_any_of_v<T, Ts...>,
             typename unique_tuple<Ts...>::type,
-            typename unique_tuple<std::tuple<T>, Ts...>::type
+            typename unique_tuple<type_list<T>, Ts...>::type
         >;
     };
 
     template<typename T>
-    struct unique_tuple<T> : public std::type_identity<std::tuple<T>> {};
+    struct unique_tuple<T> : public std::type_identity<type_list<T>> {};
 
     template<typename... Ts>
-    struct unique_tuple<std::tuple<Ts...>> : public std::type_identity<std::tuple<Ts...>> {};
+    struct unique_tuple<type_list<Ts...>> : public std::type_identity<type_list<Ts...>> {};
 
     template<typename... Ts, typename T, typename... Rest>
-    struct unique_tuple<std::tuple<Ts...>, T, Rest...> {
+    struct unique_tuple<type_list<Ts...>, T, Rest...> {
         using type = std::conditional_t<
             is_any_of_v<T, Ts...>,
-            typename unique_tuple<std::tuple<Ts...>, Rest...>::type,
-            typename unique_tuple<std::tuple<Ts..., T>, Rest...>::type
+            typename unique_tuple<type_list<Ts...>, Rest...>::type,
+            typename unique_tuple<type_list<Ts..., T>, Rest...>::type
         >;
     };
 
@@ -82,8 +88,8 @@ namespace detail {
     struct merged_tuple;
 
     template<typename... As, typename... Bs>
-    struct merged_tuple<std::tuple<As...>, std::tuple<Bs...>> {
-        using type = std::tuple<As..., Bs...>;
+    struct merged_tuple<type_list<As...>, type_list<Bs...>> {
+        using type = type_list<As..., Bs...>;
     };
 
 }  // namespace detail
@@ -106,25 +112,25 @@ namespace detail {
     template<template<typename> typename filter, typename...>
     struct filtered_tuple_impl;
     template<template<typename> typename filter, typename T, typename... rest, typename... current>
-    struct filtered_tuple_impl<filter, std::tuple<T, rest...>, std::tuple<current...>> {
+    struct filtered_tuple_impl<filter, type_list<T, rest...>, type_list<current...>> {
         using type = std::conditional_t<
             filter<T>::value,
-            typename filtered_tuple_impl<filter, std::tuple<rest...>, merged_tuple_t<std::tuple<T>, std::tuple<current...>>>::type,
-            typename filtered_tuple_impl<filter, std::tuple<rest...>, std::tuple<current...>>::type
+            typename filtered_tuple_impl<filter, type_list<rest...>, merged_tuple_t<type_list<T>, type_list<current...>>>::type,
+            typename filtered_tuple_impl<filter, type_list<rest...>, type_list<current...>>::type
         >;
     };
     template<template<typename> typename filter, typename... current>
-    struct filtered_tuple_impl<filter, std::tuple<>, std::tuple<current...>> {
-        using type = std::tuple<current...>;
+    struct filtered_tuple_impl<filter, type_list<>, type_list<current...>> {
+        using type = type_list<current...>;
     };
 
 }  // namespace detail
 #endif  // DOXYGEN
 
 template<template<typename> typename filter, typename... Ts>
-struct filtered_tuple : detail::filtered_tuple_impl<filter, std::tuple<Ts...>, std::tuple<>> {};
+struct filtered_tuple : detail::filtered_tuple_impl<filter, type_list<Ts...>, type_list<>> {};
 template<template<typename> typename filter, typename... Ts>
-struct filtered_tuple<filter, std::tuple<Ts...>> : detail::filtered_tuple_impl<filter, std::tuple<Ts...>, std::tuple<>> {};
+struct filtered_tuple<filter, type_list<Ts...>> : detail::filtered_tuple_impl<filter, type_list<Ts...>, type_list<>> {};
 template<template<typename> typename filter, typename... Ts>
 using filtered_tuple_t = typename filtered_tuple<filter, Ts...>::type;
 

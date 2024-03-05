@@ -80,40 +80,40 @@ namespace detail {
     struct leaf_symbols_impl;
 
     template<typename E, typename... Ts> requires(is_leaf_expression_v<E>)
-    struct leaf_symbols_impl<E, std::tuple<Ts...>> {
+    struct leaf_symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             traits::is_symbol<std::remove_cvref_t<E>>::value,
-            typename unique_tuple<std::tuple<Ts...>, std::remove_cvref_t<E>>::type,
-            std::tuple<Ts...>
+            typename unique_tuple<type_list<Ts...>, std::remove_cvref_t<E>>::type,
+            type_list<Ts...>
         >;
     };
 
     template<typename E, typename... Ts> requires(!is_leaf_expression_v<E>)
-    struct leaf_symbols_impl<E, std::tuple<Ts...>> {
+    struct leaf_symbols_impl<E, type_list<Ts...>> {
         using type = typename leaf_symbols_impl<
             typename traits::sub_expressions<std::remove_cvref_t<E>>::operands,
-            std::tuple<Ts...>
+            type_list<Ts...>
         >::type;
     };
 
     template<typename E0, typename... Es, typename... Ts>
-    struct leaf_symbols_impl<std::tuple<E0, Es...>, std::tuple<Ts...>> {
+    struct leaf_symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
         using type = typename unique_tuple<
             typename merged_tuple<
-                typename leaf_symbols_impl<E0, std::tuple<Ts...>>::type,
-                typename leaf_symbols_impl<Es..., std::tuple<Ts...>>::type
+                typename leaf_symbols_impl<E0, type_list<Ts...>>::type,
+                typename leaf_symbols_impl<Es..., type_list<Ts...>>::type
             >::type
         >::type;
     };
 
     template<typename... Ts>
-    struct leaf_symbols_impl<std::tuple<Ts...>> : std::type_identity<std::tuple<Ts...>> {};
+    struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
 
 template<detail::traversable_expression E>
-struct leaf_symbols : detail::leaf_symbols_impl<E, std::tuple<>> {};
+struct leaf_symbols : detail::leaf_symbols_impl<E, type_list<>> {};
 
 template<detail::traversable_expression E>
 using leaf_symbols_t = typename leaf_symbols<E>::type;

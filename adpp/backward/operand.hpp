@@ -204,7 +204,7 @@ namespace traits {
 
 template<typename O, typename E>
 struct sub_expressions<unary_operator<O, E>> {
-    using operands = std::tuple<typename unary_operator<O, E>::operand_type>;
+    using operands = type_list<typename unary_operator<O, E>::operand_type>;
 
     static constexpr auto get(const unary_operator<O, E>& op) {
         return std::forward_as_tuple(op.operand());
@@ -213,7 +213,7 @@ struct sub_expressions<unary_operator<O, E>> {
 
 template<typename O, typename A, typename B>
 struct sub_expressions<binary_operator<O, A, B>> {
-    using operands = std::tuple<
+    using operands = type_list<
         typename binary_operator<O, A, B>::first_type,
         typename binary_operator<O, A, B>::second_type
     >;

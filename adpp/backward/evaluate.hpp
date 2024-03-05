@@ -24,7 +24,7 @@ namespace detail {
     struct bindings_contain_all_leaves;
 
     template<typename... T, typename... B>
-    struct bindings_contain_all_leaves<std::tuple<T...>, B...> {
+    struct bindings_contain_all_leaves<type_list<T...>, B...> {
         static constexpr bool value = std::conjunction_v<bindings_contain<T, B...>...>;
     };
 
