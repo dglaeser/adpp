@@ -25,56 +25,28 @@ namespace detail {
         }
     );
 
-    template<typename Filter, typename F, traversable_expression E, typename... L>
-        requires(std::conjunction_v<traits::is_leaf_expression<L>...>)
-    inline constexpr auto visit_expression(const F& sub_expr_callback, std::tuple<const L&...>&& leaves, const E& e) {
-        if constexpr (is_leaf_expression_v<E>) {
-            if constexpr (!traits::is_symbol<E>::value || contains_decay_v<E, L...> || !Filter::template include<E>)
-                return std::move(leaves);
+    template<typename filter, typename... current>
+    inline constexpr auto collect_leaves(const filter&, std::tuple<current...>&& collected) {
+        return std::move(collected);
+    }
+
+    template<typename filter, typename... current, traversable_expression E0, typename... E>
+    inline constexpr auto collect_leaves(const filter& f, std::tuple<current...>&& collected, const E0& e0, const E&... e) {
+        if constexpr (is_leaf_expression_v<std::remove_cvref_t<E0>>) {
+            if constexpr (traits::is_symbol<E0>::value && filter::template include<E0> && !contains_decay_v<E0, current...>)
+                return collect_leaves(f, std::tuple_cat(std::tuple<const E0&>{e0}, std::move(collected)), e...);
             else
-                return std::tuple_cat(std::tuple<const E&>{e}, std::move(leaves));
+                return collect_leaves(f, std::move(collected), e...);
         } else {
-            return std::apply([&] <typename... SE> (SE&&... sub_expr) {
-                return sub_expr_callback(std::move(leaves), std::forward<SE>(sub_expr)...);
-            }, traits::sub_expressions<E>::get(e));
+            return collect_leaves(
+                f,
+                std::apply([&] <typename... S> (const S&... sub_exprs) {
+                    return collect_leaves(f, std::move(collected), sub_exprs...);
+                }, traits::sub_expressions<E0>::get(e0)),
+                e...
+            );
         }
     }
-
-    template<typename Filter, typename F, traversable_expression E0, traversable_expression... E, typename... L>
-        requires(std::conjunction_v<traits::is_leaf_expression<L>...>)
-    inline constexpr auto concatenate_leaf_expressions_impl(const F& sub_expr_callback, std::tuple<const L&...>&& leaves, const E0& e0, const E&... e) {
-        auto first_processed = visit_expression<Filter>(sub_expr_callback, std::move(leaves), e0);
-        if constexpr (sizeof...(E) == 0)
-            return std::move(first_processed);
-        else
-            return concatenate_leaf_expressions_impl<Filter>(sub_expr_callback, std::move(first_processed), e...);
-    }
-
-    template<typename Filter, typename... L, traversable_expression... E>
-        requires(std::conjunction_v<traits::is_leaf_expression<L>...>)
-    inline constexpr auto concatenate_leaf_expressions(std::tuple<const L&...>&& leaves, const E&... e) {
-        if constexpr (sizeof...(E) == 0) {
-            return std::move(leaves);
-        } else if constexpr (sizeof...(E) == 1) {
-            return visit_expression<Filter>([] <typename... SE> (auto&& result, SE&&... sub_expr) {
-                return concatenate_leaf_expressions<Filter>(std::move(result), std::forward<SE>(sub_expr)...);
-            }, std::move(leaves), e...);
-        } else {
-            return concatenate_leaf_expressions_impl<Filter>([] <typename... SE> (auto&& result, SE&&... sub_expr) {
-                return concatenate_leaf_expressions<Filter>(std::move(result), std::forward<SE>(sub_expr)...);
-            }, std::move(leaves), e...);
-        }
-    }
-
-    struct null_filter {
-        template<typename T>
-        static constexpr bool include = true;
-    };
-
-    struct var_filter {
-        template<typename T>
-        static constexpr bool include = traits::is_var<std::remove_cvref_t<T>>::value;
-    };
 
     template<typename...>
     struct leaf_symbols_impl;
@@ -109,6 +81,16 @@ namespace detail {
     template<typename... Ts>
     struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
+    struct var_filter {
+        template<typename T>
+        static constexpr bool include = traits::is_var<std::remove_cvref_t<T>>::value;
+    };
+
+    struct null_filter {
+        template<typename T>
+        static constexpr bool include = true;
+    };
+
 }  // namespace detail
 #endif  // DOXYGEN
 
@@ -126,12 +108,12 @@ using leaf_vars_t = typename leaf_vars<E>::type;
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_symbols_of(const E& e) {
-    return detail::concatenate_leaf_expressions<detail::null_filter>(std::tuple{}, e);
+    return detail::collect_leaves(detail::null_filter{}, std::tuple<>{}, e);
 }
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_variables_of(const E& e) {
-    return detail::concatenate_leaf_expressions<detail::var_filter>(std::tuple{}, e);
+    return detail::collect_leaves(detail::var_filter{}, std::tuple<>{}, e);
 }
 
 }  // namespace adpp
