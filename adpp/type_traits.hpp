@@ -6,6 +6,22 @@
 
 namespace adpp {
 
+    #ifndef DOXYGEN
+namespace detail {
+
+    template<typename T, std::size_t s = sizeof(T)>
+    std::false_type is_incomplete(T*);
+    std::true_type is_incomplete(...);
+
+}  // end namespace detail
+#endif  // DOXYGEN
+
+template<typename T>
+struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
+template<typename T>
+inline constexpr bool is_complete_v = is_complete<T>::value;
+
+
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
 
@@ -19,6 +35,14 @@ struct decayed_arg {
 
 template<typename... Ts>
 struct type_list {};
+
+
+template<typename T>
+struct type_size;
+template<typename... Ts>
+struct type_size<type_list<Ts...>> : std::integral_constant<std::size_t, sizeof...(Ts)> {};
+template<typename T> requires(is_complete_v<type_size<T>>)
+inline constexpr std::size_t type_size_v = type_size<T>::value;
 
 
 template<typename T>
@@ -133,21 +157,5 @@ template<template<typename> typename filter, typename... Ts>
 struct filtered_tuple<filter, type_list<Ts...>> : detail::filtered_tuple_impl<filter, type_list<Ts...>, type_list<>> {};
 template<template<typename> typename filter, typename... Ts>
 using filtered_tuple_t = typename filtered_tuple<filter, Ts...>::type;
-
-
-#ifndef DOXYGEN
-namespace detail {
-
-    template<typename T, std::size_t s = sizeof(T)>
-    std::false_type is_incomplete(T*);
-    std::true_type is_incomplete(...);
-
-}  // end namespace detail
-#endif  // DOXYGEN
-
-template<typename T>
-struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
-template<typename T>
-inline constexpr bool is_complete_v = is_complete<T>::value;
 
 }  // namespace adpp
