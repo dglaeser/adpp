@@ -101,7 +101,7 @@ template<detail::traversable_expression E>
 using leaf_symbols_t = typename leaf_symbols<E>::type;
 
 template<detail::traversable_expression E>
-struct leaf_vars : filtered_tuple<typename decayed_arg<traits::is_var>::type, leaf_symbols_t<E>> {};
+struct leaf_vars : filtered_tuple<decayed_arg<traits::is_var>::type, leaf_symbols_t<E>> {};
 
 template<detail::traversable_expression E>
 using leaf_vars_t = typename leaf_vars<E>::type;
