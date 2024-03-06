@@ -45,6 +45,14 @@ template<typename T> requires(is_complete_v<type_size<T>>)
 inline constexpr std::size_t type_size_v = type_size<T>::value;
 
 
+template<typename... T>
+struct first_type;
+template<typename T, typename... Ts>
+struct first_type<type_list<T, Ts...>> : std::type_identity<T> {};
+template<typename... T>
+using first_type_t = typename first_type<T...>::type;
+
+
 template<typename T>
 struct is_ownable : std::bool_constant<!std::is_lvalue_reference_v<T>> {};
 template<typename T>
