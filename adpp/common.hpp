@@ -5,6 +5,9 @@
 #include <utility>
 #include <memory>
 
+#include <adpp/type_traits.hpp>
+#include <adpp/concepts.hpp>
+
 namespace adpp {
 
 template<unsigned int i>
@@ -51,5 +54,32 @@ constexpr bool is_same_object(A&& a, B&& b) {
         return std::addressof(a) == std::addressof(b);
     return false;
 }
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+template<std::size_t I, typename T>
+struct indexed_element {
+    using index = index_constant<I>;
+
+    template<concepts::same_decay_t_as<T> _T>
+    constexpr index index_of() const noexcept { return {}; }
+    constexpr index index_of(const T&) const noexcept { return {}; }
+};
+
+template<typename... Ts>
+struct indexed;
+
+template<std::size_t... I, typename... Ts>
+struct indexed<std::index_sequence<I...>, Ts...> : indexed_element<I, Ts>... {
+    using indexed_element<I, Ts>::index_of...;
+};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<typename... Ts> requires(are_unique_v<Ts...>)
+struct indexed : detail::indexed<std::make_index_sequence<sizeof...(Ts)>, Ts...> {};
 
 }  // namespace adpp
