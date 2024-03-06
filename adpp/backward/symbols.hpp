@@ -66,7 +66,7 @@ struct symbol : operand {
     }
 
     template<typename Self, typename B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>& vars) {
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
         using value_type = std::remove_cvref_t<decltype(bindings[self])>;
         derivatives<value_type, V...> derivs{};
         if constexpr (contains_decay_v<Self, V...>)
