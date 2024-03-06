@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <utility>
+#include <chrono>
 
 #define ADD_2(x) x + x
 #define ADD_4(x) ADD_2(x) + ADD_2(x)
@@ -14,46 +15,10 @@
 
 #if USE_AUTODIFF
 #include <autodiff/reverse/var.hpp>
-
-autodiff::var make_var(auto&& v) {
-    return {std::move(v)};
-}
-
-autodiff::var as_expr(auto&& expression) {
-    return {std::move(expression)};
-}
-
-double result_of(const auto& expression, const auto&...) {
-    return double(expression);
-}
-
-template<typename E>
-double derivative(E&& expression, const auto& x, const auto& y, double xv, double yv) {
-    auto [de_dx] = derivatives(std::forward<E>(expression), wrt(x));
-    return de_dx;
-}
 #else
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/evaluate.hpp>
 #include <adpp/backward/differentiate.hpp>
-
-template<auto _ = [] () {}>
-auto make_var(auto&&) {
-    return adpp::backward::var<double, _>{};
-}
-
-auto as_expr(auto&& expression) {
-    return std::move(expression);
-}
-
-double result_of(const auto& expression, const auto& x, const auto& y, double xv, double yv) {
-    return adpp::backward::evaluate(expression, at(x = xv, y = yv));
-}
-
-template<typename E>
-double derivative(E&& expression, const auto& x, const auto& y, double xv, double yv) {
-    return derivative_of(expression, wrt(x), at(x = xv, y = yv));
-}
 #endif
 
 int main(int argc, char** argv) {
@@ -61,32 +26,40 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Expected two input arguments (x, y)");
 
     double xv = std::atof(argv[1]);
-    double yv = std::atof(argv[1]);
-    auto x = make_var(xv);
-    auto y = make_var(yv);
+    double yv = std::atof(argv[2]);
 
     constexpr std::size_t N = 10000;
-    std::array<double, N> values;
-    std::array<double, N> derivs;
+    double value = 0.0;
+    std::array derivs{0.0, 0.0};
     for (unsigned int i = 0; i < N; ++i) {
-        auto expression = as_expr(GENERATE_EXPRESSION(x, y));
-        auto r = result_of(expression, x, y, xv, yv);
-        auto dr_dx = derivative(expression, x, y, xv, yv);
+#if USE_AUTODIFF
+        autodiff::var x;
+        autodiff::var y;
+        const autodiff::var expression = GENERATE_EXPRESSION(x, y);
+        const auto r = double(expression);
+        const auto [dr_dx] = derivatives(expression, wrt(x));
+        const auto [dr_dy] = derivatives(expression, wrt(y));
+#else
+        adpp::backward::var<double> x;
+        adpp::backward::var<double> y;
+        const auto expression = GENERATE_EXPRESSION(x, y);
+        const auto r = evaluate(expression, at(x = xv, y = yv));
+        const auto dr_dx = derivative_of(expression, wrt(x), at(x = xv, y = yv));
+        const auto dr_dy = derivative_of(expression, wrt(y), at(x = xv, y = yv));
+#endif
 
-        values[i] = r;
-        derivs[i] = dr_dx;
+        value += r;
+        derivs[0] += dr_dx;
+        derivs[1] += dr_dy;
     }
 
-    if (argc > 1) {
-        double avg = 0, avg_deriv = 0;
-        for (unsigned int i = 0; i < N; ++i) {
-            avg += values[i];
-            avg_deriv += derivs[i];
-        }
-        avg /= N;
-        avg_deriv /= N;
-        std::cout << "r = " << avg << std::endl;
-        std::cout << "∂r/∂x = " << avg_deriv << std::endl;
-    }
+    value /= N;
+    derivs[0] /= N;
+    derivs[1] /= N;
+
+    std::cout << "r = " << value << std::endl;
+    std::cout << "∂r/∂x = " << derivs[0] << std::endl;
+    std::cout << "∂r/∂y = " << derivs[1] << std::endl;
+
     return 0;
 }

@@ -21,30 +21,30 @@ int main(int argc, char** argv) {
         throw std::runtime_error("Expected two input arguments (x, y)");
 
     double xv = std::atof(argv[1]);
-    double yv = std::atof(argv[1]);
+    double yv = std::atof(argv[2]);
     adpp::backward::var x;
     adpp::backward::var y;
 
     constexpr std::size_t N = 10000;
-    std::array<std::array<double, 2>, N> grads;
+    double value = 0.0;
+    std::array derivs{0.0, 0.0};
     for (unsigned int i = 0; i < N; ++i) {
         auto expression = GENERATE_EXPRESSION(x, y);
+        auto eval = evaluate(expression, at(x = xv, y = yv));
         auto gradient = grad(expression, at(x = xv, y = yv));
-        grads[i][0] = gradient[x];
-        grads[i][1] = gradient[y];
+
+        value += eval;
+        derivs[0] += gradient[x];
+        derivs[1] += gradient[y];
     }
 
-    if (argc > 1) {
-        double avg_x = 0, avg_y = 0;
-        for (unsigned int i = 0; i < N; ++i) {
-            avg_x += grads[i][0];
-            avg_y += grads[i][1];
-        }
-        avg_x /= N;
-        avg_y /= N;
-        std::cout << "∂r/∂x = " << avg_x << std::endl;
-        std::cout << "∂r/∂y = " << avg_y << std::endl;
-    }
+    value /= N;
+    derivs[0] /= N;
+    derivs[1] /= N;
+
+    std::cout << "f(x, y) = " << value << std::endl;
+    std::cout << "∂r/∂x = " << derivs[0] << std::endl;
+    std::cout << "∂r/∂y = " << derivs[1] << std::endl;
 
     return 0;
 }
