@@ -59,7 +59,7 @@ inline constexpr auto grad(const E& expression, const bindings<B...>& bindings) 
 }
 
 template<typename... V>
-inline constexpr auto wrt(V&&... vars) {
+inline constexpr auto wrt(V&&...) {
     return type_list<std::remove_cvref_t<V>...>{};
 }
 
