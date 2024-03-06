@@ -84,12 +84,12 @@ template<detail::traversable_expression E>
 using leaf_vars_t = typename leaf_vars<E>::type;
 
 template<detail::traversable_expression E>
-inline constexpr auto leaf_symbols_of(const E& e) {
+inline constexpr auto leaf_symbols_of(const E&) {
     return leaf_symbols_t<E>{};
 }
 
 template<detail::traversable_expression E>
-inline constexpr auto leaf_variables_of(const E& e) {
+inline constexpr auto leaf_variables_of(const E&) {
     return leaf_vars_t<E>{};
 }
 
