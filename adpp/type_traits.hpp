@@ -70,6 +70,8 @@ inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
 template<typename T, typename... Ts>
 struct contains_decay : is_any_of<std::decay_t<T>, std::decay_t<Ts>...> {};
 template<typename T, typename... Ts>
+struct contains_decay<T, type_list<Ts...>> : contains_decay<T, Ts...> {};
+template<typename T, typename... Ts>
 inline constexpr bool contains_decay_v = contains_decay<T, Ts...>::value;
 
 
@@ -85,6 +87,7 @@ struct are_unique<T1, T2, Ts...> {
 template<typename T1, typename T2> struct are_unique<T1, T2> : std::bool_constant<!std::is_same_v<T1, T2>> {};
 template<typename T> struct are_unique<T> : std::true_type {};
 template<> struct are_unique<> : std::true_type {};
+template<typename... T> struct are_unique<type_list<T...>> : are_unique<T...> {};
 template<typename... Ts>
 inline constexpr bool are_unique_v = are_unique<Ts...>::value;
 
@@ -104,9 +107,6 @@ namespace detail {
     template<typename T>
     struct unique_tuple<T> : std::type_identity<type_list<T>> {};
 
-    template<typename... Ts>
-    struct unique_tuple<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
-
     template<typename... Ts, typename T, typename... Rest>
     struct unique_tuple<type_list<Ts...>, T, Rest...> {
         using type = std::conditional_t<
@@ -115,6 +115,9 @@ namespace detail {
             typename unique_tuple<type_list<Ts..., T>, Rest...>::type
         >;
     };
+
+    template<typename... Ts>
+    struct unique_tuple<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
     template<typename A, typename B>
     struct merged_tuple;
@@ -127,8 +130,14 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+
+// TODO: Rename, these arent tuples...s
 template<typename T, typename... Ts>
 struct unique_tuple : detail::unique_tuple<T, Ts...> {};
+template<typename... Ts> requires(sizeof...(Ts) > 0)
+struct unique_tuple<type_list<Ts...>> : detail::unique_tuple<Ts...> {};
+template<>
+struct unique_tuple<type_list<>> : std::type_identity<type_list<>> {};
 template<typename A, typename... Ts>
 using unique_tuple_t = typename unique_tuple<A, Ts...>::type;
 
