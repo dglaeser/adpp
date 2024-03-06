@@ -75,20 +75,18 @@ struct val : operand {
             return self._value.get();
     }
 
-    template<typename B>
-    constexpr decltype(auto) evaluate_at(B&&) const noexcept {
+    template<typename... B>
+    constexpr decltype(auto) evaluate_at(const bindings<B...>&) const noexcept {
         return _value.get();
     }
 
-    template<typename Self, typename B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
-        static_assert(!contains_decay_v<Self, V...>, "Derivative w.r.t. constant value requested");
-        return std::make_pair(self.evaluate_at(bindings), derivatives{std::remove_cvref_t<T>{}, vars...});
+    template<typename Self, typename... B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>&) {
+        return std::make_pair(self.evaluate_at(bindings), derivatives<T, V...>{});
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, V&&) {
-        static_assert(!concepts::same_decay_t_as<Self, V>, "Derivative w.r.t. constant value requested");
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
         return val<T>{T{0}};
     }
 
@@ -110,6 +108,14 @@ namespace traits {
 template<typename T>
 struct is_leaf_expression<val<T>> : public std::true_type {};
 
+template<concepts::arithmetic T>
+struct into_operand<T> {
+    template<concepts::same_decay_t_as<T> _T>
+    static constexpr auto get(_T&& t) noexcept {
+        return val{std::forward<_T>(t)};
+    }
+};
+
 }  // namespace traits
 
 template<typename O, typename E>
@@ -121,19 +127,19 @@ class unary_operator : public operand  {
     : _expression{std::forward<E>(e)}
     {}
 
-    template<typename B>
-    constexpr decltype(auto) evaluate_at(const B& bindings) const noexcept {
-        return O{}(_expression.get().evaluate_at(bindings));
+    template<typename... B>
+    constexpr decltype(auto) evaluate_at(const bindings<B...>& values) const noexcept {
+        return O{}(_expression.get().evaluate_at(values));
     }
 
-    template<typename B, typename... V>
-    constexpr auto back_propagate(const B& bindings, const V&... vars) const {
-        return traits::differentiator<O>::back_propagate(bindings, _expression.get(), vars...);
+    template<typename... B, typename... V>
+    constexpr auto back_propagate(const bindings<B...>& values, const type_list<V...>& vars) const {
+        return traits::differentiator<O>::back_propagate(values, _expression.get(), vars);
     }
 
     template<typename V>
-    constexpr auto differentiate_wrt(V&& var) const {
-        return traits::differentiator<O>::differentiate(_expression.get(), std::forward<V>(var));
+    constexpr auto differentiate_wrt(const type_list<V>& var) const {
+        return traits::differentiator<O>::differentiate(_expression.get(), var);
     }
 
     template<typename... V>
@@ -165,22 +171,22 @@ class binary_operator : public operand {
     , _b{std::forward<B>(b)}
     {}
 
-    template<typename _B>
-    constexpr decltype(auto) evaluate_at(const _B& bindings) const noexcept {
+    template<typename... _B>
+    constexpr decltype(auto) evaluate_at(const bindings<_B...>& values) const noexcept {
         return O{}(
-            _a.get().evaluate_at(bindings),
-            _b.get().evaluate_at(bindings)
+            _a.get().evaluate_at(values),
+            _b.get().evaluate_at(values)
         );
     }
 
-    template<typename _B, typename... V>
-    constexpr auto back_propagate(const _B& bindings, const V&... vars) const {
-        return traits::differentiator<O>::back_propagate(bindings, _a.get(), _b.get(), vars...);
+    template<typename... _B, typename... V>
+    constexpr auto back_propagate(const bindings<_B...>& bindings, const type_list<V...>& vars) const {
+        return traits::differentiator<O>::back_propagate(bindings, _a.get(), _b.get(), vars);
     }
 
     template<typename V>
-    constexpr auto differentiate_wrt(V&& var) const {
-        return traits::differentiator<O>::differentiate(_a.get(), _b.get(), std::forward<V>(var));
+    constexpr auto differentiate_wrt(const type_list<V>& var) const {
+        return traits::differentiator<O>::differentiate(_a.get(), _b.get(), var);
     }
 
     template<typename... V>

@@ -7,9 +7,11 @@
 #include <adpp/dtype.hpp>
 #include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
+#include <adpp/type_traits.hpp>
 
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/operand.hpp>
+#include <adpp/backward/bindings.hpp>
 #include <adpp/backward/derivative.hpp>
 
 namespace adpp::backward {
@@ -57,22 +59,23 @@ struct symbol : operand {
         return self.bind(std::forward<V>(value));
     }
 
-    template<typename Self, typename B>
-    constexpr decltype(auto) evaluate_at(this Self&& self, const B& bindings) noexcept {
-        return bindings[self];
+    template<typename Self, typename... B>
+        requires(bindings<B...>::template contains_bindings_for<Self>)
+    constexpr decltype(auto) evaluate_at(this Self&& self, const bindings<B...>& b) noexcept {
+        return b[self];
     }
 
     template<typename Self, typename B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>& vars) {
         using value_type = std::remove_cvref_t<decltype(bindings[self])>;
-        derivatives derivs{value_type{}, vars...};
+        derivatives<value_type, V...> derivs{};
         if constexpr (contains_decay_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, V&&) {
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
         if constexpr (concepts::same_decay_t_as<Self, V>)
             return val<int>{1};
         else
@@ -80,6 +83,7 @@ struct symbol : operand {
     }
 
     template<typename Self, typename... V>
+        requires(bindings<V...>::template contains_bindings_for<Self>)
     constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
         out << name_bindings[self];
         return out;
@@ -113,14 +117,6 @@ template<typename T, auto _> struct is_var<var<T, _>> : public std::true_type {}
 template<typename T, auto _> struct is_leaf_expression<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_let<let<T, _>> : public std::true_type {};
-
-template<concepts::arithmetic T>
-struct into_operand<T> {
-    template<concepts::same_decay_t_as<T> _T>
-    static constexpr auto get(_T&& t) noexcept {
-        return val{std::forward<_T>(t)};
-    }
-};
 
 template<typename T, auto _>
 struct into_operand<var<T, _>> {

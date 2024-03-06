@@ -49,18 +49,18 @@ struct function {
     {}
 
     template<typename... B>
-    constexpr decltype(auto) operator()(B&&... bindings) const {
-        return evaluate_at(at(std::forward<B>(bindings)...));
+    constexpr decltype(auto) operator()(B&&... values) const {
+        return evaluate_at(at(std::forward<B>(values)...));
     }
 
     template<typename... B>
-    constexpr decltype(auto) operator()(const bindings<B...>& bindings) const {
-        return evaluate_at(bindings);
+    constexpr decltype(auto) operator()(const bindings<B...>& values) const {
+        return evaluate_at(values);
     }
 
-    template<typename B>
-    constexpr decltype(auto) evaluate_at(const B& bindings) const {
-        return _e.evaluate_at(bindings);
+    template<typename... B>
+    constexpr decltype(auto) evaluate_at(const bindings<B...>& values) const {
+        return _e.evaluate_at(values);
     }
 
     template<typename... Args>

@@ -25,29 +25,6 @@ namespace detail {
         }
     );
 
-    template<typename filter, typename... current>
-    inline constexpr auto collect_leaves(const filter&, std::tuple<current...>&& collected) {
-        return std::move(collected);
-    }
-
-    template<typename filter, typename... current, traversable_expression E0, typename... E>
-    inline constexpr auto collect_leaves(const filter& f, std::tuple<current...>&& collected, const E0& e0, const E&... e) {
-        if constexpr (is_leaf_expression_v<std::remove_cvref_t<E0>>) {
-            if constexpr (traits::is_symbol<E0>::value && filter::template include<E0> && !contains_decay_v<E0, current...>)
-                return collect_leaves(f, std::tuple_cat(std::tuple<const E0&>{e0}, std::move(collected)), e...);
-            else
-                return collect_leaves(f, std::move(collected), e...);
-        } else {
-            return collect_leaves(
-                f,
-                std::apply([&] <typename... S> (const S&... sub_exprs) {
-                    return collect_leaves(f, std::move(collected), sub_exprs...);
-                }, traits::sub_expressions<E0>::get(e0)),
-                e...
-            );
-        }
-    }
-
     template<typename...>
     struct leaf_symbols_impl;
 
@@ -56,7 +33,7 @@ namespace detail {
         using type = std::conditional_t<
             traits::is_symbol<std::remove_cvref_t<E>>::value,
             typename unique_tuple<type_list<Ts...>, std::remove_cvref_t<E>>::type,
-            type_list<Ts...>
+            typename unique_tuple<type_list<Ts...>>::type
         >;
     };
 
@@ -73,13 +50,13 @@ namespace detail {
         using type = typename unique_tuple<
             typename merged_tuple<
                 typename leaf_symbols_impl<E0, type_list<Ts...>>::type,
-                typename leaf_symbols_impl<Es..., type_list<Ts...>>::type
+                typename leaf_symbols_impl<type_list<Es...>, type_list<Ts...>>::type
             >::type
         >::type;
     };
 
-    template<typename... Ts>
-    struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
+    template<typename... Ts> struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
+    template<typename... Ts> struct leaf_symbols_impl<type_list<>, type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
     struct var_filter {
         template<typename T>
@@ -108,12 +85,12 @@ using leaf_vars_t = typename leaf_vars<E>::type;
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_symbols_of(const E& e) {
-    return detail::collect_leaves(detail::null_filter{}, std::tuple<>{}, e);
+    return leaf_symbols_t<E>{};
 }
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_variables_of(const E& e) {
-    return detail::collect_leaves(detail::var_filter{}, std::tuple<>{}, e);
+    return leaf_vars_t<E>{};
 }
 
 }  // namespace adpp

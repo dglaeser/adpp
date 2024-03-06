@@ -21,10 +21,9 @@ int main() {
         static_assert(adpp::type_size_v<leaves_t> == 1);
 
         constexpr auto leaves = leaf_symbols_of(a);
-        static_assert(std::tuple_size_v<decltype(leaves)> == 1);
-        static_assert(adpp::is_same_object(a, std::get<0>(leaves)));
+        static_assert(adpp::type_size_v<std::remove_cvref_t<decltype(leaves)>> == 1);
         static_assert(std::is_same_v<
-            std::remove_cvref_t<decltype(std::get<0>(leaves))>,
+            std::remove_cvref_t<adpp::first_type_t<std::remove_cvref_t<decltype(leaves)>>>,
             std::remove_cvref_t<decltype(a)>
         >);
     };
@@ -37,10 +36,9 @@ int main() {
         static_assert(adpp::type_size_v<leaves_t> == 1);
 
         constexpr auto leaves = leaf_symbols_of(a);
-        static_assert(std::tuple_size_v<decltype(leaves)> == 1);
-        static_assert(adpp::is_same_object(a, std::get<0>(leaves)));
+        static_assert(adpp::type_size_v<std::remove_cvref_t<decltype(leaves)>> == 1);
         static_assert(std::is_same_v<
-            std::remove_cvref_t<decltype(std::get<0>(leaves))>,
+            std::remove_cvref_t<adpp::first_type_t<std::remove_cvref_t<decltype(leaves)>>>,
             std::remove_cvref_t<decltype(a)>
         >);
     };
@@ -56,30 +54,21 @@ int main() {
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_t>);
         static_assert(adpp::type_size_v<leaves_t> == 3);
-
-        constexpr auto leaves = leaf_symbols_of(formula);
-        static_assert(std::tuple_size_v<decltype(leaves)> == 3);
-        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
-        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
-        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(c)>&>(leaves), c));
+        static_assert(adpp::are_unique_v<leaves_t>);
     };
 
     "leaf_vars_of"_test = [] () {
         static constexpr var a;
         static constexpr var b;
         static constexpr let c;
-        constexpr auto formula = (a + b)*c - 1.0;
+        constexpr auto formula = (a + b)*b*c - 1.0;
 
         using leaves_t = adpp::backward::leaf_vars_t<decltype(formula)>;
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_t>);
         static_assert(!adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_t>);
         static_assert(adpp::type_size_v<leaves_t> == 2);
-
-        constexpr auto leaves = leaf_variables_of(formula);
-        static_assert(std::tuple_size_v<decltype(leaves)> == 2);
-        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(a)>&>(leaves), a));
-        static_assert(adpp::is_same_object(std::get<const std::remove_cvref_t<decltype(b)>&>(leaves), b));
+        static_assert(adpp::are_unique_v<leaves_t>);
     };
 
     return EXIT_SUCCESS;

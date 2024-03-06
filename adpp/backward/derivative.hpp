@@ -3,29 +3,33 @@
 #include <algorithm>
 #include <type_traits>
 
+#include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
-#include <adpp/variadic_accessor.hpp>
 
 namespace adpp::backward {
 
 template<concepts::arithmetic R, typename... Ts>
     requires(are_unique_v<Ts...>)
-struct derivatives : variadic_accessor<const Ts&...> {
+struct derivatives : indexed<const Ts&...> {
  private:
-    using base = variadic_accessor<const Ts&...>;
-    static constexpr std::size_t N = sizeof...(Ts);
+     using base = indexed<const Ts&...>;
 
  public:
     using value_type = R;
+    static constexpr std::size_t size = sizeof...(Ts);
 
-    constexpr derivatives(value_type, const Ts&... ts) noexcept
-    : base(ts...) {
+    constexpr derivatives() noexcept {
         std::ranges::fill(_values, R{0});
     }
 
     template<typename Self, typename T> requires(contains_decay_v<T, Ts...>)
     constexpr std::convertible_to<value_type> decltype(auto) operator[](this Self&& self, const T& t) noexcept {
         return self._values[self.index_of(t)];
+    }
+
+    template<typename T> requires(contains_decay_v<T, Ts...>)
+    constexpr std::convertible_to<value_type> decltype(auto) get() const noexcept {
+        return _values[base::template index_of<T>()];
     }
 
     template<typename Self, concepts::arithmetic T>
@@ -65,11 +69,7 @@ struct derivatives : variadic_accessor<const Ts&...> {
     }
 
  private:
-    std::array<value_type, N> _values;
+    std::array<value_type, size> _values;
 };
-
-template<typename R, typename... Ts>
-    requires(std::conjunction_v<std::is_lvalue_reference<Ts>...>)
-derivatives(R&&, Ts&&...) -> derivatives<std::remove_cvref_t<R>, std::remove_cvref_t<Ts>...>;
 
 }  // namespace adpp::backward

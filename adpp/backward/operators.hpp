@@ -41,10 +41,10 @@ struct differentiator<std::plus<void>> {
         const backward::bindings<V...>& bindings,
         const auto& a,
         const auto& b,
-        const auto&... vars
+        const auto& vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
-        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars);
         auto result = value_a + value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
     }
@@ -79,10 +79,10 @@ struct differentiator<std::minus<void>> {
         const backward::bindings<V...>& bindings,
         const auto& a,
         const auto& b,
-        const auto&... vars
+        const auto& vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
-        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars);
         auto result = value_a - value_b;
         return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
@@ -117,10 +117,10 @@ struct differentiator<std::multiplies<void>> {
         const backward::bindings<V...>& bindings,
         const auto& a,
         const auto& b,
-        const auto&... vars
+        const auto& vars
     ) {
-        auto [value_a, derivs_a] = a.back_propagate(bindings, vars...);
-        auto [value_b, derivs_b] = b.back_propagate(bindings, vars...);
+        auto [value_a, derivs_a] = a.back_propagate(bindings, vars);
+        auto [value_b, derivs_b] = b.back_propagate(bindings, vars);
         auto result = value_a*value_b;
         return std::make_pair(
             result,
@@ -162,9 +162,9 @@ struct differentiator<adpp::backward::operators::exp> {
     static constexpr auto back_propagate(
         const backward::bindings<V...>& bindings,
         const auto& e,
-        const auto&... vars
+        const auto& vars
     ) {
-        auto [value, derivs] = e.back_propagate(bindings, vars...);
+        auto [value, derivs] = e.back_propagate(bindings, vars);
         auto result = exp_op(value);
         return std::make_pair(result, std::move(derivs).scaled_with(result));
     }
