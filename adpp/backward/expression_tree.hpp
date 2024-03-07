@@ -19,7 +19,7 @@ namespace detail {
     concept tuple_like = is_tuple<std::remove_cvref_t<T>>::value;
 
     template<typename T>
-    concept traversable_expression = is_leaf_expression_v<std::remove_cvref_t<T>> or (
+    concept traversable_expression = is_symbol_v<std::remove_cvref_t<T>> or (
         is_complete_v<traits::sub_expressions<std::remove_cvref_t<T>>> and requires(const T& t) {
             typename traits::sub_expressions<std::remove_cvref_t<T>>::operands;
             { traits::sub_expressions<std::remove_cvref_t<T>>::get(t) } -> tuple_like;
@@ -29,7 +29,7 @@ namespace detail {
     template<typename...>
     struct leaf_symbols_impl;
 
-    template<typename E, typename... Ts> requires(is_leaf_expression_v<std::remove_cvref_t<E>>)
+    template<typename E, typename... Ts> requires(is_symbol_v<std::remove_cvref_t<E>>)
     struct leaf_symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             symbolic<std::remove_cvref_t<E>>,
@@ -38,7 +38,7 @@ namespace detail {
         >;
     };
 
-    template<typename E, typename... Ts> requires(!is_leaf_expression_v<std::remove_cvref_t<E>>)
+    template<typename E, typename... Ts> requires(!is_symbol_v<std::remove_cvref_t<E>>)
     struct leaf_symbols_impl<E, type_list<Ts...>> {
         using type = typename leaf_symbols_impl<
             typename traits::sub_expressions<std::remove_cvref_t<E>>::operands,
