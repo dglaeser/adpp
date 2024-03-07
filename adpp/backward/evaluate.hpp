@@ -40,7 +40,7 @@ namespace detail {
 #endif  // DOXYGEN
 
 template<typename E>
-    requires(detail::traversable_expression<E> or traits::is_leaf_expression<E>::value)
+    requires(detail::traversable_expression<E> or leaf_expression<E>)
 struct function {
  public:
     constexpr function(E&& e) noexcept
@@ -91,11 +91,7 @@ function(E&&) -> function<std::remove_cvref_t<E>>;
 namespace traits {
 
 template<typename E>
-struct is_leaf_expression<function<E>>
-: public is_leaf_expression<std::remove_cvref_t<E>> {};
-
-template<typename E>
-    requires(!traits::is_leaf_expression<E>::value)
+    requires(!is_leaf_expression_v<E>)
 struct sub_expressions<function<E>> {
     using operands = typename sub_expressions<std::remove_cvref_t<E>>::operands;
 

@@ -53,8 +53,15 @@ int main() {
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_t>);
         static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_t>);
-        static_assert(adpp::type_size_v<leaves_t> == 3);
+        static_assert(adpp::type_size_v<leaves_t> == 4);
         static_assert(adpp::are_unique_v<leaves_t>);
+
+        using leaves_unbound_t = adpp::backward::leaf_unbound_symbols_t<decltype(formula)>;
+        static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(a)>, leaves_unbound_t>);
+        static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(b)>, leaves_unbound_t>);
+        static_assert(adpp::is_any_of_v<std::remove_cvref_t<decltype(c)>, leaves_unbound_t>);
+        static_assert(adpp::type_size_v<leaves_unbound_t> == 3);
+        static_assert(adpp::are_unique_v<leaves_unbound_t>);
     };
 
     "leaf_vars_of"_test = [] () {

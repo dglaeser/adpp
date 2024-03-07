@@ -103,10 +103,10 @@ struct val : operand {
 template<typename T>
 val(T&&) -> val<T>;
 
-namespace traits {
-
 template<typename T>
-struct is_leaf_expression<val<T>> : public std::true_type {};
+struct is_symbol<val<T>> : std::true_type {};
+
+namespace traits {
 
 template<concepts::arithmetic T>
 struct into_operand<T> {
