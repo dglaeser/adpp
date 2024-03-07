@@ -61,6 +61,12 @@ struct symbol : operand {
 
     template<typename Self, typename... B>
         requires(bindings<B...>::template contains_bindings_for<Self>)
+    constexpr decltype(auto) operator()(this Self&& self, const bindings<B...>& bindings) noexcept {
+        return bindings[self];
+    }
+
+    template<typename Self, typename... B>
+        requires(bindings<B...>::template contains_bindings_for<Self>)
     constexpr decltype(auto) evaluate_at(this Self&& self, const bindings<B...>& b) noexcept {
         return b[self];
     }

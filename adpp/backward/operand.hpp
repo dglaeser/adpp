@@ -75,6 +75,12 @@ struct val : operand {
             return self._value.get();
     }
 
+    template<typename Self, typename... B>
+        requires(bindings<B...>::template contains_bindings_for<Self>)
+    constexpr decltype(auto) operator()(this Self&& self, const bindings<B...>& bindings) noexcept {
+        return self.unwrap();
+    }
+
     template<typename... B>
     constexpr decltype(auto) evaluate_at(const bindings<B...>&) const noexcept {
         return _value.get();
