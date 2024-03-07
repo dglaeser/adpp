@@ -13,8 +13,10 @@ namespace adpp::backward {
 #ifndef DOXYGEN
 namespace detail {
 
+    template<typename T> struct is_value_binder : std::bool_constant<binder<T>> {};
+
     template<typename... B>
-    inline constexpr bool are_binders = std::conjunction_v<traits::is_value_binder<std::remove_cvref_t<B>>...>;
+    inline constexpr bool are_binders = std::conjunction_v<is_value_binder<std::remove_cvref_t<B>>...>;
 
 }  // namespace detail
 #endif  // DOXYGEN
