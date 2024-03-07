@@ -5,7 +5,6 @@
 #include <type_traits>
 
 #include <adpp/concepts.hpp>
-#include <adpp/variadic_accessor.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/expression_tree.hpp>
