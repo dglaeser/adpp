@@ -36,8 +36,7 @@ struct is_expression : std::false_type {};
 template<typename T>
 inline constexpr bool is_expression_v = is_expression<T>::value;
 template<typename T>
-concept term = symbolic<T> or is_expression_v<T>;
-
+concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
 
 template<typename T>
 concept into_operand = is_complete_v<traits::into_operand<std::remove_cvref_t<T>>> and requires(const T& t) {
