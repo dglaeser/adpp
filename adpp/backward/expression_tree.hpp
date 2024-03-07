@@ -31,7 +31,7 @@ namespace detail {
     template<typename E, typename... Ts> requires(is_leaf_expression_v<E>)
     struct leaf_symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
-            traits::is_symbol<std::remove_cvref_t<E>>::value,
+            symbolic<std::remove_cvref_t<E>>,
             typename unique_tuple<type_list<Ts...>, std::remove_cvref_t<E>>::type,
             typename unique_tuple<type_list<Ts...>>::type
         >;
@@ -78,15 +78,28 @@ template<detail::traversable_expression E>
 using leaf_symbols_t = typename leaf_symbols<E>::type;
 
 template<detail::traversable_expression E>
+inline constexpr auto leaf_symbols_of(const E&) {
+    return leaf_symbols_t<E>{};
+}
+
+
+template<detail::traversable_expression E>
+struct leaf_unbound_symbols : filtered_tuple<decayed_arg<is_unbound_symbol>::type, leaf_symbols_t<E>> {};
+
+template<detail::traversable_expression E>
+using leaf_unbound_symbols_t = typename leaf_symbols<E>::type;
+
+template<detail::traversable_expression E>
+inline constexpr auto leaf_unbound_symbols_of(const E&) {
+    return leaf_unbound_symbols_t<E>{};
+}
+
+
+template<detail::traversable_expression E>
 struct leaf_vars : filtered_tuple<decayed_arg<traits::is_var>::type, leaf_symbols_t<E>> {};
 
 template<detail::traversable_expression E>
 using leaf_vars_t = typename leaf_vars<E>::type;
-
-template<detail::traversable_expression E>
-inline constexpr auto leaf_symbols_of(const E&) {
-    return leaf_symbols_t<E>{};
-}
 
 template<detail::traversable_expression E>
 inline constexpr auto leaf_variables_of(const E&) {

@@ -12,11 +12,27 @@ template<typename T> struct sub_expressions;
 template<typename T> struct differentiator;
 template<typename T> struct formatter;
 template<typename T> struct is_leaf_expression : public std::false_type {};
-template<typename T> struct is_symbol : public std::false_type {};
 template<typename T> struct is_var : public std::false_type {};
 template<typename T> struct is_let : public std::false_type {};
 
 }  // namespace traits
+
+
+template<typename T>
+struct is_symbol : std::false_type {};
+template<typename T>
+inline constexpr bool is_symbol_v = is_symbol<T>::value;
+template<typename T>
+concept symbolic = is_symbol_v<T>;
+
+
+template<typename T>
+struct is_unbound_symbol : std::false_type {};
+template<typename T>
+inline constexpr bool is_unbound_symbol_v = is_unbound_symbol<T>::value;
+template<typename T>
+concept unbound_symbol = is_unbound_symbol_v<T>;
+
 
 template<typename T>
 concept into_operand = is_complete_v<traits::into_operand<std::remove_cvref_t<T>>> and requires(const T& t) {

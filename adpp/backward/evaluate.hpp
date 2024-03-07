@@ -29,7 +29,7 @@ namespace detail {
 
     template<typename E, typename... B>
     concept bindings_for = traversable_expression<std::remove_cvref_t<E>>
-        and bindings_contain_all_leaves<leaf_symbols_t<E>, B...>::value;
+        and bindings_contain_all_leaves<leaf_unbound_symbols_t<E>, B...>::value;
 
     template<typename T, typename... B>
     concept expression = requires(const T& t, B&&... b) {

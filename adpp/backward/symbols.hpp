@@ -108,14 +108,17 @@ struct let : symbol<T> {
     constexpr let& operator=(const let<_T, __>&) = delete;
 };
 
+template<typename T, auto _> struct is_symbol<var<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_unbound_symbol<var<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_unbound_symbol<let<T, _>> : public std::true_type {};
+
 namespace traits {
 
 template<typename T, auto _> struct is_leaf_expression<var<T, _>> : public std::true_type {};
-template<typename T, auto _> struct is_symbol<var<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_var<var<T, _>> : public std::true_type {};
 
 template<typename T, auto _> struct is_leaf_expression<let<T, _>> : public std::true_type {};
-template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_let<let<T, _>> : public std::true_type {};
 
 template<typename T, auto _>
