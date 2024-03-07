@@ -9,7 +9,7 @@
 
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/operators.hpp>
-#include <adpp/backward/derivative.hpp>
+#include <adpp/backward/derivatives.hpp>
 #include <adpp/backward/bindings.hpp>
 
 namespace adpp::backward {
