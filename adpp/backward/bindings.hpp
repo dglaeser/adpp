@@ -28,11 +28,8 @@ struct bindings : variadic_accessor<B...> {
     template<typename T>
     using symbol_type_of = typename std::remove_cvref_t<T>::symbol_type;
 
-    template<typename T>
-    struct always_false : public std::false_type {};
-
     template<typename T, typename... Bs>
-    struct binder_type_for ;
+    struct binder_type_for;
 
     template<typename T, typename B0, typename... Bs>
     struct binder_type_for<T, B0, Bs...> {
