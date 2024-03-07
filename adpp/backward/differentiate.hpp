@@ -55,7 +55,7 @@ inline constexpr auto derivative_of(const E& expression, const type_list<V>& var
 
 template<typename E, typename... B>
 inline constexpr auto grad(const E& expression, const bindings<B...>& bindings) {
-    return derivatives_of(expression, leaf_variables_of(expression), bindings);
+    return derivatives_of(expression, variables_of(expression), bindings);
 }
 
 template<typename... V>
