@@ -84,4 +84,4 @@ namespace detail {
 template<typename T>
 inline constexpr std::size_t sub_expressions_size_v = detail::sub_expressions_size<std::remove_cvref_t<T>>::value;
 
-}  // namespace adpp
+}  // namespace adpp::backward

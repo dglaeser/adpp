@@ -60,10 +60,17 @@ struct bindings : variadic_accessor<B...> {
     : base(std::forward<B>(binders)...)
     {}
 
+    using base::get;
+    template<typename Self, typename T>
+        requires(contains_bindings_for<T>)
+    constexpr decltype(auto) get(this Self&& self) noexcept {
+        return self.get(self.template index_of<binder_type<T>>()).unwrap();
+    }
+
     template<typename Self, typename T>
         requires(contains_bindings_for<T>)
     constexpr decltype(auto) operator[](this Self&& self, const T&) noexcept {
-        return self.get(self.template index_of<binder_type<T>>()).unwrap();
+        return self.template get<Self, T>();
     }
 };
 
