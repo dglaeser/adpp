@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <adpp/backward/concepts.hpp>
+#include <adpp/backward/symbols.hpp>
 
 namespace adpp::backward {
 
@@ -58,6 +59,9 @@ namespace detail {
     template<typename... Ts> struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
     template<typename... Ts> struct leaf_symbols_impl<type_list<>, type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
+    template<typename T> struct is_var : std::false_type {};
+    template<typename T, auto _> struct is_var<var<T, _>> : std::true_type {};
+
 }  // namespace detail
 #endif  // DOXYGEN
 
@@ -86,7 +90,7 @@ inline constexpr auto leaf_unbound_symbols_of(const E&) {
 
 
 template<detail::traversable_expression E>
-struct leaf_vars : filtered_tuple<decayed_arg<traits::is_var>::type, leaf_symbols_t<E>> {};
+struct leaf_vars : filtered_tuple<decayed_arg<detail::is_var>::type, leaf_symbols_t<E>> {};
 
 template<detail::traversable_expression E>
 using leaf_vars_t = typename leaf_vars<E>::type;
