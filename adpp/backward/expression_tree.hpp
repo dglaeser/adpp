@@ -58,16 +58,6 @@ namespace detail {
     template<typename... Ts> struct leaf_symbols_impl<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
     template<typename... Ts> struct leaf_symbols_impl<type_list<>, type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
-    struct var_filter {
-        template<typename T>
-        static constexpr bool include = traits::is_var<std::remove_cvref_t<T>>::value;
-    };
-
-    struct null_filter {
-        template<typename T>
-        static constexpr bool include = true;
-    };
-
 }  // namespace detail
 #endif  // DOXYGEN
 
