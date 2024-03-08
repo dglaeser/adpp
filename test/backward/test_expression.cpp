@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <functional>
 #include <type_traits>
+#include <iostream>
+#include <sstream>
 
 #include <boost/ut.hpp>
 
@@ -11,6 +13,7 @@ using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
+using adpp::backward::let;
 using adpp::backward::var;
 using adpp::backward::aval;
 using adpp::backward::expression;
@@ -73,6 +76,15 @@ int main() {
         const auto [value, derivs] = expr.back_propagate(at(x = 3, y = 2), wrt(tmp));
         expect(eq(value, 10));
         expect(eq(derivs[tmp], 2));
+    };
+
+     "expression_stream"_test = [] () {
+        var x;
+        var y;
+        let mu;
+        std::stringstream s;
+        exp((x + y)*mu).stream(s, at(x = "x", y = "y", mu = "µ"));
+        expect(eq(s.str(), std::string{"exp((x + y)*µ)"}));
     };
 
     return EXIT_SUCCESS;

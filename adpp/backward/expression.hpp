@@ -127,6 +127,9 @@ struct divide : std::divides<void> {};
 template<typename op, typename... T>
 struct back_propagation;
 
+template<typename op, typename... T>
+struct format;
+
 template<typename op, term... Ts>
 struct expression {
     template<typename... B>
@@ -145,6 +148,12 @@ struct expression {
         if constexpr (contains_decay_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(std::move(value), std::move(derivs));
+    }
+
+    template<typename... B>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>& name_bindings) const {
+        format<op, Ts...>{}(out, name_bindings);
+        return out;
     }
 };
 
@@ -242,6 +251,72 @@ struct back_propagation<op::exp, A> {
         auto [value_inner, derivs_inner] = A{}.back_propagate(b, vars);
         auto result = op::exp{}(value_inner);
         return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(result));
+    }
+};
+
+template<typename A, typename B>
+struct format<op::add, A, B> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        A{}.stream(out, name_map);
+        out << " + ";
+        B{}.stream(out, name_map);
+    }
+};
+
+template<typename A, typename B>
+struct format<op::subtract, A, B> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        A{}.stream(out, name_map);
+        out << " - ";
+        B{}.stream(out, name_map);
+    }
+};
+
+template<typename A, typename B>
+struct format<op::divide, A, B> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        constexpr bool use_braces_around_a = false; // TODO: backward::sub_expressions_size_v<A> > 1;
+        if constexpr (use_braces_around_a) out << "(";
+        A{}.stream(out, name_map);
+        if constexpr (use_braces_around_a) out << ")";
+
+        out << "/";
+
+        constexpr bool use_braces_around_b = false; // backward::sub_expressions_size_v<B> > 1;
+        if constexpr (use_braces_around_b) out << "(";
+        B{}.stream(out, name_map);
+        if constexpr (use_braces_around_b) out << ")";
+    }
+};
+
+template<typename A, typename B>
+struct format<op::multiply, A, B> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        constexpr bool use_braces_around_a = false;  // backward::sub_expressions_size_v<A> > 1;
+        if constexpr (use_braces_around_a) out << "(";
+        A{}.stream(out, name_map);
+        if constexpr (use_braces_around_a) out << ")";
+
+        out << "*";
+
+        constexpr bool use_braces_around_b = false;  // backward::sub_expressions_size_v<B> > 1;
+        if constexpr (use_braces_around_b) out << "(";
+        B{}.stream(out, name_map);
+        if constexpr (use_braces_around_b) out << ")";
+    }
+};
+
+template<typename A>
+struct format<op::exp, A> {
+    template<typename... B>
+    constexpr void operator()(std::ostream& out, const bindings<B...>& name_map) {
+        out << "exp(";
+        A{}.stream(out, name_map);
+        out << ")";
     }
 };
 
