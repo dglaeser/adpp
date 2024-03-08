@@ -57,6 +57,15 @@ int main() {
         expect(eq(derivs.second[z], std::exp(12.0)*3.0));
     };
 
+    "expression_gradient"_test = [] () {
+        var x;
+        var y;
+        const auto expression = aval<2>*(x + y)*x;
+        const auto grad = expression.gradient(at(x = 3, y = 2));
+        expect(eq(grad[x], 4.0*3.0 + 2.0*2.0));
+        expect(eq(grad[y], 2.0*3.0));
+    };
+
     "expression_derivative_wrt_expression"_test = [] () {
         var x;
         var y;
