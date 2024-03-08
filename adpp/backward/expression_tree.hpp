@@ -12,13 +12,6 @@ namespace adpp::backward {
 namespace detail {
 
     template<typename T>
-    struct is_tuple : public std::false_type {};
-    template<typename... Args>
-    struct is_tuple<std::tuple<Args...>> : public std::true_type {};
-    template<typename T>
-    concept tuple_like = is_tuple<std::remove_cvref_t<T>>::value;
-
-    template<typename T>
     concept traversable_expression = is_symbol_v<std::remove_cvref_t<T>> or (
         is_complete_v<traits::sub_expressions<std::remove_cvref_t<T>>> and requires(const T& t) {
             typename traits::sub_expressions<std::remove_cvref_t<T>>::operands;
