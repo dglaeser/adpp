@@ -116,6 +116,11 @@ struct exp {
     }
 };
 
+struct add : std::plus<void> {};
+struct subtract : std::minus<void> {};
+struct multiply : std::multiplies<void> {};
+struct divide : std::divides<void> {};
+
 }  // namespace op
 
 
@@ -171,19 +176,19 @@ template<typename op, term... Ts>
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 
 template<term A, term B>
-inline constexpr op_result_t<std::plus<void>, A, B> operator+(A&&, B&&) { return {}; }
+inline constexpr op_result_t<op::add, A, B> operator+(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<std::minus<void>, A, B> operator-(A&&, B&&) { return {}; }
+inline constexpr op_result_t<op::subtract, A, B> operator-(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<std::multiplies<void>, A, B> operator*(A&&, B&&) { return {}; }
+inline constexpr op_result_t<op::multiply, A, B> operator*(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<std::divides<void>, A, B> operator/(A&&, B&&) { return {}; }
+inline constexpr op_result_t<op::divide, A, B> operator/(A&&, B&&) { return {}; }
 template<term A>
 inline constexpr op_result_t<op::exp, A> exp(A&&) { return {}; }
 
 
 template<typename A, typename B>
-struct back_propagation<std::plus<void>, A, B> {
+struct back_propagation<op::add, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
@@ -193,7 +198,7 @@ struct back_propagation<std::plus<void>, A, B> {
 };
 
 template<typename A, typename B>
-struct back_propagation<std::minus<void>, A, B> {
+struct back_propagation<op::subtract, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
@@ -203,7 +208,7 @@ struct back_propagation<std::minus<void>, A, B> {
 };
 
 template<typename A, typename B>
-struct back_propagation<std::multiplies<void>, A, B> {
+struct back_propagation<op::multiply, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
@@ -214,7 +219,7 @@ struct back_propagation<std::multiplies<void>, A, B> {
 };
 
 template<typename A, typename B>
-struct back_propagation<std::divides<void>, A, B> {
+struct back_propagation<op::divide, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
