@@ -36,7 +36,10 @@ struct expression {
 
     template<typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
-        return back_propagation<op, Ts...>{}(bindings, vars);
+        auto [value, derivs] = back_propagation<op, Ts...>{}(bindings, vars);
+        if constexpr (contains_decay_v<Self, V...>)
+            derivs[self] = 1.0;
+        return std::make_pair(std::move(value), std::move(derivs));
     }
 };
 
@@ -85,8 +88,7 @@ struct back_propagation<std::plus<void>, A, B> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
         auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
-        auto result = value_a + value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b));
+        return std::make_pair(value_a + value_b, std::move(derivs_a) + std::move(derivs_b));
     }
 };
 
@@ -96,8 +98,7 @@ struct back_propagation<std::minus<void>, A, B> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
         auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
-        auto result = value_a + value_b;
-        return std::make_pair(result, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
+        return std::make_pair(value_a - value_b, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
 };
 
@@ -107,9 +108,8 @@ struct back_propagation<std::multiplies<void>, A, B> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
         auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
-        auto result = value_a*value_b;
         auto derivs = std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a);
-        return std::make_pair(result, std::move(derivs));
+        return std::make_pair(value_a*value_b, std::move(derivs));
     }
 };
 
@@ -119,9 +119,9 @@ struct back_propagation<std::divides<void>, A, B> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
         auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
-        auto result = value_a*value_b;
+        // TODO: correct
         auto derivs = std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a);
-        return std::make_pair(result, std::move(derivs));
+        return std::make_pair(value_a/value_b, std::move(derivs));
     }
 };
 
@@ -131,7 +131,7 @@ struct back_propagation<op::exp, A> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_inner, derivs_inner] = A{}.back_propagate(b, vars);
         auto result = op::exp{}(value_inner);
-        return std::make_pair(result, std::move(derivs_inner).scaled_with(result));
+        return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(result));
     }
 };
 

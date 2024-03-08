@@ -45,6 +45,7 @@ int main() {
         expect(eq(expr(at(x = 3, y = 2)), 2*std::exp(1.0)));
     };
 
+    // TODO: Test division
     "expression_derivative"_test = [] () {
         var x;
         var y;
@@ -54,6 +55,15 @@ int main() {
         expect(eq(derivs.second[x], 0));
         expect(eq(derivs.second[y], -2));
         expect(eq(derivs.second[z], std::exp(12.0)*3.0));
+    };
+
+    "expression_derivative_wrt_expression"_test = [] () {
+        var x;
+        var y;
+        const auto tmp = x + y;
+        const auto expr = aval<2>*tmp;
+        const auto derivs = expr.back_propagate(at(x = 3, y = 2), wrt(tmp));
+        expect(eq(derivs.second[tmp], 2));
     };
 
     return EXIT_SUCCESS;
