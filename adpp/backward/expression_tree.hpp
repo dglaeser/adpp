@@ -22,7 +22,6 @@ namespace detail {
     concept traversable_expression = is_symbol_v<std::remove_cvref_t<T>> or (
         is_complete_v<traits::sub_expressions<std::remove_cvref_t<T>>> and requires(const T& t) {
             typename traits::sub_expressions<std::remove_cvref_t<T>>::operands;
-            { traits::sub_expressions<std::remove_cvref_t<T>>::get(t) } -> tuple_like;
         }
     );
 

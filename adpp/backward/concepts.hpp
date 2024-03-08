@@ -64,9 +64,7 @@ namespace detail {
     struct sub_expressions_size<T> : public std::integral_constant<std::size_t, 0> {};
     template<typename T> requires(!is_symbol_v<T>)
     struct sub_expressions_size<T> {
-        static constexpr std::size_t value = std::tuple_size_v<
-            std::remove_cvref_t<decltype(traits::sub_expressions<T>::get(std::declval<const T&>()))>
-        >;
+        static constexpr std::size_t value = type_size_v<typename traits::sub_expressions<T>::operands>;
     };
 
 }  // namespace detail
