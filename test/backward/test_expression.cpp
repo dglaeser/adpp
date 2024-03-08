@@ -45,16 +45,15 @@ int main() {
         expect(eq(expr(at(x = 3, y = 2)), 2*std::exp(1.0)));
     };
 
-    // TODO: Test division
     "expression_derivative"_test = [] () {
         var x;
         var y;
         var z;
-        const auto expr = x - aval<2>*y - x + exp(aval<3.0>*z);
+        const auto expr = x - aval<2>*y - x + exp(aval<3.0>/z);
         const auto derivs = expr.back_propagate(at(x = 3, y = 2, z = 4.0), wrt(x, y, z));
         expect(eq(derivs.second[x], 0));
         expect(eq(derivs.second[y], -2));
-        expect(eq(derivs.second[z], std::exp(12.0)*3.0));
+        expect(eq(derivs.second[z], std::exp(3.0/4.0)*(-3.0/16.0)));
     };
 
     "expression_gradient"_test = [] () {
@@ -71,8 +70,9 @@ int main() {
         var y;
         const auto tmp = x + y;
         const auto expr = aval<2>*tmp;
-        const auto derivs = expr.back_propagate(at(x = 3, y = 2), wrt(tmp));
-        expect(eq(derivs.second[tmp], 2));
+        const auto [value, derivs] = expr.back_propagate(at(x = 3, y = 2), wrt(tmp));
+        expect(eq(value, 10));
+        expect(eq(derivs[tmp], 2));
     };
 
     return EXIT_SUCCESS;

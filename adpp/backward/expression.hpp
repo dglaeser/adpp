@@ -219,9 +219,14 @@ struct back_propagation<std::divides<void>, A, B> {
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
         auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
         auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
-        // TODO: correct
-        auto derivs = std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a);
-        return std::make_pair(value_a/value_b, std::move(derivs));
+
+        using TA = std::remove_cvref_t<decltype(value_a)>;
+        using TB = std::remove_cvref_t<decltype(value_b)>;
+        return std::make_pair(
+            value_a/value_b,
+            std::move(derivs_a).scaled_with(TB{1}/value_b)
+            + std::move(derivs_b).scaled_with(TA{-1}*value_a/(value_b*value_b))
+        );
     }
 };
 
