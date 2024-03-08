@@ -11,26 +11,49 @@ using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
+using adpp::backward::var;
+using adpp::backward::aval;
+using adpp::backward::expression;
+
 int main() {
 
     "expression_type"_test = [] () {
-        adpp::backward::var x;
-        adpp::backward::var y;
+        var x;
+        var y;
 
         using X = std::remove_cvref_t<decltype(x)>;
         using Y = std::remove_cvref_t<decltype(y)>;
-        using E1 = adpp::backward::expression<std::multiplies<void>, X, Y>;
-        using E2 = adpp::backward::expression<std::plus<void>, E1, X>;
+        using E1 = expression<std::multiplies<void>, X, Y>;
+        using E2 = expression<std::plus<void>, E1, X>;
 
-        expect(eq(E2{}(adpp::backward::bindings{x = 3, y = 2}), 9));
+        expect(eq(E2{}(at(x = 3, y = 2)), 9));
     };
 
     "expression_operators_single_expression"_test = [] () {
-        adpp::backward::var x;
-        adpp::backward::var y;
-
+        var x;
+        var y;
         const auto expr = exp((x + y)*(x - y)/(x + y));
-        expect(eq(expr(adpp::backward::bindings{x = 3, y = 2}), std::exp(1.0)));
+        expect(eq(expr(at(x = 3, y = 2)), std::exp(1.0)));
+    };
+
+    "expression_operators_multiple_expression"_test = [] () {
+        var x;
+        var y;
+        const auto expr_tmp_1 = (x + y)*(x - y)/(x + y);
+        const auto expr_tmp_2 = exp(expr_tmp_1);
+        const auto expr = aval<2>*expr_tmp_2;
+        expect(eq(expr(at(x = 3, y = 2)), 2*std::exp(1.0)));
+    };
+
+    "expression_derivative"_test = [] () {
+        var x;
+        var y;
+        var z;
+        const auto expr = x - aval<2>*y - x + exp(aval<3.0>*z);
+        const auto derivs = expr.back_propagate(at(x = 3, y = 2, z = 4.0), wrt(x, y, z));
+        expect(eq(derivs.second[x], 0));
+        expect(eq(derivs.second[y], -2));
+        expect(eq(derivs.second[z], std::exp(12.0)*3.0));
     };
 
     return EXIT_SUCCESS;
