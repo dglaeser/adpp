@@ -275,11 +275,27 @@ struct back_propagation<op::exp, A> {
     }
 };
 
+template<typename T0, typename T1, typename F0, typename F1, typename F>
+constexpr auto _decide(T0 t0, T1 t1, const F0& f0, const F1& f1, const F& f) {
+    if constexpr (is_zero<T0>())
+        return f1(t1);
+    else if constexpr (is_zero<T1>())
+        return f0(t0);
+    else
+        return f(t0, t1);
+}
+
 template<typename A, typename B>
 struct derivative<op::add, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return A{}.differentiate_wrt(v) + B{}.differentiate_wrt(v);
+        return _decide(
+            A{}.differentiate_wrt(v),
+            B{}.differentiate_wrt(v),
+            [] (auto&& da_dv) { return da_dv; },
+            [] (auto&& db_dv) { return db_dv; },
+            [] (auto&& da_dv, auto&& db_dv) { return da_dv + db_dv; }
+        );
     }
 };
 
@@ -287,7 +303,13 @@ template<typename A, typename B>
 struct derivative<op::subtract, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return A{}.differentiate_wrt(v) - B{}.differentiate_wrt(v);
+        return _decide(
+            A{}.differentiate_wrt(v),
+            B{}.differentiate_wrt(v),
+            [] (auto&& da_dv) { return da_dv; },
+            [] (auto&& db_dv) { return aval<-1>*db_dv; },
+            [] (auto&& da_dv, auto&& db_dv) { return da_dv - db_dv; }
+        );
     }
 };
 
@@ -295,7 +317,13 @@ template<typename A, typename B>
 struct derivative<op::multiply, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return A{}.differentiate_wrt(v)*B{} + A{}*B{}.differentiate_wrt(v);
+        return _decide(
+            A{}.differentiate_wrt(v),
+            B{}.differentiate_wrt(v),
+            [] (auto&& da_dv) { return da_dv*B{}; },
+            [] (auto&& db_dv) { return A{}*db_dv; },
+            [] (auto&& da_dv, auto&& db_dv) { return da_dv*B{} + A{}*db_dv; }
+        );
     }
 };
 
@@ -303,8 +331,13 @@ template<typename A, typename B>
 struct derivative<op::divide, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return A{}.differentiate_wrt(v)*_val<1>{}/B{}
-            - A{}*B{}.differentiate_wrt(v)/(B{}*B{});
+        return _decide(
+            A{}.differentiate_wrt(v),
+            B{}.differentiate_wrt(v),
+            [] (auto&& da_dv) { return da_dv/B{}; },
+            [] (auto&& db_dv) { return aval<-1>*A{}*db_dv/(B{}*B{}); },
+            [] (auto&& da_dv, auto&& db_dv) { return da_dv/B{} - A{}*db_dv/(B{}*B{}); }
+        );
     }
 };
 
@@ -312,7 +345,11 @@ template<typename A>
 struct derivative<op::exp, A> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return exp(A{})*A{}.differentiate_wrt(v);
+        const auto da_dv = A{}.differentiate_wrt(v);
+        if constexpr (is_zero(da_dv))
+            return aval<0>;
+        else
+            return exp(A{})*A{}.differentiate_wrt(v);
     }
 };
 
@@ -380,7 +417,7 @@ struct format<op::exp, A> {
     }
 };
 
-template<typename E, typename... N> requires(is_expression_v<E>)
+template<typename E, typename... N> // requires(is_expression_v<E>)
 inline constexpr void print_to(std::ostream& s, const E& expression, const bindings<N...>& name_map) {
     expression.stream(s, name_map);
 }

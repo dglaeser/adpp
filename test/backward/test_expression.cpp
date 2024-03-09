@@ -94,9 +94,49 @@ int main() {
         const auto expr = aval<1.5>*(x + y) - exp(aval<-1>*mu*x);
         const auto deriv = expr.differentiate_wrt(wrt(x));
         expect(eq(deriv(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
-        std::cout << "deriv = ";
-        print_to(std::cout, deriv, with(x = "x", y = "y", mu = "µ"));
-        std::cout << "\n";
+    };
+
+    "expression_multiplication_derivative_simplification"_test  = [] () {
+        var x;
+        {
+            const auto expr = aval<2>*x;
+            const auto deriv = expr.differentiate_wrt(wrt(x));
+            expect(eq(deriv(at(x = 2)), 2));
+            std::stringstream s;
+            print_to(s, deriv, with(x = "x"));
+            expect(eq(s.str(), std::string{"2"}));
+        }
+        {
+            var y;
+            const auto expr = x*y + y;
+            const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
+                expect(eq(deriv_x(at(x = 2, y = 3)), 3));
+                std::stringstream s;
+                print_to(s, deriv_x, with(x = "x", y = "y"));
+                expect(eq(s.str(), std::string{"1*y"}));
+            }
+            const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
+                expect(eq(deriv_y(at(x = 2, y = 3)), 2 + 1));
+                std::stringstream s;
+                print_to(s, deriv_y, with(x = "x", y = "y"));
+                expect(eq(s.str(), std::string{"x*1 + 1"}));
+            }
+        }
+    };
+
+    "expression_division_derivative_simplification"_test  = [] () {
+        var x;
+        var y;
+        const auto expr = x/y + (y + y/aval<2.0>);
+        const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
+            expect(eq(deriv_x(at(x = 2.0, y = 3.0)), 1.0/3.0));
+        }
+        const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
+            expect(eq(deriv_y(at(x = 2.0, y = 3.0)), ((-1*2.0)*1)/(3.0*3.0) + 1.5));
+            std::stringstream s;
+            print_to(s, deriv_y, with(x = "x", y = "y"));
+            expect(eq(s.str(), std::string{"((-1*x)*1)/(y*y) + 1.5"}));
+        }
     };
 
     return EXIT_SUCCESS;
