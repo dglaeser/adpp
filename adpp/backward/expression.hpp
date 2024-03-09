@@ -130,6 +130,9 @@ struct back_propagation;
 template<typename op, typename... T>
 struct format;
 
+template<typename op, typename... T>
+struct derivative;
+
 template<typename op, term... Ts>
 struct expression {
     template<typename... B>
@@ -150,6 +153,11 @@ struct expression {
         return std::make_pair(std::move(value), std::move(derivs));
     }
 
+    template<typename V>
+    constexpr auto differentiate_wrt(const type_list<V>& var) const {
+        return derivative<op, Ts...>{}(var);
+    }
+
     template<typename... B>
     constexpr std::ostream& stream(std::ostream& out, const bindings<B...>& name_bindings) const {
         format<op, Ts...>{}(out, name_bindings);
@@ -159,27 +167,6 @@ struct expression {
 
 template<typename op, term... Ts>
 struct is_expression<expression<op, Ts...>> : std::true_type {};
-
-
-template<auto value>
-struct _val {
-    template<typename... B>
-    constexpr auto operator()(const bindings<B...>&) const noexcept {
-        return value;
-    }
-
-    template<typename Self, typename... B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>&) {
-        using T = std::remove_cvref_t<decltype(value)>;
-        return std::make_pair(value, derivatives<T, V...>{});
-    }
-};
-
-template<auto v>
-struct is_symbol<_val<v>> : std::true_type {};
-
-template<auto value>
-inline constexpr _val<value> aval;
 
 template<typename op, term... Ts>
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
@@ -255,6 +242,47 @@ struct back_propagation<op::exp, A> {
 };
 
 template<typename A, typename B>
+struct derivative<op::add, A, B> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return A{}.differentiate_wrt(v) + B{}.differentiate_wrt(v);
+    }
+};
+
+template<typename A, typename B>
+struct derivative<op::subtract, A, B> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return A{}.differentiate_wrt(v) - B{}.differentiate_wrt(v);
+    }
+};
+
+template<typename A, typename B>
+struct derivative<op::multiply, A, B> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return A{}.differentiate_wrt(v)*B{} + A{}*B{}.differentiate_wrt(v);
+    }
+};
+
+template<typename A, typename B>
+struct derivative<op::divide, A, B> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return A{}.differentiate_wrt(v)*_val<1>{}/B{}
+            - A{}*B{}.differentiate_wrt(v)/(B{}*B{});
+    }
+};
+
+template<typename A>
+struct derivative<op::exp, A> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return exp(A{})*A{}.differentiate_wrt(v);
+    }
+};
+
+template<typename A, typename B>
 struct format<op::add, A, B> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
@@ -310,12 +338,17 @@ struct format<op::multiply, A, B> {
 
 template<typename A>
 struct format<op::exp, A> {
-    template<typename... B>
-    constexpr void operator()(std::ostream& out, const bindings<B...>& name_map) {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
         out << "exp(";
         A{}.stream(out, name_map);
         out << ")";
     }
 };
+
+template<typename E, typename... N> requires(is_expression_v<E>)
+inline constexpr void print_to(std::ostream& s, const E& expression, const bindings<N...>& name_map) {
+    expression.stream(s, name_map);
+}
 
 }  // namespace adpp::backward

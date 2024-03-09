@@ -16,6 +16,56 @@
 
 namespace adpp::backward {
 
+template<auto value>
+struct _val : operand {
+    template<typename... B>
+    constexpr auto operator()(const bindings<B...>&) const noexcept {
+        return value;
+    }
+
+    template<typename... B>
+    constexpr auto evaluate_at(const bindings<B...>&) const noexcept {
+        return value;
+    }
+
+    template<typename Self, typename... B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>&) {
+        using T = std::remove_cvref_t<decltype(value)>;
+        return std::make_pair(value, derivatives<T, V...>{});
+    }
+
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>& var) noexcept {
+        if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
+            return _val<1>{};
+        else
+            return _val<0>{};
+    }
+
+    template<typename... B>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>&) const {
+        out << value;
+        return out;
+    }
+};
+
+namespace traits {
+
+template<auto v>
+struct into_operand<_val<v>> {
+    static constexpr auto get(const _val<v>&) noexcept {
+        return val{v};
+    }
+};
+
+}  // namespace traits
+
+template<auto v>
+struct is_symbol<_val<v>> : std::true_type {};
+
+template<auto value>
+inline constexpr _val<value> aval;
+
 template<typename S, typename V>
 struct value_binder {
     using symbol_type = std::remove_cvref_t<S>;
@@ -83,9 +133,9 @@ struct symbol : operand {
     template<typename Self, typename V>
     constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
         if constexpr (concepts::same_decay_t_as<Self, V>)
-            return val<int>{1};
+            return _val<1>{};
         else
-            return val<int>{0};
+            return _val<0>{};
     }
 
     template<typename Self, typename... V>

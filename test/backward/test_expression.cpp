@@ -83,8 +83,20 @@ int main() {
         var y;
         let mu;
         std::stringstream s;
-        exp((x + y/x)*mu).stream(s, at(x = "x", y = "y", mu = "µ"));
+        exp((x + y/x)*mu).stream(s, with(x = "x", y = "y", mu = "µ"));
         expect(eq(s.str(), std::string{"exp((x + y/x)*µ)"}));
+    };
+
+    "expression_derivative"_test  = [] () {
+        var x;
+        var y;
+        let mu;
+        const auto expr = aval<1.5>*(x + y) - exp(aval<-1>*mu*x);
+        const auto deriv = expr.differentiate_wrt(wrt(x));
+        expect(eq(deriv(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
+        std::cout << "deriv = ";
+        print_to(std::cout, deriv, with(x = "x", y = "y", mu = "µ"));
+        std::cout << "\n";
     };
 
     return EXIT_SUCCESS;
