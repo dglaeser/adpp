@@ -165,10 +165,44 @@ struct expression {
     }
 };
 
+
+
+
+template<typename T> struct _is_val : std::false_type {};
+template<auto v> struct _is_val<_val<v>> : std::true_type {};
+
+template<typename T> requires(!_is_val<std::remove_cvref_t<T>>::value)
+constexpr bool is_zero() {
+    return false;
+}
+template<typename T> requires(_is_val<std::remove_cvref_t<T>>::value)
+constexpr bool is_zero() {
+    return T::value == 0;
+}
+template<typename T>
+constexpr bool is_zero(const T&) {
+    return is_zero<T>();
+}
+
+template<typename T>
+constexpr bool is_val() {
+    return _is_val<std::remove_cvref_t<T>>::value;
+}
+
+template<typename T>
+constexpr bool is_val(const T&) {
+    return is_val<T>();
+}
+
+
+
+
 template<typename op, term... Ts>
 struct is_expression<expression<op, Ts...>> : std::true_type {};
 
+// for operations between vals, we use the operators defined in-class
 template<typename op, term... Ts>
+    requires(!std::conjunction_v<_is_val<std::remove_cvref_t<Ts>>...>)
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 
 template<term A, term B>

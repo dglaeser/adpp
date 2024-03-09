@@ -16,8 +16,15 @@
 
 namespace adpp::backward {
 
-template<auto value>
+template<auto v>
 struct _val : operand {
+    static constexpr auto value = v;
+
+    template<auto k> constexpr auto operator+(const _val<k>&) const noexcept { return _val<v+k>{}; }
+    template<auto k> constexpr auto operator-(const _val<k>&) const noexcept { return _val<v-k>{}; }
+    template<auto k> constexpr auto operator*(const _val<k>&) const noexcept { return _val<v*k>{}; }
+    template<auto k> constexpr auto operator/(const _val<k>&) const noexcept { return _val<v/k>{}; }
+
     template<typename... B>
     constexpr auto operator()(const bindings<B...>&) const noexcept {
         return value;
