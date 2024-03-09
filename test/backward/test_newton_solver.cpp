@@ -13,13 +13,14 @@ using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
+using adpp::backward::aval;
 
 using adpp::backward::bind;
 using adpp::backward::function;
 
 constexpr double newton_solve() {
     var x;
-    function f = x*x*2.0 - 4.0;
+    function f = x*x*aval<2.0> - aval<4.0>;
 
     double solution = 10.0;
     const auto args = bind(x = solution);

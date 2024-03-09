@@ -7,7 +7,6 @@
 namespace adpp::backward {
 namespace traits {
 
-template<typename T> struct into_operand;
 template<typename T> struct sub_expressions;
 template<typename T> struct differentiator;
 template<typename T> struct formatter;
@@ -38,21 +37,12 @@ inline constexpr bool is_expression_v = is_expression<T>::value;
 template<typename T>
 concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
 
-template<typename T>
-concept into_operand = is_complete_v<traits::into_operand<std::remove_cvref_t<T>>> and requires(const T& t) {
-    { traits::into_operand<std::remove_cvref_t<T>>::get(t) };
-};
 
 template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
     { t.unwrap() };
 };
-
-template<into_operand T>
-inline constexpr decltype(auto) as_operand(T&& t) noexcept {
-    return traits::into_operand<std::remove_cvref_t<T>>::get(std::forward<T>(t));
-}
 
 
 #ifndef DOXYGEN

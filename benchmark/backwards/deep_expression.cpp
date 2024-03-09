@@ -17,8 +17,7 @@
 #include <autodiff/reverse/var.hpp>
 #else
 #include <adpp/backward/symbols.hpp>
-#include <adpp/backward/evaluate.hpp>
-#include <adpp/backward/differentiate.hpp>
+#include <adpp/backward/expression.hpp>
 #endif
 
 int main(int argc, char** argv) {
@@ -43,9 +42,9 @@ int main(int argc, char** argv) {
         adpp::backward::var<double> x;
         adpp::backward::var<double> y;
         const auto expression = GENERATE_EXPRESSION(x, y);
-        const auto r = evaluate(expression, at(x = xv, y = yv));
-        const auto dr_dx = derivative_of(expression, wrt(x), at(x = xv, y = yv));
-        const auto dr_dy = derivative_of(expression, wrt(y), at(x = xv, y = yv));
+        const auto r = expression(at(x = xv, y = yv));
+        const auto dr_dx = expression.back_propagate(at(x = xv, y = yv), wrt(x)).second[x];
+        const auto dr_dy = expression.back_propagate(at(x = xv, y = yv), wrt(y)).second[y];
 #endif
 
         value += r;

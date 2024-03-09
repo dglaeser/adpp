@@ -49,8 +49,8 @@ int main() {
     "exp_expression_evaluate"_test = [] () {
         var a;
         let b;
-        auto exp_a = a.exp();
-        auto exp_b = std::exp(b);
+        auto exp_a = exp(a);
+        auto exp_b = exp(b);
         expect(eq(evaluate(exp_a, at(a = 2.0)), std::exp(2.0)));
         expect(eq(evaluate(exp_b, at(b = 4.0)), std::exp(4.0)));
     };
@@ -58,7 +58,7 @@ int main() {
     "composite_expression_evaluate"_test = [] () {
         var a;
         let b;
-        function f = std::exp((a + b)*a);
+        function f = exp((a + b)*a);
         expect(eq(
             evaluate(f, at(a = 2.0, b = 4.0)),
             std::exp((2.0 + 4.0)*2.0)
@@ -68,7 +68,7 @@ int main() {
     "composite_expression_evaluate_via_operator()"_test = [] () {
         var a;
         let b;
-        function result = std::exp((a + b)*a);
+        function result = exp((a + b)*a);
         expect(eq(
             result(a = 2.0, b = 4.0),
             std::exp((2.0 + 4.0)*2.0)
@@ -79,7 +79,7 @@ int main() {
         var a;
         let b;
         var c;
-        function result = std::exp((a + b)*a);
+        function result = exp((a + b)*a);
         expect(eq(
             evaluate(result, at(a = 2.0, b = 4.0, c = 10.0)),
             std::exp((2.0 + 4.0)*2.0)

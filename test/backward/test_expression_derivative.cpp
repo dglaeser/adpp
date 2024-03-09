@@ -12,6 +12,7 @@ using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
+using adpp::backward::aval;
 
 
 int main() {
@@ -28,7 +29,7 @@ int main() {
     "derivatives_at_runtime"_test = [] () {
         var a;
         var b;
-        auto expr = std::exp((a + b)*b);
+        auto expr = exp((a + b)*b);
         auto derivs = derivatives_of(expr, wrt(a, b), at(a = 1.0, b = 2.0));
         expect(eq(derivs[a], std::exp((1.0 + 2.0)*2.0)*2.0));
         expect(eq(derivs[b], std::exp((1.0 + 2.0)*2.0)*(2.0 + 3.0)));
@@ -55,7 +56,7 @@ int main() {
         static constexpr var a;
         static constexpr var b;
         static constexpr let mu;
-        constexpr auto expr = a*a*a + b*b*2 + mu;
+        constexpr auto expr = a*a*a + b*b*aval<2> + mu;
         static_assert(3.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::first_order));
         static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::second_order));
         static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::third_order));
@@ -88,7 +89,7 @@ int main() {
         static constexpr var a;
         static constexpr var b;
         static constexpr let mu;
-        static constexpr auto expr = 2*a + b*mu;
+        static constexpr auto expr = aval<2>*a + b*mu;
         // we still have to provide all variables
         {
             constexpr auto derivative = differentiate(expr, wrt(a));
@@ -108,7 +109,7 @@ int main() {
         var a;
         var b;
         let mu;
-        auto expr = std::exp((a + b)*b)*mu;
+        auto expr = exp((a + b)*b)*mu;
         {
             auto derivative = differentiate(expr, wrt(a));
             expect(eq(

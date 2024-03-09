@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <utility>
+#include <array>
 
 #define ADD_2(x) x + x
 #define ADD_4(x) ADD_2(x) + ADD_2(x)
@@ -30,8 +31,8 @@ int main(int argc, char** argv) {
     std::array derivs{0.0, 0.0};
     for (unsigned int i = 0; i < N; ++i) {
         auto expression = GENERATE_EXPRESSION(x, y);
-        auto eval = evaluate(expression, at(x = xv, y = yv));
-        auto gradient = grad(expression, at(x = xv, y = yv));
+        auto eval = expression(at(x = xv, y = yv));
+        auto gradient = expression.gradient(at(x = xv, y = yv));
 
         value += eval;
         derivs[0] += gradient[x];

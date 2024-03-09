@@ -5,7 +5,7 @@
 
 #include <adpp/common.hpp>
 #include <adpp/backward/bindings.hpp>
-#include <adpp/backward/expression_tree.hpp>
+#include <adpp/backward/expression.hpp>
 
 namespace adpp::backward {
 
@@ -56,11 +56,6 @@ inline constexpr auto derivative_of(const E& expression, const type_list<V>& var
 template<typename E, typename... B>
 inline constexpr auto grad(const E& expression, const bindings<B...>& bindings) {
     return derivatives_of(expression, variables_of(expression), bindings);
-}
-
-template<typename... V>
-inline constexpr auto wrt(V&&...) {
-    return type_list<std::remove_cvref_t<V>...>{};
 }
 
 template<typename E, typename V>

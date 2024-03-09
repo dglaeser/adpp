@@ -10,14 +10,13 @@
 #include <adpp/type_traits.hpp>
 
 #include <adpp/backward/concepts.hpp>
-#include <adpp/backward/operand.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/derivatives.hpp>
 
 namespace adpp::backward {
 
 template<auto v>
-struct _val : operand {
+struct _val {
     static constexpr auto value = v;
 
     template<auto k> constexpr auto operator+(const _val<k>&) const noexcept { return _val<v+k>{}; }
@@ -35,14 +34,14 @@ struct _val : operand {
         return value;
     }
 
-    template<typename Self, typename... B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>&) {
+    template<typename... B, typename... V>
+    constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
         using T = std::remove_cvref_t<decltype(value)>;
         return std::make_pair(value, derivatives<T, V...>{});
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, const type_list<V>& var) noexcept {
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
             return _val<1>{};
         else
@@ -55,17 +54,6 @@ struct _val : operand {
         return out;
     }
 };
-
-namespace traits {
-
-template<auto v>
-struct into_operand<_val<v>> {
-    static constexpr auto get(const _val<v>&) noexcept {
-        return val{v};
-    }
-};
-
-}  // namespace traits
 
 template<auto v>
 struct is_symbol<_val<v>> : std::true_type {};
@@ -99,7 +87,7 @@ template<typename S, typename V>
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
 template<typename T>
-struct symbol : operand {
+struct symbol {
     constexpr symbol() = default;
     constexpr symbol(symbol&&) = default;
     constexpr symbol(const symbol&) = delete;
@@ -176,23 +164,4 @@ template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type
 template<typename T, auto _> struct is_unbound_symbol<var<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_unbound_symbol<let<T, _>> : public std::true_type {};
 
-namespace traits {
-
-template<typename T, auto _>
-struct into_operand<var<T, _>> {
-    template<concepts::same_decay_t_as<var<T, _>> V>
-    static constexpr decltype(auto) get(V&& var) noexcept {
-        return std::forward<V>(var);
-    }
-};
-
-template<typename T, auto _>
-struct into_operand<let<T, _>> {
-    template<concepts::same_decay_t_as<let<T, _>> L>
-    static constexpr decltype(auto) get(L&& let) noexcept {
-        return std::forward<L>(let);
-    }
-};
-
-}  // namespace traits
 }  // namespace adpp::backward

@@ -27,10 +27,10 @@ int main() {
         let a;
         let b;
         let c;
-        auto expr = std::exp(a + b)*c + b*(a + b);
+        auto expr = exp(a + b)*c + b*(a + b);
         std::ostringstream s;
         stream(s, expr, with(a = "a", b = "b", c = "c"));
-        expect(eq(std::string{s.str()}, std::string{"exp(a + b)*c + b*(a + b)"}));
+        expect(eq(std::string{s.str()}, std::string{"(exp(a + b))*c + b*(a + b)"}));
     };
 
     "expression_no_braces_stream"_test = [] () {

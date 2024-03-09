@@ -15,8 +15,12 @@ inline constexpr auto wrt(V&&...) {
     return type_list<std::remove_cvref_t<V>...>{};
 }
 
+
+// TODO: get rid of forward decls
 template<typename op, term... Ts>
 struct expression;
+template<typename E>
+struct function;
 
 
 #ifndef DOXYGEN
@@ -26,8 +30,10 @@ namespace detail {
     struct operands;
     template<typename op, typename... T>
     struct operands<expression<op, T...>> : std::type_identity<type_list<T...>> {};
+    template<typename E>
+    struct operands<function<E>> : operands<E> {};
     template<typename T>
-    using operands_t = typename operands<T>::type;
+    using operands_t = typename operands<std::remove_cvref_t<T>>::type;
 
     template<typename T>
     concept traversable_expression = is_symbol_v<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
@@ -200,19 +206,23 @@ constexpr bool is_val(const T&) {
 template<typename op, term... Ts>
 struct is_expression<expression<op, Ts...>> : std::true_type {};
 
-// for operations between vals, we use the operators defined in-class
+// for arithmetic operations between vals, we use the operators defined in-class
 template<typename op, term... Ts>
     requires(!std::conjunction_v<_is_val<std::remove_cvref_t<Ts>>...>)
+using arithmetic_op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
+
+template<typename op, term... Ts>
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 
+
 template<term A, term B>
-inline constexpr op_result_t<op::add, A, B> operator+(A&&, B&&) { return {}; }
+inline constexpr arithmetic_op_result_t<op::add, A, B> operator+(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<op::subtract, A, B> operator-(A&&, B&&) { return {}; }
+inline constexpr arithmetic_op_result_t<op::subtract, A, B> operator-(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<op::multiply, A, B> operator*(A&&, B&&) { return {}; }
+inline constexpr arithmetic_op_result_t<op::multiply, A, B> operator*(A&&, B&&) { return {}; }
 template<term A, term B>
-inline constexpr op_result_t<op::divide, A, B> operator/(A&&, B&&) { return {}; }
+inline constexpr arithmetic_op_result_t<op::divide, A, B> operator/(A&&, B&&) { return {}; }
 template<term A>
 inline constexpr op_result_t<op::exp, A> exp(A&&) { return {}; }
 
@@ -423,3 +433,6 @@ inline constexpr void print_to(std::ostream& s, const E& expression, const bindi
 }
 
 }  // namespace adpp::backward
+
+
+// TODO: register (e.g.) std::exp for terms?

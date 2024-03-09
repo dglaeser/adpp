@@ -7,7 +7,7 @@
 #include <adpp/concepts.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
-#include <adpp/backward/expression_tree.hpp>
+#include <adpp/backward/expression.hpp>
 
 namespace adpp::backward {
 
@@ -31,16 +31,11 @@ namespace detail {
     concept bindings_for = traversable_expression<std::remove_cvref_t<E>>
         and bindings_contain_all_leaves<unbound_symbols_t<E>, B...>::value;
 
-    template<typename T, typename... B>
-    concept expression = requires(const T& t, B&&... b) {
-        { t.evaluate_at(bindings{std::forward<B>(b)...}) };
-    };
-
 }  // namespace detail
 #endif  // DOXYGEN
 
+// TODO: constraints
 template<typename E>
-    requires(detail::traversable_expression<E> or is_symbol_v<E>)
 struct function {
  public:
     constexpr function(E&& e) noexcept
@@ -59,7 +54,7 @@ struct function {
 
     template<typename... B>
     constexpr decltype(auto) evaluate_at(const bindings<B...>& values) const {
-        return _e.evaluate_at(values);
+        return _e(values);
     }
 
     template<typename... Args>
@@ -88,6 +83,9 @@ struct function {
 template<typename E>
 function(E&&) -> function<std::remove_cvref_t<E>>;
 
+template<typename E>
+struct is_expression<function<E>> : std::true_type {};
+
 namespace traits {
 
 template<typename E>
@@ -105,9 +103,9 @@ struct sub_expressions<function<E>> {
 }  // namespace traits
 
 template<typename E, typename... B>
-    requires(detail::bindings_for<E, B...> and detail::expression<E, B...>)
+    requires(detail::bindings_for<E, B...>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
-    return e.evaluate_at(b);
+    return e(b);
 }
 
 }  // namespace adpp
