@@ -274,21 +274,27 @@ struct format<op::subtract, A, B> {
     }
 };
 
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename A, typename... N>
+    inline constexpr void in_braces(std::ostream& out, const A& a, const bindings<N...>& name_map) {
+        constexpr bool use_braces = !is_symbol_v<A>;
+        if constexpr (use_braces) out << "(";
+        a.stream(out, name_map);
+        if constexpr (use_braces) out << ")";
+    }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
 template<typename A, typename B>
 struct format<op::divide, A, B> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
-        constexpr bool use_braces_around_a = false; // TODO: backward::sub_expressions_size_v<A> > 1;
-        if constexpr (use_braces_around_a) out << "(";
-        A{}.stream(out, name_map);
-        if constexpr (use_braces_around_a) out << ")";
-
+        detail::in_braces(out, A{}, name_map);
         out << "/";
-
-        constexpr bool use_braces_around_b = false; // backward::sub_expressions_size_v<B> > 1;
-        if constexpr (use_braces_around_b) out << "(";
-        B{}.stream(out, name_map);
-        if constexpr (use_braces_around_b) out << ")";
+        detail::in_braces(out, B{}, name_map);
     }
 };
 
@@ -296,17 +302,9 @@ template<typename A, typename B>
 struct format<op::multiply, A, B> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
-        constexpr bool use_braces_around_a = false;  // backward::sub_expressions_size_v<A> > 1;
-        if constexpr (use_braces_around_a) out << "(";
-        A{}.stream(out, name_map);
-        if constexpr (use_braces_around_a) out << ")";
-
+        detail::in_braces(out, A{}, name_map);
         out << "*";
-
-        constexpr bool use_braces_around_b = false;  // backward::sub_expressions_size_v<B> > 1;
-        if constexpr (use_braces_around_b) out << "(";
-        B{}.stream(out, name_map);
-        if constexpr (use_braces_around_b) out << ")";
+        detail::in_braces(out, B{}, name_map);
     }
 };
 
