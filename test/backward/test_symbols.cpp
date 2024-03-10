@@ -6,9 +6,12 @@
 #include <adpp/backward/symbols.hpp>
 
 using boost::ut::operator""_test;
+using boost::ut::expect;
+using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
+using adpp::backward::constant;
 using adpp::backward::value_binder;
 
 using adpp::dtype::real;
@@ -118,6 +121,11 @@ int main() {
         constexpr auto b = a = 42;
         static_assert(!holds_reference(b));
         static_assert(b.unwrap() == 42);
+    };
+
+    "val_construction"_test = [] () {
+        adpp::backward::value v{42};
+        expect(eq(v.get(), 42));
     };
 
     return EXIT_SUCCESS;

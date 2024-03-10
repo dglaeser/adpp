@@ -141,11 +141,18 @@ struct derivative;
 
 template<typename op, term... Ts>
 struct expression {
+    constexpr expression() = default;
+    constexpr expression(const op&, const Ts&...) noexcept {}
+
     template<typename... B>
     constexpr decltype(auto) operator()(const bindings<B...>& operands) const {
         return op{}(Ts{}(operands)...);
     }
 
+    // TODO: much slower than individually back-propagating each var.
+    //       we could back-propagate for each var and merge? Although it would defeat the purpose..
+    //       more efficient operations between deriv storage? Maybe the reason for the runtime diff
+    //       is because we scale/add/etc. each deriv (many unnecessary operations?)
     template<typename Self, typename... B>
     constexpr auto gradient(this Self&& self, const bindings<B...>& bindings) {
         return self.back_propagate(bindings, variables_of(self)).second;
@@ -172,10 +179,12 @@ struct expression {
 };
 
 
+template<typename op, typename... Ts>
+expression(op&&, Ts&&...) -> expression<std::remove_cvref_t<op>, std::remove_cvref_t<Ts>...>;
 
 
 template<typename T> struct _is_val : std::false_type {};
-template<auto v> struct _is_val<_val<v>> : std::true_type {};
+template<auto v> struct _is_val<constant<v>> : std::true_type {};
 
 template<typename T> requires(!_is_val<std::remove_cvref_t<T>>::value)
 constexpr bool is_zero() {
@@ -214,17 +223,47 @@ using arithmetic_op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 template<typename op, term... Ts>
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 
+template<typename T>
+concept to_term = term<std::remove_cvref_t<T>> or concepts::arithmetic<std::remove_cvref_t<T>>;
 
-template<term A, term B>
-inline constexpr arithmetic_op_result_t<op::add, A, B> operator+(A&&, B&&) { return {}; }
-template<term A, term B>
-inline constexpr arithmetic_op_result_t<op::subtract, A, B> operator-(A&&, B&&) { return {}; }
-template<term A, term B>
-inline constexpr arithmetic_op_result_t<op::multiply, A, B> operator*(A&&, B&&) { return {}; }
-template<term A, term B>
-inline constexpr arithmetic_op_result_t<op::divide, A, B> operator/(A&&, B&&) { return {}; }
-template<term A>
-inline constexpr op_result_t<op::exp, A> exp(A&&) { return {}; }
+template<to_term T>
+inline constexpr decltype(auto) as_term(T&& t) noexcept {
+    if constexpr (term<std::remove_cvref_t<T>>)
+        return std::forward<T>(t);
+    else
+        return value{std::forward<T>(t)};
+}
+
+template<to_term T, auto _ = [] () {}>
+using term_t = std::conditional_t<
+    concepts::arithmetic<std::remove_cvref_t<T>>,
+    value<std::remove_cvref_t<T>, _>,
+    std::remove_cvref_t<T>
+>;
+
+template<typename... Ts>
+concept all_vals = std::conjunction_v<_is_val<std::remove_cvref_t<Ts>>...>;
+
+template<to_term A, to_term B> requires(!all_vals<A, B>)
+inline constexpr auto operator+(A&& a, B&& b) {
+    return expression{op::add{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
+}
+template<to_term A, to_term B> requires(!all_vals<A, B>)
+inline constexpr auto operator-(A&& a, B&& b) {
+    return expression{op::subtract{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
+}
+template<to_term A, to_term B> requires(!all_vals<A, B>)
+inline constexpr auto operator*(A&& a, B&& b) {
+    return expression{op::multiply{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
+}
+template<to_term A, to_term B> requires(!all_vals<A, B>)
+inline constexpr auto operator/(A&& a, B&& b) {
+    return expression{op::divide{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
+}
+template<to_term A>
+inline constexpr op_result_t<op::exp, A> exp(A&& a) {
+    return expression{op::exp{}, as_term(std::forward<A>(a))};
+}
 
 
 template<typename A, typename B>
@@ -317,7 +356,7 @@ struct derivative<op::subtract, A, B> {
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv; },
-            [] (auto&& db_dv) { return aval<-1>*db_dv; },
+            [] (auto&& db_dv) { return val<-1>*db_dv; },
             [] (auto&& da_dv, auto&& db_dv) { return da_dv - db_dv; }
         );
     }
@@ -345,7 +384,7 @@ struct derivative<op::divide, A, B> {
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv/B{}; },
-            [] (auto&& db_dv) { return aval<-1>*A{}*db_dv/(B{}*B{}); },
+            [] (auto&& db_dv) { return val<-1>*A{}*db_dv/(B{}*B{}); },
             [] (auto&& da_dv, auto&& db_dv) { return da_dv/B{} - A{}*db_dv/(B{}*B{}); }
         );
     }
@@ -357,7 +396,7 @@ struct derivative<op::exp, A> {
     constexpr auto operator()(const type_list<V>& v) {
         const auto da_dv = A{}.differentiate_wrt(v);
         if constexpr (is_zero(da_dv))
-            return aval<0>;
+            return val<0>;
         else
             return exp(A{})*A{}.differentiate_wrt(v);
     }

@@ -16,13 +16,13 @@
 namespace adpp::backward {
 
 template<auto v>
-struct _val {
+struct constant {
     static constexpr auto value = v;
 
-    template<auto k> constexpr auto operator+(const _val<k>&) const noexcept { return _val<v+k>{}; }
-    template<auto k> constexpr auto operator-(const _val<k>&) const noexcept { return _val<v-k>{}; }
-    template<auto k> constexpr auto operator*(const _val<k>&) const noexcept { return _val<v*k>{}; }
-    template<auto k> constexpr auto operator/(const _val<k>&) const noexcept { return _val<v/k>{}; }
+    template<auto k> constexpr auto operator+(const constant<k>&) const noexcept { return constant<v+k>{}; }
+    template<auto k> constexpr auto operator-(const constant<k>&) const noexcept { return constant<v-k>{}; }
+    template<auto k> constexpr auto operator*(const constant<k>&) const noexcept { return constant<v*k>{}; }
+    template<auto k> constexpr auto operator/(const constant<k>&) const noexcept { return constant<v/k>{}; }
 
     template<typename... B>
     constexpr auto operator()(const bindings<B...>&) const noexcept {
@@ -43,9 +43,9 @@ struct _val {
     template<typename Self, typename V>
     constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
-            return _val<1>{};
+            return constant<1>{};
         else
-            return _val<0>{};
+            return constant<0>{};
     }
 
     template<typename... B>
@@ -55,11 +55,79 @@ struct _val {
     }
 };
 
+
 template<auto v>
-struct is_symbol<_val<v>> : std::true_type {};
+struct is_symbol<constant<v>> : std::true_type {};
 
 template<auto value>
-inline constexpr _val<value> aval;
+inline constexpr constant<value> val;
+
+
+template<typename T, auto _ = [] () {}>
+struct value {
+ private:
+    static T _value;
+
+ public:
+    constexpr value() = default;
+    constexpr value(value&&) = default;
+    constexpr value(const value&) = default;
+
+    template<typename _T>
+        requires(contains_decay_v<_T, T>)
+    constexpr value(_T&& v) noexcept {
+        value<T, _>::_value = v;
+    }
+
+    template<typename _T, auto __ = [] () {}>
+        requires(contains_decay_v<_T, T>)
+    constexpr auto operator=(_T&& v) noexcept {
+        return value<T, __>{v};
+    }
+
+    template<typename... B>
+    constexpr decltype(auto) operator()(const bindings<B...>&) const noexcept {
+        return get();
+    }
+
+    template<typename... B>
+    constexpr decltype(auto) evaluate_at(const bindings<B...>&) const noexcept {
+        return get();
+    }
+
+    template<typename... B, typename... V>
+    constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
+        return std::make_pair(get(), derivatives<T, V...>{});
+    }
+
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
+        if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
+            return constant<1>{};
+        else
+            return constant<0>{};
+    }
+
+    template<typename... B>
+    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>&) const {
+        out << get();
+        return out;
+    }
+
+    const T& get() const {
+        return value<T, _>::_value;
+    }
+};
+
+template<typename T, auto _>
+T value<T, _>::_value = T{0};
+
+template<typename T, auto _ = [] () {}>
+value(T&&) -> value<T, _>;
+
+template<typename T, auto _>
+struct is_symbol<value<T, _>> : std::true_type {};
+
 
 template<typename S, typename V>
 struct value_binder {
@@ -110,6 +178,7 @@ struct symbol {
         return bindings[self];
     }
 
+    // currently unused
     template<typename Self, typename... B>
         requires(bindings<B...>::template contains_bindings_for<Self>)
     constexpr decltype(auto) evaluate_at(this Self&& self, const bindings<B...>& b) noexcept {
@@ -128,9 +197,9 @@ struct symbol {
     template<typename Self, typename V>
     constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
         if constexpr (concepts::same_decay_t_as<Self, V>)
-            return _val<1>{};
+            return val<1>;
         else
-            return _val<0>{};
+            return val<0>;
     }
 
     template<typename Self, typename... V>

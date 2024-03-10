@@ -10,7 +10,7 @@
 #define ADD_32(x) ADD_16(x) + ADD_16(x)
 #define ADD_64(x) ADD_32(x) + ADD_32(x)
 
-#define UNIT_EXPRESSION(a, b) a*((a + b)*b + (a*b) + b)
+#define UNIT_EXPRESSION(a, b) 2*a*((a + b)*b*4 + (a*b) + 4*b)
 #define GENERATE_EXPRESSION(a, b) ADD_64(UNIT_EXPRESSION(a, b))
 
 #include <adpp/backward/symbols.hpp>
