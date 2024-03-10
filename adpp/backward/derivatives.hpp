@@ -34,39 +34,29 @@ struct derivatives : indexed<const Ts&...> {
 
     template<typename Self, concepts::arithmetic T>
     constexpr decltype(auto) scaled_with(this Self&& self, T factor) noexcept {
-        std::ranges::for_each(self._values, [factor] (auto& v) { v *= factor; });
+        std::ranges::for_each(self._values, [factor=static_cast<R>(factor)] (auto& v) { v *= factor; });
         return std::forward<Self>(self);
     }
 
-    template<typename Self, concepts::arithmetic T>
+    template<typename Self, concepts::arithmetic T> requires(!std::is_lvalue_reference_v<Self>)
     constexpr decltype(auto) operator+(this Self&& self, derivatives<T, Ts...>&& other) noexcept {
-        using result_type = std::common_type_t<R, T>;
-        if constexpr (std::is_same_v<result_type, R>) {
-            const auto& other_values = other.as_array();
-            std::transform(
-                other_values.begin(), other_values.end(),
-                self._values.begin(), self._values.begin(),
-                std::plus{}
-            );
+        using result_t = std::common_type_t<R, T>;
+        static_assert(is_any_of_v<result_t, R, T>);
+        if constexpr (std::is_same_v<result_t, R>) {
+            auto& out = self._values;
+            const auto& in = other.as_array();
+            std::transform(in.begin(), in.end(), out.begin(), out.begin(), std::plus<result_t>{});
             return std::forward<Self>(self);
         } else {
-            auto& other_values = other.as_array();
-            std::transform(
-                self._values.begin(), self._values.end(),
-                other_values.begin(), other_values.begin(),
-                std::plus{}
-            );
+            auto& out = other.as_array();
+            const auto& in = self._values;
+            std::transform(in.begin(), in.end(), out.begin(), out.begin(), std::plus<result_t>{});
             return std::move(other);
         }
     }
 
-    constexpr const auto& as_array() const {
-        return _values;
-    }
-
-    constexpr auto& as_array() {
-        return _values;
-    }
+    constexpr const auto& as_array() const noexcept { return _values; }
+    constexpr auto& as_array() noexcept { return _values; }
 
  private:
     std::array<value_type, size> _values;
