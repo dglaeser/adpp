@@ -51,11 +51,14 @@ struct bindings : variadic_accessor<B...> {
     struct is_contained : std::disjunction<std::is_same<std::remove_cvref_t<T>, symbol_type_of<B>>...> {};
 
  public:
+    using common_value_type = std::common_type_t<typename std::remove_cvref_t<B>::value_type...>;
+
     template<typename... T>
     static constexpr bool contains_bindings_for = std::conjunction_v<is_contained<T>...>;
 
     template<typename T> requires(sizeof...(B) > 0 and contains_bindings_for<T>)
     using binder_type = binder_type_for<T, B...>::type;
+
 
     constexpr bindings(B... binders) noexcept
     : base(std::forward<B>(binders)...)

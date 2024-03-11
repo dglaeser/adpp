@@ -41,6 +41,7 @@ concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_c
 template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
+    typename T::value_type;
     { t.unwrap() };
 };
 

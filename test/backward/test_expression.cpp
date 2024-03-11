@@ -8,6 +8,7 @@
 
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/expression.hpp>
+#include <adpp/backward/differentiate.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -54,19 +55,19 @@ int main() {
         var y;
         var z;
         const auto expr = x - 2*y - x + exp(val<3.0>/z);
-        const auto derivs = expr.back_propagate(at(x = 3, y = 2, z = 4.0), wrt(x, y, z));
-        expect(eq(derivs.second[x], 0));
-        expect(eq(derivs.second[y], -2));
-        expect(eq(derivs.second[z], std::exp(3.0/4.0)*(-3.0/16.0)));
+        const auto derivs = derivatives_of(expr, wrt(x, y, z), at(x = 3, y = 2, z = 4.0));
+        expect(eq(derivs[x], 0));
+        expect(eq(derivs[y], -2));
+        expect(eq(derivs[z], std::exp(3.0/4.0)*(-3.0/16.0)));
     };
 
     "expression_gradient"_test = [] () {
         var x;
         var y;
         const auto expression = val<2>*(x + y)*x;
-        const auto grad = expression.gradient(at(x = 3, y = 2));
-        expect(eq(grad[x], 4.0*3.0 + 2.0*2.0));
-        expect(eq(grad[y], 2.0*3.0));
+        const auto gradient = grad(expression, at(x = 3, y = 2));
+        expect(eq(gradient[x], 4.0*3.0 + 2.0*2.0));
+        expect(eq(gradient[y], 2.0*3.0));
     };
 
     "expression_derivative_wrt_expression"_test = [] () {
@@ -74,7 +75,7 @@ int main() {
         var y;
         const auto tmp = x + y;
         const auto expr = val<2>*tmp;
-        const auto [value, derivs] = expr.back_propagate(at(x = 3, y = 2), wrt(tmp));
+        const auto [value, derivs] = expr.template back_propagate<double>(at(x = 3, y = 2), wrt(tmp));
         expect(eq(value, 10));
         expect(eq(derivs[tmp], 2));
     };

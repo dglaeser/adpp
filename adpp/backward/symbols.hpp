@@ -34,10 +34,9 @@ struct constant {
         return value;
     }
 
-    template<typename... B, typename... V>
+    template<concepts::arithmetic R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
-        using T = std::remove_cvref_t<decltype(value)>;
-        return std::make_pair(value, derivatives<T, V...>{});
+        return std::make_pair(value, derivatives<R, V...>{});
     }
 
     template<typename Self, typename V>
@@ -95,9 +94,9 @@ struct value {
         return get();
     }
 
-    template<typename... B, typename... V>
+    template<concepts::arithmetic R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
-        return std::make_pair(get(), derivatives<T, V...>{});
+        return std::make_pair(get(), derivatives<R, V...>{});
     }
 
     template<typename Self, typename V>
@@ -132,6 +131,7 @@ struct is_symbol<value<T, _>> : std::true_type {};
 template<typename S, typename V>
 struct value_binder {
     using symbol_type = std::remove_cvref_t<S>;
+    using value_type = std::remove_cvref_t<V>;
 
     template<concepts::same_decay_t_as<V> _V>
     constexpr value_binder(const S&, _V&& v) noexcept
@@ -185,10 +185,9 @@ struct symbol {
         return b[self];
     }
 
-    template<typename Self, typename B, typename... V>
+    template<concepts::arithmetic R, typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
-        using value_type = std::remove_cvref_t<decltype(bindings[self])>;
-        derivatives<value_type, V...> derivs{};
+        derivatives<R, V...> derivs{};
         if constexpr (contains_decay_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(self.evaluate_at(bindings), std::move(derivs));

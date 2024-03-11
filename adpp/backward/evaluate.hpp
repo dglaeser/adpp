@@ -57,9 +57,9 @@ struct function {
         return _e(values);
     }
 
-    template<typename... Args>
+    template<concepts::arithmetic R, typename... Args>
     constexpr decltype(auto) back_propagate(Args&&... args) const {
-        return _e.back_propagate(std::forward<Args>(args)...);
+        return _e.template back_propagate<R>(std::forward<Args>(args)...);
     }
 
     template<typename V>

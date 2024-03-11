@@ -130,7 +130,7 @@ struct divide : std::divides<void> {};
 }  // namespace op
 
 
-template<typename op, typename... T>
+template<typename R, typename op, typename... T>
 struct back_propagation;
 
 template<typename op, typename... T>
@@ -149,18 +149,14 @@ struct expression {
         return op{}(Ts{}(operands)...);
     }
 
-    // TODO: much slower than individually back-propagating each var.
-    //       we could back-propagate for each var and merge? Although it would defeat the purpose..
-    //       more efficient operations between deriv storage? Maybe the reason for the runtime diff
-    //       is because we scale/add/etc. each deriv (many unnecessary operations?)
-    template<typename Self, typename... B>
+    template<concepts::arithmetic R, typename Self, typename... B>
     constexpr auto gradient(this Self&& self, const bindings<B...>& bindings) {
-        return self.back_propagate(bindings, variables_of(self)).second;
+        return self.template back_propagate<R>(bindings, variables_of(self)).second;
     }
 
-    template<typename Self, typename... B, typename... V>
+    template<concepts::arithmetic R, typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
-        auto [value, derivs] = back_propagation<op, Ts...>{}(bindings, vars);
+        auto [value, derivs] = back_propagation<R, op, Ts...>{}(bindings, vars);
         if constexpr (contains_decay_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(std::move(value), std::move(derivs));
@@ -266,43 +262,43 @@ inline constexpr op_result_t<op::exp, A> exp(A&& a) {
 }
 
 
-template<typename A, typename B>
-struct back_propagation<op::add, A, B> {
+template<typename R, typename A, typename B>
+struct back_propagation<R, op::add, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
-        auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
-        auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
+        auto [value_a, derivs_a] = A{}.template back_propagate<R>(b, vars);
+        auto [value_b, derivs_b] = B{}.template back_propagate<R>(b, vars);
         return std::make_pair(value_a + value_b, std::move(derivs_a) + std::move(derivs_b));
     }
 };
 
-template<typename A, typename B>
-struct back_propagation<op::subtract, A, B> {
+template<typename R, typename A, typename B>
+struct back_propagation<R, op::subtract, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
-        auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
-        auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
+        auto [value_a, derivs_a] = A{}.template back_propagate<R>(b, vars);
+        auto [value_b, derivs_b] = B{}.template back_propagate<R>(b, vars);
         return std::make_pair(value_a - value_b, std::move(derivs_a) + std::move(derivs_b).scaled_with(-1));
     }
 };
 
-template<typename A, typename B>
-struct back_propagation<op::multiply, A, B> {
+template<typename R, typename A, typename B>
+struct back_propagation<R, op::multiply, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
-        auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
-        auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
+        auto [value_a, derivs_a] = A{}.template back_propagate<R>(b, vars);
+        auto [value_b, derivs_b] = B{}.template back_propagate<R>(b, vars);
         auto derivs = std::move(derivs_a).scaled_with(value_b) + std::move(derivs_b).scaled_with(value_a);
         return std::make_pair(value_a*value_b, std::move(derivs));
     }
 };
 
-template<typename A, typename B>
-struct back_propagation<op::divide, A, B> {
+template<typename R, typename A, typename B>
+struct back_propagation<R, op::divide, A, B> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
-        auto [value_a, derivs_a] = A{}.back_propagate(b, vars);
-        auto [value_b, derivs_b] = B{}.back_propagate(b, vars);
+        auto [value_a, derivs_a] = A{}.template back_propagate<R>(b, vars);
+        auto [value_b, derivs_b] = B{}.template back_propagate<R>(b, vars);
 
         using TA = std::remove_cvref_t<decltype(value_a)>;
         using TB = std::remove_cvref_t<decltype(value_b)>;
@@ -314,11 +310,11 @@ struct back_propagation<op::divide, A, B> {
     }
 };
 
-template<typename A>
-struct back_propagation<op::exp, A> {
+template<typename R, typename A>
+struct back_propagation<R, op::exp, A> {
     template<typename... _B, typename... V>
     constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
-        auto [value_inner, derivs_inner] = A{}.back_propagate(b, vars);
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
         auto result = op::exp{}(value_inner);
         return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(result));
     }

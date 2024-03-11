@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     for (unsigned int i = 0; i < N; ++i) {
         const auto expression = GENERATE_EXPRESSION(x, y);
         const auto eval = expression(at(x = xv, y = yv));
-        const auto gradient = expression.gradient(at(x = xv, y = yv));
+        const auto gradient = grad(expression, at(x = xv, y = yv));
 
         value += eval;
         derivs[0] += gradient[x];
