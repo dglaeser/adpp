@@ -3,29 +3,14 @@
 #include <utility>
 #include <chrono>
 
-#define ADD_2(x) x + x
-#define ADD_4(x) ADD_2(x) + ADD_2(x)
-#define ADD_8(x) ADD_4(x) + ADD_4(x)
-#define ADD_16(x) ADD_8(x) + ADD_8(x)
-#define ADD_32(x) ADD_16(x) + ADD_16(x)
-#define ADD_64(x) ADD_32(x) + ADD_32(x)
-
-#if USE_AUTODIFF
-#define UNIT_EXPRESSION(a, b) 2*a*((a + b)*b*4 + (a*b) + 8*b)
-#define GENERATE_EXPRESSION(a, b) ADD_64(UNIT_EXPRESSION(a, b))
-#else
-#include <adpp/backward/symbols.hpp>
-using adpp::backward::val;
-#define UNIT_EXPRESSION(a, b) val<2>*a*((a + b)*b*val<4> + (a*b) + val<8>*b)
-#define GENERATE_EXPRESSION(a, b) ADD_64(UNIT_EXPRESSION(a, b))
-#endif
-
 #if USE_AUTODIFF
 #include <autodiff/reverse/var.hpp>
 #else
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/expression.hpp>
 #endif
+
+#include "test_expr.hpp"
 
 int main(int argc, char** argv) {
     if (argc < 3)

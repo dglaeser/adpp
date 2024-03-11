@@ -30,7 +30,7 @@ if ref_name is not None:
 adpp_size = os.path.getsize(name)
 print("     adpp binary size: {:.2f} MB".format(adpp_size/1e6))
 if ref_name is not None:
-    ref_size = os.path.getsize(f"{name}_autodiff")
+    ref_size = os.path.getsize(ref_name)
     print("reference binary size: {:.2f} MB".format(ref_size/1e6))
     print("                ratio: {:.2f}".format(ref_size/adpp_size))
 
