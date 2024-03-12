@@ -150,11 +150,6 @@ struct expression {
         return op{}(Ts{}.evaluate(operands)...);
     }
 
-    template<scalar R, typename Self, typename... B>
-    constexpr auto gradient(this Self&& self, const bindings<B...>& bindings) {
-        return self.template back_propagate<R>(bindings, variables_of(self)).second;
-    }
-
     template<scalar R, typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
         auto [value, derivs] = back_propagation<R, op, Ts...>{}(bindings, vars);
