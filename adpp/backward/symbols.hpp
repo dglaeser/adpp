@@ -65,9 +65,17 @@ inline constexpr constant<value> val;
 template<typename T, auto _ = [] () {}>
 struct value {
  private:
-    static T _value;
+    static constexpr bool is_reference = std::is_lvalue_reference_v<T>;
+    using stored_t = std::conditional_t<
+        is_reference,
+        std::add_pointer_t<std::remove_reference_t<T>>,
+        std::remove_cvref_t<T>
+    >;
+    static stored_t _value;
 
  public:
+    using stored_type = stored_t;
+
     constexpr value() = default;
     constexpr value(value&&) = default;
     constexpr value(const value&) = default;
@@ -75,7 +83,12 @@ struct value {
     template<typename _T>
         requires(contains_decay_v<_T, T>)
     constexpr value(_T&& v) noexcept {
-        value<T, _>::_value = v;
+        if constexpr (is_reference) {
+            static_assert(std::is_lvalue_reference_v<T>, "Provided value is not an lvalue reference");
+            value<T, _>::_value = &v;
+        } else {
+            value<T, _>::_value = std::forward<_T>(v);
+        }
     }
 
     template<typename _T, auto __ = [] () {}>
@@ -114,12 +127,15 @@ struct value {
     }
 
     const T& get() const {
-        return value<T, _>::_value;
+        if constexpr (is_reference)
+            return *value<T, _>::_value;
+        else
+            return value<T, _>::_value;
     }
 };
 
 template<typename T, auto _>
-T value<T, _>::_value = T{0};
+typename value<T, _>::stored_t value<T, _>::_value = {};
 
 template<typename T, auto _ = [] () {}>
 value(T&&) -> value<T, _>;
