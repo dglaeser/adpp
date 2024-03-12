@@ -6,7 +6,13 @@
 
 namespace adpp {
 
-    #ifndef DOXYGEN
+struct automatic {};
+
+template<typename... Ts>
+struct type_list {};
+
+
+#ifndef DOXYGEN
 namespace detail {
 
     template<typename T, std::size_t s = sizeof(T)>
@@ -31,10 +37,6 @@ struct decayed_arg {
     template<typename T>
     struct type : trait<std::decay_t<T>> {};
 };
-
-
-template<typename... Ts>
-struct type_list {};
 
 
 template<typename T>
