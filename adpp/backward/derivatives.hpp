@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <type_traits>
+#include <array>
 
 #include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
