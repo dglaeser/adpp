@@ -150,12 +150,12 @@ struct expression {
         return op{}(Ts{}(operands)...);
     }
 
-    template<concepts::arithmetic R, typename Self, typename... B>
+    template<arithmetic R, typename Self, typename... B>
     constexpr auto gradient(this Self&& self, const bindings<B...>& bindings) {
         return self.template back_propagate<R>(bindings, variables_of(self)).second;
     }
 
-    template<concepts::arithmetic R, typename Self, typename... B, typename... V>
+    template<arithmetic R, typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
         auto [value, derivs] = back_propagation<R, op, Ts...>{}(bindings, vars);
         if constexpr (contains_decayed_v<Self, V...>)
@@ -220,7 +220,7 @@ template<typename op, term... Ts>
 using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
 
 template<typename T>
-concept to_term = term<std::remove_cvref_t<T>> or concepts::arithmetic<std::remove_cvref_t<T>>;
+concept to_term = term<std::remove_cvref_t<T>> or arithmetic<std::remove_cvref_t<T>>;
 
 template<to_term T>
 inline constexpr decltype(auto) as_term(T&& t) noexcept {
@@ -232,7 +232,7 @@ inline constexpr decltype(auto) as_term(T&& t) noexcept {
 
 template<to_term T, auto _ = [] () {}>
 using term_t = std::conditional_t<
-    concepts::arithmetic<std::remove_cvref_t<T>>,
+    arithmetic<std::remove_cvref_t<T>>,
     value<std::remove_cvref_t<T>, _>,
     std::remove_cvref_t<T>
 >;

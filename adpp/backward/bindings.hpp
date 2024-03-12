@@ -36,7 +36,7 @@ struct bindings : variadic_accessor<B...> {
     template<typename T, typename B0, typename... Bs>
     struct binder_type_for<T, B0, Bs...> {
         using type = std::conditional_t<
-            concepts::same_remove_cvref_t_as<T, symbol_type_of<B0>>, B0, typename binder_type_for<T, Bs...>::type
+            same_remove_cvref_t_as<T, symbol_type_of<B0>>, B0, typename binder_type_for<T, Bs...>::type
         >;
     };
 

@@ -6,7 +6,7 @@
 
 #include <adpp/type_traits.hpp>
 
-namespace adpp::concepts {
+namespace adpp {
 
 template<typename T>
 concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
@@ -14,4 +14,4 @@ concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integra
 template<typename A, typename B>
 concept same_remove_cvref_t_as = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
 
-}  // namespace adpp::concepts
+}  // namespace adpp

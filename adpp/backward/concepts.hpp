@@ -36,7 +36,7 @@ template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
     typename T::value_type;
-    { t.unwrap() } -> concepts::same_remove_cvref_t_as<typename T::value_type>;
+    { t.unwrap() } -> same_remove_cvref_t_as<typename T::value_type>;
 };
 
 }  // namespace adpp::backward

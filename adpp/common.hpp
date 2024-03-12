@@ -63,7 +63,7 @@ namespace detail {
     struct indexed_element {
         using index = index_constant<I>;
 
-        template<concepts::same_remove_cvref_t_as<T> _T>
+        template<same_remove_cvref_t_as<T> _T>
         constexpr index index_of() const noexcept { return {}; }
         constexpr index index_of(const T&) const noexcept { return {}; }
     };
@@ -92,7 +92,7 @@ namespace detail {
 
         constexpr variadic_element(T t) noexcept : _storage{std::forward<T>(t)} {}
 
-        template<concepts::same_remove_cvref_t_as<T> _T>
+        template<same_remove_cvref_t_as<T> _T>
         constexpr index index_of() const noexcept { return {}; }
         constexpr index index_of(const T&) const noexcept { return {}; }
 
