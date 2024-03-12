@@ -174,14 +174,12 @@ struct symbol {
     constexpr symbol(symbol&&) = default;
     constexpr symbol(const symbol&) = delete;
 
-    template<typename Self, typename V>
-        requires(concepts::accepts<T, V>)
+    template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
 
-    template<typename Self, typename V>
-        requires(concepts::accepts<T, V>)
+    template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto operator=(this Self&& self, V&& value) noexcept {
         return self.bind(std::forward<V>(value));
     }
