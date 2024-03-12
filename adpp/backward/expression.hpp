@@ -10,11 +10,6 @@
 
 namespace adpp::backward {
 
-template<typename... V>
-inline constexpr auto wrt(V&&...) {
-    return type_list<std::remove_cvref_t<V>...>{};
-}
-
 #ifndef DOXYGEN
 namespace detail {
 

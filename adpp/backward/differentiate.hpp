@@ -3,9 +3,15 @@
 #include <type_traits>
 
 #include <adpp/common.hpp>
+#include <adpp/type_traits.hpp>
 #include <adpp/backward/bindings.hpp>
 
 namespace adpp::backward {
+
+template<typename... V>
+inline constexpr auto wrt(V&&...) {
+    return type_list<std::remove_cvref_t<V>...>{};
+}
 
 template<typename R = automatic, typename E, typename... B, typename... V>
     requires(expression_for<E, bindings<B...>>)
