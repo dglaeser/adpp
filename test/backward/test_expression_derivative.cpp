@@ -13,7 +13,7 @@ using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
-using adpp::backward::val;
+using adpp::backward::cval;
 
 
 int main() {
@@ -57,7 +57,7 @@ int main() {
         static constexpr var a;
         static constexpr var b;
         static constexpr let mu;
-        constexpr auto expr = a*a*a + b*b*val<2> + mu;
+        constexpr auto expr = a*a*a + b*b*cval<2> + mu;
         static_assert(3.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::first_order));
         static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::second_order));
         static_assert(6.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0, mu = 3.0), adpp::third_order));
@@ -90,7 +90,7 @@ int main() {
         static constexpr var a;
         static constexpr var b;
         static constexpr let mu;
-        static constexpr auto expr = val<2>*a + b*mu;
+        static constexpr auto expr = cval<2>*a + b*mu;
         // we still have to provide all variables
         {
             constexpr auto derivative = differentiate(expr, wrt(a));

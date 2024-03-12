@@ -352,7 +352,7 @@ struct derivative<op::subtract, A, B> {
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv; },
-            [] (auto&& db_dv) { return val<-1>*db_dv; },
+            [] (auto&& db_dv) { return cval<-1>*db_dv; },
             [] (auto&& da_dv, auto&& db_dv) { return da_dv - db_dv; }
         );
     }
@@ -380,7 +380,7 @@ struct derivative<op::divide, A, B> {
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv/B{}; },
-            [] (auto&& db_dv) { return val<-1>*A{}*db_dv/(B{}*B{}); },
+            [] (auto&& db_dv) { return cval<-1>*A{}*db_dv/(B{}*B{}); },
             [] (auto&& da_dv, auto&& db_dv) { return da_dv/B{} - A{}*db_dv/(B{}*B{}); }
         );
     }
@@ -392,7 +392,7 @@ struct derivative<op::exp, A> {
     constexpr auto operator()(const type_list<V>& v) {
         const auto da_dv = A{}.differentiate_wrt(v);
         if constexpr (is_zero(da_dv))
-            return val<0>;
+            return cval<0>;
         else
             return exp(A{})*A{}.differentiate_wrt(v);
     }

@@ -16,7 +16,7 @@ using boost::ut::eq;
 
 using adpp::backward::let;
 using adpp::backward::var;
-using adpp::backward::val;
+using adpp::backward::cval;
 using adpp::backward::value;
 using adpp::backward::expression;
 
@@ -46,7 +46,7 @@ int main() {
         var y;
         const auto expr_tmp_1 = (x + y)*(x - y)/(x + y);
         const auto expr_tmp_2 = exp(expr_tmp_1);
-        const auto expr = val<2>*expr_tmp_2;
+        const auto expr = cval<2>*expr_tmp_2;
         expect(eq(expr(at(x = 3, y = 2)), 2*std::exp(1.0)));
     };
 
@@ -54,7 +54,7 @@ int main() {
         var x;
         var y;
         var z;
-        const auto expr = x - 2*y - x + exp(val<3.0>/z);
+        const auto expr = x - 2*y - x + exp(cval<3.0>/z);
         const auto derivs = derivatives_of(expr, wrt(x, y, z), at(x = 3, y = 2, z = 4.0));
         expect(eq(derivs[x], 0));
         expect(eq(derivs[y], -2));
@@ -64,7 +64,7 @@ int main() {
     "expression_gradient"_test = [] () {
         var x;
         var y;
-        const auto expression = val<2>*(x + y)*x;
+        const auto expression = cval<2>*(x + y)*x;
         const auto gradient = grad(expression, at(x = 3, y = 2));
         expect(eq(gradient[x], 4.0*3.0 + 2.0*2.0));
         expect(eq(gradient[y], 2.0*3.0));
@@ -74,7 +74,7 @@ int main() {
         var x;
         var y;
         const auto tmp = x + y;
-        const auto expr = val<2>*tmp;
+        const auto expr = cval<2>*tmp;
         const auto [value, derivs] = expr.template back_propagate<double>(at(x = 3, y = 2), wrt(tmp));
         expect(eq(value, 10));
         expect(eq(derivs[tmp], 2));
@@ -93,7 +93,7 @@ int main() {
         var x;
         var y;
         let mu;
-        const auto expr = val<1.5>*(x + y) - exp(val<-1>*mu*x);
+        const auto expr = cval<1.5>*(x + y) - exp(cval<-1>*mu*x);
         const auto deriv = expr.differentiate_wrt(wrt(x));
         expect(eq(deriv(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
     };
@@ -101,7 +101,7 @@ int main() {
     "expression_multiplication_derivative_simplification"_test  = [] () {
         var x;
         {
-            const auto expr = val<2>*x;
+            const auto expr = cval<2>*x;
             const auto deriv = expr.differentiate_wrt(wrt(x));
             expect(eq(deriv(at(x = 2)), 2));
             std::stringstream s;
@@ -129,7 +129,7 @@ int main() {
     "expression_division_derivative_simplification"_test  = [] () {
         var x;
         var y;
-        const auto expr = x/y + (y + y/val<2.0>);
+        const auto expr = x/y + (y + y/cval<2.0>);
         const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
             expect(eq(deriv_x(at(x = 2.0, y = 3.0)), 1.0/3.0));
         }

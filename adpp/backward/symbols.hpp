@@ -58,7 +58,7 @@ template<auto v>
 struct is_symbol<constant<v>> : std::true_type {};
 
 template<auto value>
-inline constexpr constant<value> val;
+inline constexpr constant<value> cval;
 
 
 template<typename T, auto _ = [] () {}>
@@ -208,9 +208,9 @@ struct symbol {
     template<typename Self, typename V>
     constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
         if constexpr (same_remove_cvref_t_as<Self, V>)
-            return val<1>;
+            return cval<1>;
         else
-            return val<0>;
+            return cval<0>;
     }
 
     template<typename Self, typename... V>

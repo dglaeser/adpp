@@ -16,7 +16,7 @@ using boost::ut::expect;
 using boost::ut::eq;
 
 using adpp::backward::var;
-using adpp::backward::val;
+using adpp::backward::cval;
 using adpp::backward::value;
 using adpp::backward::function;
 
@@ -37,16 +37,16 @@ int main() {
     "var_times_scalar"_test = [] () {
         var a;
         {
-            [[maybe_unused]] auto op_right = a*val<1>;
-            [[maybe_unused]] auto op_left = val<1>*a;
+            [[maybe_unused]] auto op_right = a*cval<1>;
+            [[maybe_unused]] auto op_left = cval<1>*a;
         }
         {
-            [[maybe_unused]] auto op_right = a + val<1>;
-            [[maybe_unused]] auto op_left = val<1> + a;
+            [[maybe_unused]] auto op_right = a + cval<1>;
+            [[maybe_unused]] auto op_left = cval<1> + a;
         }
         {
-            [[maybe_unused]] auto op_right = a - val<1>;
-            [[maybe_unused]] auto op_left = val<1> - a;
+            [[maybe_unused]] auto op_right = a - cval<1>;
+            [[maybe_unused]] auto op_left = cval<1> - a;
         }
     };
 
