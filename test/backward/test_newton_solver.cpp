@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cmath>
 
 #include <iostream>
 #include <boost/ut.hpp>
@@ -9,7 +10,7 @@
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
-using boost::ut::eq;
+using boost::ut::lt;
 
 using adpp::backward::var;
 using adpp::backward::let;
@@ -38,10 +39,11 @@ constexpr double newton_solve() {
 int main() {
     using boost::ut::operator""_test;
     using boost::ut::expect;
-    using boost::ut::eq;
+    using boost::ut::lt;
 
     "newton_solver"_test = [] () {
-        static_assert(newton_solve() < 1e-6);
+        static_assert(newton_solve()*newton_solve() < 1e-12);
+        expect(lt(newton_solve()*newton_solve(), 1e-12));
     };
 
     return EXIT_SUCCESS;
