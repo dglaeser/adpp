@@ -14,6 +14,9 @@ concept arithmetic = std::floating_point<std::remove_cvref_t<T>> or std::integra
 template<typename A, typename B>
 concept same_decay_t_as = std::same_as<std::decay_t<A>, std::decay_t<B>>;
 
+template<typename A, typename B>
+concept same_remove_cvref_t_as = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
+
 template<typename T>
 concept ownable = is_ownable<T>::value;
 

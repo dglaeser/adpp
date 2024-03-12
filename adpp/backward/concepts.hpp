@@ -26,19 +26,17 @@ template<typename T>
 struct is_expression : std::false_type {};
 template<typename T>
 inline constexpr bool is_expression_v = is_expression<T>::value;
-template<typename T, typename Arg>
-concept expression_for = is_expression_v<std::remove_cvref_t<T>>
-    and requires(const T& t, const Arg& b) { { t(b) }; };
-
 template<typename T>
 concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
+template<typename T, typename Arg>
+concept expression_for = term<T> and requires(const T& t, const Arg& b) { { t(b) }; };
 
 
 template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
     typename T::value_type;
-    { t.unwrap() };
+    { t.unwrap() } -> concepts::same_remove_cvref_t_as<typename T::value_type>;
 };
 
 }  // namespace adpp::backward
