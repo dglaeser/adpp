@@ -17,7 +17,7 @@ struct formatted {
     {}
 
     friend constexpr std::ostream& operator<<(std::ostream& out, const formatted& f) {
-        f._expr.get().stream(out, f._substitutions.get());
+        f._expr.get().export_to(out, f._substitutions.get());
         return out;
     }
 

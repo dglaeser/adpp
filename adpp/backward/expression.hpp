@@ -169,9 +169,8 @@ struct expression {
     }
 
     template<typename... B>
-    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>& name_bindings) const {
+    constexpr void export_to(std::ostream& out, const bindings<B...>& name_bindings) const {
         format<op, Ts...>{}(out, name_bindings);
-        return out;
     }
 };
 
@@ -403,9 +402,9 @@ template<typename A, typename B>
 struct format<op::add, A, B> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
-        A{}.stream(out, name_map);
+        A{}.export_to(out, name_map);
         out << " + ";
-        B{}.stream(out, name_map);
+        B{}.export_to(out, name_map);
     }
 };
 
@@ -413,9 +412,9 @@ template<typename A, typename B>
 struct format<op::subtract, A, B> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
-        A{}.stream(out, name_map);
+        A{}.export_to(out, name_map);
         out << " - ";
-        B{}.stream(out, name_map);
+        B{}.export_to(out, name_map);
     }
 };
 
@@ -426,7 +425,7 @@ namespace detail {
     inline constexpr void in_braces(std::ostream& out, const A& a, const bindings<N...>& name_map) {
         constexpr bool use_braces = !is_symbol_v<A>;
         if constexpr (use_braces) out << "(";
-        a.stream(out, name_map);
+        a.export_to(out, name_map);
         if constexpr (use_braces) out << ")";
     }
 
@@ -458,14 +457,14 @@ struct format<op::exp, A> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
         out << "exp(";
-        A{}.stream(out, name_map);
+        A{}.export_to(out, name_map);
         out << ")";
     }
 };
 
 template<typename E, typename... N> // requires(is_expression_v<E>)
 inline constexpr void print_to(std::ostream& s, const E& expression, const bindings<N...>& name_map) {
-    expression.stream(s, name_map);
+    expression.export_to(s, name_map);
 }
 
 }  // namespace adpp::backward

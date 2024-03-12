@@ -85,7 +85,7 @@ int main() {
         var y;
         let mu;
         std::stringstream s;
-        exp((x + y/x)*mu).stream(s, with(x = "x", y = "y", mu = "µ"));
+        exp((x + y/x)*mu).export_to(s, with(x = "x", y = "y", mu = "µ"));
         expect(eq(s.str(), std::string{"exp((x + y/x)*µ)"}));
     };
 

@@ -48,9 +48,8 @@ struct constant {
     }
 
     template<typename... B>
-    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>&) const {
+    constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
         out << value;
-        return out;
     }
 };
 
@@ -121,9 +120,8 @@ struct value {
     }
 
     template<typename... B>
-    constexpr std::ostream& stream(std::ostream& out, const bindings<B...>&) const {
+    constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
         out << get();
-        return out;
     }
 
     const T& get() const {
@@ -219,9 +217,8 @@ struct symbol {
 
     template<typename Self, typename... V>
         requires(bindings<V...>::template contains_bindings_for<Self>)
-    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
+    constexpr void export_to(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
         out << name_bindings[self];
-        return out;
     }
 };
 
