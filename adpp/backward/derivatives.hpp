@@ -22,12 +22,12 @@ struct derivatives : indexed<const Ts&...> {
         std::ranges::fill(_values, R{0});
     }
 
-    template<typename Self, typename T> requires(contains_decay_v<T, Ts...>)
+    template<typename Self, typename T> requires(contains_decayed_v<T, Ts...>)
     constexpr std::convertible_to<value_type> decltype(auto) operator[](this Self&& self, const T& t) noexcept {
         return self._values[self.index_of(t)];
     }
 
-    template<typename T> requires(contains_decay_v<T, Ts...>)
+    template<typename T> requires(contains_decayed_v<T, Ts...>)
     constexpr std::convertible_to<value_type> decltype(auto) get() const noexcept {
         return _values[base::template index_of<T>()];
     }

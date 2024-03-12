@@ -80,7 +80,7 @@ struct value {
     constexpr value(const value&) = default;
 
     template<typename _T>
-        requires(contains_decay_v<_T, T>)
+        requires(contains_decayed_v<_T, T>)
     constexpr value(_T&& v) noexcept {
         if constexpr (is_reference) {
             static_assert(std::is_lvalue_reference_v<T>, "Provided value is not an lvalue reference");
@@ -91,7 +91,7 @@ struct value {
     }
 
     template<typename _T, auto __ = [] () {}>
-        requires(contains_decay_v<_T, T>)
+        requires(contains_decayed_v<_T, T>)
     constexpr auto operator=(_T&& v) noexcept {
         return value<T, __>{v};
     }
@@ -200,7 +200,7 @@ struct symbol {
     template<concepts::arithmetic R, typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
         derivatives<R, V...> derivs{};
-        if constexpr (contains_decay_v<Self, V...>)
+        if constexpr (contains_decayed_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
     }

@@ -46,8 +46,8 @@ namespace detail {
     struct symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             symbolic<std::remove_cvref_t<E>>,
-            typename unique_tuple<type_list<Ts...>, std::remove_cvref_t<E>>::type,
-            typename unique_tuple<type_list<Ts...>>::type
+            typename unique_types<type_list<Ts...>, std::remove_cvref_t<E>>::type,
+            typename unique_types<type_list<Ts...>>::type
         >;
     };
 
@@ -58,8 +58,8 @@ namespace detail {
 
     template<typename E0, typename... Es, typename... Ts>
     struct symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
-        using type = typename unique_tuple<
-            typename merged_tuple<
+        using type = typename unique_types<
+            typename merged_types<
                 typename symbols_impl<E0, type_list<Ts...>>::type,
                 typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
             >::type
@@ -89,7 +89,7 @@ inline constexpr auto symbols_of(const E&) {
 
 
 template<detail::traversable_expression E>
-struct unbound_symbols : filtered_tuple<decayed_arg<is_unbound_symbol>::type, symbols_t<E>> {};
+struct unbound_symbols : filtered_types<decayed_trait<is_unbound_symbol>::type, symbols_t<E>> {};
 
 template<detail::traversable_expression E>
 using unbound_symbols_t = typename unbound_symbols<E>::type;
@@ -101,7 +101,7 @@ inline constexpr auto unbound_symbols_of(const E&) {
 
 
 template<detail::traversable_expression E>
-struct vars : filtered_tuple<decayed_arg<detail::is_var>::type, symbols_t<E>> {};
+struct vars : filtered_types<decayed_trait<detail::is_var>::type, symbols_t<E>> {};
 
 template<detail::traversable_expression E>
 using vars_t = typename vars<E>::type;
@@ -158,7 +158,7 @@ struct expression {
     template<concepts::arithmetic R, typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
         auto [value, derivs] = back_propagation<R, op, Ts...>{}(bindings, vars);
-        if constexpr (contains_decay_v<Self, V...>)
+        if constexpr (contains_decayed_v<Self, V...>)
             derivs[self] = 1.0;
         return std::make_pair(std::move(value), std::move(derivs));
     }
