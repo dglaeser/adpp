@@ -15,26 +15,8 @@ inline constexpr auto wrt(V&&...) {
     return type_list<std::remove_cvref_t<V>...>{};
 }
 
-
-// TODO: get rid of forward decls
-template<typename op, term... Ts>
-struct expression;
-template<typename E>
-    requires(is_expression_v<E>)
-struct function;
-
-
 #ifndef DOXYGEN
 namespace detail {
-
-    template<typename T>
-    struct operands;
-    template<typename op, typename... T>
-    struct operands<expression<op, T...>> : std::type_identity<type_list<T...>> {};
-    template<typename E>
-    struct operands<function<E>> : operands<E> {};
-    template<typename T>
-    using operands_t = typename operands<std::remove_cvref_t<T>>::type;
 
     template<typename...>
     struct symbols_impl;
@@ -148,6 +130,9 @@ expression(op&&, Ts&&...) -> expression<std::remove_cvref_t<op>, std::remove_cvr
 
 template<typename op, term... Ts>
 struct is_expression<expression<op, Ts...>> : std::true_type {};
+
+template<typename op, typename... T>
+struct operands<expression<op, T...>> : std::type_identity<type_list<T...>> {};
 
 }  // namespace adpp::backward
 

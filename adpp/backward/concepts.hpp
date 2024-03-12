@@ -35,6 +35,12 @@ concept into_term = term<std::remove_cvref_t<T>> or scalar<std::remove_cvref_t<T
 
 
 template<typename T>
+struct operands;
+template<typename T>
+using operands_t = typename operands<T>::type;
+
+
+template<typename T>
 concept binder = requires(const T& t) {
     typename T::symbol_type;
     typename T::value_type;

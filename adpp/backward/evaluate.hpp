@@ -69,6 +69,9 @@ function(E&&) -> function<std::remove_cvref_t<E>>;
 template<typename E>
 struct is_expression<function<E>> : std::true_type {};
 
+template<typename E>
+struct operands<function<E>> : operands<E> {};
+
 template<typename E, typename... B>
     requires(expression_for<E, bindings<B...>>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
