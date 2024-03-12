@@ -14,7 +14,6 @@ using adpp::backward::var;
 using adpp::backward::let;
 using adpp::backward::function;
 
-
 int main() {
 
     "var_bindings"_test = [] () {

@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.18)
 project(adpp)
 
 set(CPP_AD_NAMESPACE adpp)
-option(ADPP_BUILD_BENCHMARK OFF)
-option(ADPP_BUILD_EXAMPLES ON)
+option(ADPP_BUILD_BENCHMARK "Control if benchmarks should be built" OFF)
+option(ADPP_BUILD_EXAMPLES "Control if examples should be built" ON)
 
 include(GNUInstallDirs)
 add_library(${PROJECT_NAME} INTERFACE)

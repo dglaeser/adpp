@@ -15,7 +15,6 @@ using adpp::backward::var;
 using adpp::backward::let;
 using adpp::backward::cval;
 
-
 int main() {
 
     "derivatives"_test = [] () {
@@ -67,7 +66,7 @@ int main() {
         static_assert(0.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0, mu = 3.0), adpp::third_order));
     };
 
-    "derivative_expression"_test = [] () {
+    "derivative_mixed_var_let_expression"_test = [] () {
         static constexpr var a;
         static constexpr var b;
         static constexpr let mu;

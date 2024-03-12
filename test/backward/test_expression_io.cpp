@@ -45,17 +45,5 @@ int main() {
         ));
     };
 
-    // TODO(?): this would require simplifications of expressions
-    // "expression_derivative_stream"_test = [] () {
-    //     let a;
-    //     let b;
-    //     let c;
-    //     auto expr = a*b*c;
-    //     auto deriv = differentiate(expr, wrt(a));
-    //     std::ostringstream s;
-    //     stream(s, deriv, with(a = "a", b = "b", c = "c"));
-    //     expect(eq(std::string{s.str()}, std::string{"b*c"}));
-    // };
-
     return EXIT_SUCCESS;
 }
