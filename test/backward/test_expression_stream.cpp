@@ -6,13 +6,14 @@
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/expression.hpp>
 #include <adpp/backward/differentiate.hpp>
-#include <adpp/backward/stream.hpp>
+#include <adpp/backward/io.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
 
 using adpp::backward::let;
+using adpp::backward::formatted;
 
 int main() {
 
@@ -20,7 +21,7 @@ int main() {
         let a;
         let b;
         std::ostringstream s;
-        stream(s, a + b, with(a = "a", b = "b"));
+        s << formatted{a + b, where(a = "a", b = "b")};
         expect(eq(std::string{s.str()}, std::string{"a + b"}));
     };
 
@@ -29,9 +30,8 @@ int main() {
         let b;
         let c;
         auto expr = exp(a + b)*c + b*(a + b);
-        std::ostringstream s;
-        stream(s, expr, with(a = "a", b = "b", c = "c"));
-        expect(eq(std::string{s.str()}, std::string{"(exp(a + b))*c + b*(a + b)"}));
+        auto text = formatted{expr, where(a = "a", b = "b", c = "c")}.to_string();
+        expect(eq(text, std::string{"(exp(a + b))*c + b*(a + b)"}));
     };
 
     "expression_no_braces_stream"_test = [] () {
@@ -39,9 +39,10 @@ int main() {
         let b;
         let c;
         auto expr = a + b + c;
-        std::ostringstream s;
-        stream(s, expr, with(a = "a", b = "b", c = "c"));
-        expect(eq(std::string{s.str()}, std::string{"a + b + c"}));
+        expect(eq(
+            formatted{expr, where(a = "a", b = "b", c = "c")}.to_string(),
+            std::string{"a + b + c"}
+        ));
     };
 
     // TODO(?): this would require simplifications of expressions

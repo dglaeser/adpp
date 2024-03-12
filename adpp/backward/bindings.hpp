@@ -79,18 +79,23 @@ template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
 template<typename... B> requires(detail::are_binders<B...>)
-inline constexpr auto at(B&&... b) {
+inline constexpr auto bind(B&&... b) {
     return bindings{std::forward<B>(b)...};
+}
+
+template<typename... B> requires(detail::are_binders<B...>)
+inline constexpr auto at(B&&... b) {
+    return bind(std::forward<B>(b)...);
 }
 
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto with(B&&... b) {
-    return bindings{std::forward<B>(b)...};
+    return bind(std::forward<B>(b)...);
 }
 
 template<typename... B> requires(detail::are_binders<B...>)
-inline constexpr auto bind(B&&... b) {
-    return bindings{std::forward<B>(b)...};
+inline constexpr auto where(B&&... b) {
+    return bind(std::forward<B>(b)...);
 }
 
 }  // namespace adpp
