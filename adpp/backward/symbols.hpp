@@ -53,7 +53,6 @@ struct constant {
     }
 };
 
-
 template<auto v>
 struct is_symbol<constant<v>> : std::true_type {};
 
@@ -62,7 +61,7 @@ inline constexpr constant<value> cval;
 
 
 template<typename T, auto _ = [] () {}>
-struct value {
+struct val {
  private:
     static constexpr bool is_reference = std::is_lvalue_reference_v<T>;
     using stored_t = std::conditional_t<
@@ -75,25 +74,25 @@ struct value {
  public:
     using stored_type = stored_t;
 
-    constexpr value() = default;
-    constexpr value(value&&) = default;
-    constexpr value(const value&) = default;
+    constexpr val() = default;
+    constexpr val(val&&) = default;
+    constexpr val(const val&) = default;
 
     template<typename _T>
         requires(contains_decayed_v<_T, T>)
-    constexpr value(_T&& v) noexcept {
+    constexpr val(_T&& v) noexcept {
         if constexpr (is_reference) {
             static_assert(std::is_lvalue_reference_v<T>, "Provided value is not an lvalue reference");
-            value<T, _>::_value = &v;
+            val<T, _>::_value = &v;
         } else {
-            value<T, _>::_value = std::forward<_T>(v);
+            val<T, _>::_value = std::forward<_T>(v);
         }
     }
 
     template<typename _T, auto __ = [] () {}>
         requires(contains_decayed_v<_T, T>)
     constexpr auto operator=(_T&& v) noexcept {
-        return value<T, __>{v};
+        return val<T, __>{v};
     }
 
     template<typename... B>
@@ -126,20 +125,20 @@ struct value {
 
     const T& get() const {
         if constexpr (is_reference)
-            return *value<T, _>::_value;
+            return *val<T, _>::_value;
         else
-            return value<T, _>::_value;
+            return val<T, _>::_value;
     }
 };
 
 template<typename T, auto _>
-typename value<T, _>::stored_t value<T, _>::_value = {};
+typename val<T, _>::stored_t val<T, _>::_value = {};
 
 template<typename T, auto _ = [] () {}>
-value(T&&) -> value<T, _>;
+val(T&&) -> val<T, _>;
 
 template<typename T, auto _>
-struct is_symbol<value<T, _>> : std::true_type {};
+struct is_symbol<val<T, _>> : std::true_type {};
 
 
 template<typename S, typename V>
@@ -167,6 +166,7 @@ struct value_binder {
 template<typename S, typename V>
     requires(std::is_lvalue_reference_v<S>)
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
+
 
 template<typename T>
 struct symbol {

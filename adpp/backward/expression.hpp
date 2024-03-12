@@ -227,13 +227,13 @@ inline constexpr decltype(auto) as_term(T&& t) noexcept {
     if constexpr (term<std::remove_cvref_t<T>>)
         return std::forward<T>(t);
     else
-        return value{std::forward<T>(t)};
+        return val{std::forward<T>(t)};
 }
 
 template<to_term T, auto _ = [] () {}>
 using term_t = std::conditional_t<
     scalar<std::remove_cvref_t<T>>,
-    value<std::remove_cvref_t<T>, _>,
+    val<std::remove_cvref_t<T>, _>,
     std::remove_cvref_t<T>
 >;
 

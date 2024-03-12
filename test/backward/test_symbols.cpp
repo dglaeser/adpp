@@ -11,8 +11,8 @@ using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
+using adpp::backward::val;
 using adpp::backward::constant;
-using adpp::backward::value;
 using adpp::backward::value_binder;
 
 using adpp::dtype::real;
@@ -125,7 +125,7 @@ int main() {
     };
 
     "val_construction_by_value"_test = [] () {
-        value v{42};
+        val v{42};
         static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, int>);
         expect(eq(v.get(), 42));
     };
@@ -133,14 +133,14 @@ int main() {
     "val_construction_by_reference"_test = [] () {
         {
             int _v = 42;
-            value v{_v};
+            val v{_v};
             static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, int*>);
             expect(eq(v.get(), 42));
         }
         {
 
             const int _v = 42;
-            value v{_v};
+            val v{_v};
             static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, const int*>);
             expect(eq(v.get(), 42));
         }

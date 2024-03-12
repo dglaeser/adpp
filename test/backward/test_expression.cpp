@@ -17,7 +17,6 @@ using boost::ut::eq;
 using adpp::backward::let;
 using adpp::backward::var;
 using adpp::backward::cval;
-using adpp::backward::value;
 using adpp::backward::expression;
 
 int main() {

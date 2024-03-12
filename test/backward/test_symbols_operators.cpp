@@ -16,13 +16,13 @@ using boost::ut::expect;
 using boost::ut::eq;
 
 using adpp::backward::var;
+using adpp::backward::val;
 using adpp::backward::cval;
-using adpp::backward::value;
 using adpp::backward::function;
 
 
 template<typename T> struct is_value : std::false_type {};
-template<typename T, auto _> struct is_value<adpp::backward::value<T, _>> : std::true_type {};
+template<typename T, auto _> struct is_value<adpp::backward::val<T, _>> : std::true_type {};
 
 template<typename E>
 struct value_stored_type {
