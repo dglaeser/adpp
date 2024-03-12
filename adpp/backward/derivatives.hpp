@@ -8,7 +8,7 @@
 
 namespace adpp::backward {
 
-template<arithmetic R, typename... Ts>
+template<scalar R, typename... Ts>
     requires(are_unique_v<Ts...>)
 struct derivatives : indexed<const Ts&...> {
  private:
@@ -32,13 +32,13 @@ struct derivatives : indexed<const Ts&...> {
         return _values[base::template index_of<T>()];
     }
 
-    template<typename Self, arithmetic T>
+    template<typename Self, scalar T>
     constexpr decltype(auto) scaled_with(this Self&& self, T factor) noexcept {
         std::ranges::for_each(self._values, [factor=static_cast<R>(factor)] (auto& v) { v *= factor; });
         return std::forward<Self>(self);
     }
 
-    template<typename Self, arithmetic T> requires(!std::is_lvalue_reference_v<Self>)
+    template<typename Self, scalar T> requires(!std::is_lvalue_reference_v<Self>)
     constexpr decltype(auto) operator+(this Self&& self, derivatives<T, Ts...>&& other) noexcept {
         using result_t = std::common_type_t<R, T>;
         static_assert(is_any_of_v<result_t, R, T>);

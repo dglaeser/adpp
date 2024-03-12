@@ -34,7 +34,7 @@ struct constant {
         return value;
     }
 
-    template<arithmetic R, typename... B, typename... V>
+    template<scalar R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
         return std::make_pair(value, derivatives<R, V...>{});
     }
@@ -106,7 +106,7 @@ struct value {
         return get();
     }
 
-    template<arithmetic R, typename... B, typename... V>
+    template<scalar R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
         return std::make_pair(get(), derivatives<R, V...>{});
     }
@@ -197,7 +197,7 @@ struct symbol {
         return b[self];
     }
 
-    template<arithmetic R, typename Self, typename B, typename... V>
+    template<scalar R, typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
         derivatives<R, V...> derivs{};
         if constexpr (contains_decayed_v<Self, V...>)

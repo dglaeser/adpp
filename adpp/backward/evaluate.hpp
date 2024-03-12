@@ -39,7 +39,7 @@ struct function {
         return (*this)(at(std::forward<B>(values)...));
     }
 
-    template<arithmetic R, typename... Args>
+    template<scalar R, typename... Args>
     constexpr decltype(auto) back_propagate(Args&&... args) const {
         return _e.template back_propagate<R>(std::forward<Args>(args)...);
     }
