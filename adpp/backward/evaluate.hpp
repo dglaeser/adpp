@@ -20,22 +20,25 @@ namespace detail {
     };
 
     template<typename T, typename... B>
-    struct bindings_contain_all_leaves;
+    struct bindings_contain_all_symbols;
 
     template<typename... T, typename... B>
-    struct bindings_contain_all_leaves<type_list<T...>, B...> {
+    struct bindings_contain_all_symbols<type_list<T...>, B...> {
         static constexpr bool value = std::conjunction_v<bindings_contain<T, B...>...>;
     };
 
     template<typename E, typename... B>
     concept bindings_for = traversable_expression<std::remove_cvref_t<E>>
-        and bindings_contain_all_leaves<unbound_symbols_t<E>, B...>::value;
+        and bindings_contain_all_symbols<unbound_symbols_t<E>, B...>::value;
+
+    template<typename... B> struct is_binding : std::false_type {};
+    template<typename... B> struct is_binding<bindings<B...>> : std::true_type {};
 
 }  // namespace detail
 #endif  // DOXYGEN
 
-// TODO: constraints
 template<typename E>
+    requires(is_expression_v<E>)
 struct function {
  public:
     constexpr function(E&& e) noexcept
@@ -43,18 +46,15 @@ struct function {
     {}
 
     template<typename... B>
-    constexpr decltype(auto) operator()(B&&... values) const {
-        return evaluate_at(at(std::forward<B>(values)...));
-    }
-
-    template<typename... B>
+        requires(detail::bindings_for<E, B...>)
     constexpr decltype(auto) operator()(const bindings<B...>& values) const {
-        return evaluate_at(values);
+        return _e(values);
     }
 
     template<typename... B>
-    constexpr decltype(auto) evaluate_at(const bindings<B...>& values) const {
-        return _e(values);
+        requires(!detail::is_binding<B...>::value)
+    constexpr decltype(auto) operator()(B&&... values) const {
+        return (*this)(at(std::forward<B>(values)...));
     }
 
     template<concepts::arithmetic R, typename... Args>
@@ -70,10 +70,6 @@ struct function {
     template<typename... Args>
     constexpr std::ostream& stream(std::ostream& s, Args&&... args) const {
         return _e.stream(s, std::forward<Args>(args)...);
-    }
-
-    operator const E&() const {
-        return _e;
     }
 
  private:

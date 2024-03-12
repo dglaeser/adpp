@@ -20,6 +20,7 @@ inline constexpr auto wrt(V&&...) {
 template<typename op, term... Ts>
 struct expression;
 template<typename E>
+    requires(is_expression_v<E>)
 struct function;
 
 
