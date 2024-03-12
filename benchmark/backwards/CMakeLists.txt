@@ -1,4 +1,4 @@
-adpp_add_benchmark(deep_gradient deep_gradient.cpp)
+adpp_add_benchmark(gradient gradient.cpp)
 adpp_add_benchmark(derivatives derivatives.cpp)
 adpp_add_benchmark(derivatives_autodiff derivatives.cpp)
 
