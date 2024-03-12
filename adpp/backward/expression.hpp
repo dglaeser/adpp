@@ -146,8 +146,8 @@ struct expression {
     constexpr expression(const op&, const Ts&...) noexcept {}
 
     template<typename... B>
-    constexpr decltype(auto) operator()(const bindings<B...>& operands) const {
-        return op{}(Ts{}(operands)...);
+    constexpr decltype(auto) evaluate(const bindings<B...>& operands) const {
+        return op{}(Ts{}.evaluate(operands)...);
     }
 
     template<scalar R, typename Self, typename... B>

@@ -28,15 +28,20 @@ struct function {
     {}
 
     template<typename... B>
-        requires(expression_for<E, bindings<B...>>)
     constexpr decltype(auto) operator()(const bindings<B...>& values) const {
-        return _e(values);
+        return evaluate(values);
     }
 
     template<typename... B>
         requires(!detail::is_binding<B...>::value)
     constexpr decltype(auto) operator()(B&&... values) const {
-        return (*this)(at(std::forward<B>(values)...));
+        return evaluate(at(std::forward<B>(values)...));
+    }
+
+    template<typename... B>
+        requires(expression_for<E, bindings<B...>>)
+    constexpr decltype(auto) evaluate(const bindings<B...>& values) const {
+        return _e.evaluate(values);
     }
 
     template<scalar R, typename... Args>
@@ -67,7 +72,7 @@ struct is_expression<function<E>> : std::true_type {};
 template<typename E, typename... B>
     requires(expression_for<E, bindings<B...>>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
-    return e(b);
+    return e.evaluate(b);
 }
 
 }  // namespace adpp

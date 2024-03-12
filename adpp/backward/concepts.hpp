@@ -29,7 +29,7 @@ inline constexpr bool is_expression_v = is_expression<T>::value;
 template<typename T>
 concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
 template<typename T, typename Arg>
-concept expression_for = term<T> and requires(const T& t, const Arg& b) { { t(b) }; };
+concept expression_for = term<T> and requires(const T& t, const Arg& b) { { t.evaluate(b) }; };
 
 
 template<typename T>

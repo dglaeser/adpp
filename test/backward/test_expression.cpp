@@ -30,14 +30,14 @@ int main() {
         using E1 = expression<std::multiplies<void>, X, Y>;
         using E2 = expression<std::plus<void>, E1, X>;
 
-        expect(eq(E2{}(at(x = 3, y = 2)), 9));
+        expect(eq(E2{}.evaluate(at(x = 3, y = 2)), 9));
     };
 
     "expression_operators_single_expression"_test = [] () {
         var x;
         var y;
         const auto expr = exp((x + y)*(x - y)/(x + y));
-        expect(eq(expr(at(x = 3, y = 2)), std::exp(1.0)));
+        expect(eq(expr.evaluate(at(x = 3, y = 2)), std::exp(1.0)));
     };
 
     "expression_operators_multiple_expression"_test = [] () {
@@ -46,7 +46,7 @@ int main() {
         const auto expr_tmp_1 = (x + y)*(x - y)/(x + y);
         const auto expr_tmp_2 = exp(expr_tmp_1);
         const auto expr = cval<2>*expr_tmp_2;
-        expect(eq(expr(at(x = 3, y = 2)), 2*std::exp(1.0)));
+        expect(eq(expr.evaluate(at(x = 3, y = 2)), 2*std::exp(1.0)));
     };
 
     "expression_derivative"_test = [] () {
@@ -94,7 +94,7 @@ int main() {
         let mu;
         const auto expr = cval<1.5>*(x + y) - exp(cval<-1>*mu*x);
         const auto deriv = expr.differentiate_wrt(wrt(x));
-        expect(eq(deriv(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
+        expect(eq(deriv.evaluate(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
     };
 
     "expression_multiplication_derivative_simplification"_test  = [] () {
@@ -102,7 +102,7 @@ int main() {
         {
             const auto expr = cval<2>*x;
             const auto deriv = expr.differentiate_wrt(wrt(x));
-            expect(eq(deriv(at(x = 2)), 2));
+            expect(eq(deriv.evaluate(at(x = 2)), 2));
             std::stringstream s;
             print_to(s, deriv, with(x = "x"));
             expect(eq(s.str(), std::string{"2"}));
@@ -111,13 +111,13 @@ int main() {
             var y;
             const auto expr = x*y + y;
             const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
-                expect(eq(deriv_x(at(x = 2, y = 3)), 3));
+                expect(eq(deriv_x.evaluate(at(x = 2, y = 3)), 3));
                 std::stringstream s;
                 print_to(s, deriv_x, with(x = "x", y = "y"));
                 expect(eq(s.str(), std::string{"1*y"}));
             }
             const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
-                expect(eq(deriv_y(at(x = 2, y = 3)), 2 + 1));
+                expect(eq(deriv_y.evaluate(at(x = 2, y = 3)), 2 + 1));
                 std::stringstream s;
                 print_to(s, deriv_y, with(x = "x", y = "y"));
                 expect(eq(s.str(), std::string{"x*1 + 1"}));
@@ -130,10 +130,10 @@ int main() {
         var y;
         const auto expr = x/y + (y + y/cval<2.0>);
         const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
-            expect(eq(deriv_x(at(x = 2.0, y = 3.0)), 1.0/3.0));
+            expect(eq(deriv_x.evaluate(at(x = 2.0, y = 3.0)), 1.0/3.0));
         }
         const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
-            expect(eq(deriv_y(at(x = 2.0, y = 3.0)), ((-1*2.0)*1)/(3.0*3.0) + 1.5));
+            expect(eq(deriv_y.evaluate(at(x = 2.0, y = 3.0)), ((-1*2.0)*1)/(3.0*3.0) + 1.5));
             std::stringstream s;
             print_to(s, deriv_y, with(x = "x", y = "y"));
             expect(eq(s.str(), std::string{"((-1*x)*1)/(y*y) + 1.5"}));

@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
         adpp::backward::var<double> x;
         adpp::backward::var<double> y;
         const auto expression = GENERATE_EXPRESSION(x, y);
-        const auto r = expression(at(x = xv, y = yv));
+        const auto r = expression.evaluate(at(x = xv, y = yv));
         const auto dr_dx = derivative_of(expression, wrt(x), at(x = xv, y = yv));
         const auto dr_dy = derivative_of(expression, wrt(y), at(x = xv, y = yv));
 #endif

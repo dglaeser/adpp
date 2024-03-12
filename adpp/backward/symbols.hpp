@@ -25,12 +25,7 @@ struct constant {
     template<auto k> constexpr auto operator/(const constant<k>&) const noexcept { return constant<v/k>{}; }
 
     template<typename... B>
-    constexpr auto operator()(const bindings<B...>&) const noexcept {
-        return value;
-    }
-
-    template<typename... B>
-    constexpr auto evaluate_at(const bindings<B...>&) const noexcept {
+    constexpr auto evaluate(const bindings<B...>&) const noexcept {
         return value;
     }
 
@@ -96,12 +91,7 @@ struct val {
     }
 
     template<typename... B>
-    constexpr decltype(auto) operator()(const bindings<B...>&) const noexcept {
-        return get();
-    }
-
-    template<typename... B>
-    constexpr decltype(auto) evaluate_at(const bindings<B...>&) const noexcept {
+    constexpr decltype(auto) evaluate(const bindings<B...>&) const noexcept {
         return get();
     }
 
@@ -186,14 +176,7 @@ struct symbol {
 
     template<typename Self, typename... B>
         requires(bindings<B...>::template contains_bindings_for<Self>)
-    constexpr decltype(auto) operator()(this Self&& self, const bindings<B...>& bindings) noexcept {
-        return bindings[self];
-    }
-
-    // currently unused
-    template<typename Self, typename... B>
-        requires(bindings<B...>::template contains_bindings_for<Self>)
-    constexpr decltype(auto) evaluate_at(this Self&& self, const bindings<B...>& b) noexcept {
+    constexpr decltype(auto) evaluate(this Self&& self, const bindings<B...>& b) noexcept {
         return b[self];
     }
 
@@ -202,7 +185,7 @@ struct symbol {
         derivatives<R, V...> derivs{};
         if constexpr (contains_decayed_v<Self, V...>)
             derivs[self] = 1.0;
-        return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
+        return std::make_pair(self.evaluate(bindings), std::move(derivs));
     }
 
     template<typename Self, typename V>
