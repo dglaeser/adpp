@@ -36,9 +36,6 @@ namespace detail {
     template<typename T>
     using operands_t = typename operands<std::remove_cvref_t<T>>::type;
 
-    template<typename T>
-    concept traversable_expression = is_symbol_v<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
-
     template<typename...>
     struct symbols_impl;
 
@@ -76,37 +73,37 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 struct symbols : detail::symbols_impl<E, type_list<>> {};
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using symbols_t = typename symbols<E>::type;
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto symbols_of(const E&) {
     return symbols_t<E>{};
 }
 
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 struct unbound_symbols : filtered_types<decayed_trait<is_unbound_symbol>::type, symbols_t<E>> {};
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using unbound_symbols_t = typename unbound_symbols<E>::type;
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto unbound_symbols_of(const E&) {
     return unbound_symbols_t<E>{};
 }
 
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 struct vars : filtered_types<decayed_trait<detail::is_var>::type, symbols_t<E>> {};
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using vars_t = typename vars<E>::type;
 
-template<detail::traversable_expression E>
+template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto variables_of(const E&) {
     return vars_t<E>{};
 }
