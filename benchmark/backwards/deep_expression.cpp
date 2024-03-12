@@ -7,7 +7,7 @@
 #include <autodiff/reverse/var.hpp>
 #else
 #include <adpp/backward/symbols.hpp>
-#include <adpp/backward/expression.hpp>
+#include <adpp/backward/operators.hpp>
 #include <adpp/backward/differentiate.hpp>
 #endif
 

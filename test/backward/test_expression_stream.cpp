@@ -4,7 +4,7 @@
 #include <boost/ut.hpp>
 
 #include <adpp/backward/symbols.hpp>
-#include <adpp/backward/expression.hpp>
+#include <adpp/backward/operators.hpp>
 #include <adpp/backward/differentiate.hpp>
 #include <adpp/backward/io.hpp>
 

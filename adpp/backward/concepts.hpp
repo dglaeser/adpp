@@ -30,6 +30,8 @@ template<typename T>
 concept term = symbolic<std::remove_cvref_t<T>> or is_expression_v<std::remove_cvref_t<T>>;
 template<typename T, typename Arg>
 concept expression_for = term<T> and requires(const T& t, const Arg& b) { { t.evaluate(b) }; };
+template<typename T>
+concept into_term = term<std::remove_cvref_t<T>> or scalar<std::remove_cvref_t<T>>;
 
 
 template<typename T>

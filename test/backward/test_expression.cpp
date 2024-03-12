@@ -7,8 +7,9 @@
 #include <boost/ut.hpp>
 
 #include <adpp/backward/symbols.hpp>
-#include <adpp/backward/expression.hpp>
+#include <adpp/backward/operators.hpp>
 #include <adpp/backward/differentiate.hpp>
+#include <adpp/backward/io.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -104,7 +105,7 @@ int main() {
             const auto deriv = expr.differentiate_wrt(wrt(x));
             expect(eq(deriv.evaluate(at(x = 2)), 2));
             std::stringstream s;
-            print_to(s, deriv, with(x = "x"));
+            s << adpp::backward::formatted{deriv, where(x = "x")};
             expect(eq(s.str(), std::string{"2"}));
         }
         {
@@ -113,13 +114,13 @@ int main() {
             const auto deriv_x = expr.differentiate_wrt(wrt(x)); {
                 expect(eq(deriv_x.evaluate(at(x = 2, y = 3)), 3));
                 std::stringstream s;
-                print_to(s, deriv_x, with(x = "x", y = "y"));
+                s << adpp::backward::formatted{deriv_x, where(x = "x", y = "y")};
                 expect(eq(s.str(), std::string{"1*y"}));
             }
             const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
                 expect(eq(deriv_y.evaluate(at(x = 2, y = 3)), 2 + 1));
                 std::stringstream s;
-                print_to(s, deriv_y, with(x = "x", y = "y"));
+                s << adpp::backward::formatted{deriv_y, where(x = "x", y = "y")};
                 expect(eq(s.str(), std::string{"x*1 + 1"}));
             }
         }
@@ -135,7 +136,7 @@ int main() {
         const auto deriv_y = expr.differentiate_wrt(wrt(y)); {
             expect(eq(deriv_y.evaluate(at(x = 2.0, y = 3.0)), ((-1*2.0)*1)/(3.0*3.0) + 1.5));
             std::stringstream s;
-            print_to(s, deriv_y, with(x = "x", y = "y"));
+            s << adpp::backward::formatted{deriv_y, where(x = "x", y = "y")};
             expect(eq(s.str(), std::string{"((-1*x)*1)/(y*y) + 1.5"}));
         }
     };

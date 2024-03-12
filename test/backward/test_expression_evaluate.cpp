@@ -3,8 +3,8 @@
 #include <boost/ut.hpp>
 
 #include <adpp/backward/symbols.hpp>
+#include <adpp/backward/operators.hpp>
 #include <adpp/backward/evaluate.hpp>
-#include <adpp/backward/expression.hpp> // TODO: include operators once header exists
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
