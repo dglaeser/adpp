@@ -41,12 +41,12 @@ namespace detail {
     template<typename... Ts>
     inline constexpr bool all_cvals_v = std::conjunction_v<is_cval<std::remove_cvref_t<Ts>>...>;
 
-    template<into_term T>
+    template<into_term T, auto _ = [] () {}>
     inline constexpr decltype(auto) as_term(T&& t) noexcept {
         if constexpr (term<std::remove_cvref_t<T>>)
             return std::forward<T>(t);
         else
-            return val{std::forward<T>(t)};
+            return val<T, _>{std::forward<T>(t)};
     }
 
 }  // namespace detail
