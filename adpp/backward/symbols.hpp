@@ -147,7 +147,7 @@ struct value_binder {
     using symbol_type = std::remove_cvref_t<S>;
     using value_type = std::remove_cvref_t<V>;
 
-    template<concepts::same_decay_t_as<V> _V>
+    template<concepts::same_remove_cvref_t_as<V> _V>
     constexpr value_binder(const S&, _V&& v) noexcept
     : _value{std::forward<_V>(v)}
     {}
@@ -207,7 +207,7 @@ struct symbol {
 
     template<typename Self, typename V>
     constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
-        if constexpr (concepts::same_decay_t_as<Self, V>)
+        if constexpr (concepts::same_remove_cvref_t_as<Self, V>)
             return val<1>;
         else
             return val<0>;
