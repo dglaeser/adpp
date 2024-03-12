@@ -5,14 +5,6 @@
 #include <adpp/concepts.hpp>
 
 namespace adpp::backward {
-namespace traits {
-
-template<typename T> struct sub_expressions;
-template<typename T> struct differentiator;
-template<typename T> struct formatter;
-
-}  // namespace traits
-
 
 template<typename T>
 struct is_symbol : std::false_type {};
@@ -44,24 +36,5 @@ concept binder = requires(const T& t) {
     typename T::value_type;
     { t.unwrap() };
 };
-
-
-#ifndef DOXYGEN
-namespace detail {
-
-    template<typename T>
-    struct sub_expressions_size;
-    template<typename T> requires(is_symbol_v<T>)
-    struct sub_expressions_size<T> : public std::integral_constant<std::size_t, 0> {};
-    template<typename T> requires(!is_symbol_v<T>)
-    struct sub_expressions_size<T> {
-        static constexpr std::size_t value = type_size_v<typename traits::sub_expressions<T>::operands>;
-    };
-
-}  // namespace detail
-#endif  // DOXYGEN
-
-template<typename T>
-inline constexpr std::size_t sub_expressions_size_v = detail::sub_expressions_size<std::remove_cvref_t<T>>::value;
 
 }  // namespace adpp::backward

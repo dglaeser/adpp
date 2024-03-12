@@ -86,22 +86,6 @@ function(E&&) -> function<std::remove_cvref_t<E>>;
 template<typename E>
 struct is_expression<function<E>> : std::true_type {};
 
-namespace traits {
-
-template<typename E>
-    requires(!is_symbol_v<E>)
-struct sub_expressions<function<E>> {
-    using operands = typename sub_expressions<std::remove_cvref_t<E>>::operands;
-
-    static constexpr decltype(auto) get(const function<E>& e) {
-        return sub_expressions<std::remove_cvref_t<E>>::get(
-            static_cast<const std::remove_cvref_t<E>&>(e)
-        );
-    }
-};
-
-}  // namespace traits
-
 template<typename E, typename... B>
     requires(detail::bindings_for<E, B...>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
