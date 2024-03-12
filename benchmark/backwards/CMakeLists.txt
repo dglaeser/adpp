@@ -1,6 +1,6 @@
 adpp_add_benchmark(deep_gradient deep_gradient.cpp)
-adpp_add_benchmark(deep_expression deep_expression.cpp)
-adpp_add_benchmark(deep_expression_autodiff deep_expression.cpp)
+adpp_add_benchmark(derivatives derivatives.cpp)
+adpp_add_benchmark(derivatives_autodiff derivatives.cpp)
 
-target_compile_definitions(deep_expression PRIVATE USE_AUTODIFF=0)
-target_compile_definitions(deep_expression_autodiff PRIVATE USE_AUTODIFF=1)
+target_compile_definitions(derivatives PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(derivatives_autodiff PRIVATE USE_AUTODIFF=1)
