@@ -36,9 +36,7 @@ struct bindings : variadic_accessor<B...> {
     template<typename T, typename B0, typename... Bs>
     struct binder_type_for<T, B0, Bs...> {
         using type = std::conditional_t<
-            concepts::same_decay_t_as<T, symbol_type_of<B0>>,
-            B0,
-            typename binder_type_for<T, Bs...>::type
+            concepts::same_decay_t_as<T, symbol_type_of<B0>>, B0, typename binder_type_for<T, Bs...>::type
         >;
     };
 
@@ -50,15 +48,14 @@ struct bindings : variadic_accessor<B...> {
     template<typename T>
     struct is_contained : std::disjunction<std::is_same<std::remove_cvref_t<T>, symbol_type_of<B>>...> {};
 
- public:
-    using common_value_type = std::common_type_t<typename std::remove_cvref_t<B>::value_type...>;
+    template<typename T> requires(sizeof...(B) > 0 and is_contained<T>::value)
+    using binder_type = binder_type_for<T, B...>::type;
 
+ public:
     template<typename... T>
     static constexpr bool contains_bindings_for = std::conjunction_v<is_contained<T>...>;
 
-    template<typename T> requires(sizeof...(B) > 0 and contains_bindings_for<T>)
-    using binder_type = binder_type_for<T, B...>::type;
-
+    using common_value_type = std::common_type_t<typename std::remove_cvref_t<B>::value_type...>;
 
     constexpr bindings(B... binders) noexcept
     : base(std::forward<B>(binders)...)
@@ -81,20 +78,17 @@ struct bindings : variadic_accessor<B...> {
 template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
-template<typename... B>
-    requires(detail::are_binders<B...>)
+template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto at(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
 
-template<typename... B>
-    requires(detail::are_binders<B...>)
+template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto with(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
 
-template<typename... B>
-    requires(detail::are_binders<B...>)
+template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto bind(B&&... b) {
     return bindings{std::forward<B>(b)...};
 }
