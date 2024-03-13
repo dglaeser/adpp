@@ -14,6 +14,7 @@ using boost::ut::eq;
 using adpp::backward::var;
 using adpp::backward::let;
 using adpp::backward::cval;
+using adpp::backward::function;
 
 int main() {
 
@@ -124,23 +125,44 @@ int main() {
         }
     };
 
-    "derivative_expression_disappearing_variable"_test = [] () {
+    "derivative_expression_disappearing_variables"_test = [] () {
         static constexpr var a;
         static constexpr var b;
+        static constexpr var c;
+        static constexpr var d;
         static constexpr let mu;
-        static constexpr auto expr = cval<2>*a + b*mu;
-        // we still have to provide all variables
+        static constexpr auto expr = cval<2>*a + b*mu - c + cval<1>/d;
         {
-            constexpr auto derivative = differentiate(expr, wrt(a));
-            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 2.0);
+            constexpr function f = differentiate(expr, wrt(a));
+            static_assert(f() == 2.0);
+            expect(eq(f(), 2.0));
         }
         {
             constexpr auto derivative = differentiate(expr, wrt(b));
-            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 3.0);
+            static_assert(evaluate(derivative, at(mu = 3.0)) == 3.0);
+            expect(eq(evaluate(derivative, at(mu = 3.0)), 3.0));
         }
         {
             constexpr auto derivative = differentiate(expr, wrt(mu));
-            static_assert(evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)) == 2.0);
+            static_assert(evaluate(derivative, at(b = 2.0)) == 2.0);
+            expect(eq(evaluate(derivative, at(b = 2.0)), 2.0));
+        }
+        {
+            constexpr function f = differentiate(expr, wrt(c));
+            static_assert(evaluate(f, adpp::backward::at()) == -1.0);
+            static_assert(f() == -1.0);
+            expect(eq(evaluate(f, adpp::backward::at()), -1.0));
+            expect(eq(f(), -1.0));
+        }
+        {
+            constexpr auto derivative = differentiate(expr, wrt(d));
+            static_assert(evaluate(derivative, at(d = 2.0)) == -1.0/4.0);
+            expect(eq(evaluate(derivative, at(d = 2.0)), -1.0/4.0));
+        }
+        {
+            constexpr function zero = differentiate(exp(a), wrt(b));
+            static_assert(zero() == 0);
+            expect(eq(zero(), 0.0));
         }
     };
 
