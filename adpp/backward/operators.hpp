@@ -152,13 +152,43 @@ namespace detail {
     constexpr bool is_zero(const T&) { return is_zero<T>(); }
 
     template<typename T0, typename T1, typename F0, typename F1, typename F>
-    constexpr auto simplified(T0 t0, T1 t1, const F0& f0, const F1& f1, const F& f) {
-        if constexpr (is_zero<T0>())
-            return f1(t1);
-        else if constexpr (is_zero<T1>())
-            return f0(t0);
+    constexpr auto simplified(T0&& t0, T1&& t1, const F0& f0, const F1& f1, const F& f) {
+        if constexpr (is_zero<std::remove_cvref_t<T0>>())
+            return f1(std::forward<T1>(t1));
+        else if constexpr (is_zero<std::remove_cvref_t<T1>>())
+            return f0(std::forward<T0>(t0));
         else
-            return f(t0, t1);
+            return f(std::forward<T0>(t0), std::forward<T1>(t1));
+    }
+
+    template<typename T0, typename T1>
+    constexpr auto simplify_mul(T0 t0, T1 t1) {
+        return simplified(
+            std::forward<T0>(t0), std::forward<T1>(t1),
+            [] (auto&&) { return cval<0>; },
+            [] (auto&&) { return cval<0>; },
+            [] (auto&& a, auto&& b) { return a*b; }
+        );
+    }
+
+    template<typename T0, typename T1>
+    constexpr auto simplify_plus(T0 t0, T1 t1) {
+        return simplified(
+            std::forward<T0>(t0), std::forward<T1>(t1),
+            [] (auto&& a) { return a; },
+            [] (auto&& b) { return b; },
+            [] (auto&& a, auto&& b) { return a + b; }
+        );
+    }
+
+    template<typename T0, typename T1>
+    constexpr auto simplify_division(T0 t0, T1 t1) {
+        return simplified(
+            std::forward<T0>(t0), std::forward<T1>(t1),
+            [] (auto&& a) { static_assert(always_false<T0>::value, "division by zero!"); return a; },
+            [] (auto&&) { return cval<0>; },
+            [] (auto&& a, auto&& b) { return a/b; }
+        );
     }
 
 }  // namespace detail
@@ -173,7 +203,9 @@ struct differentiator<op::add, A, B> {
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv; },
             [] (auto&& db_dv) { return db_dv; },
-            [] (auto&& da_dv, auto&& db_dv) { return da_dv + db_dv; }
+            [] (auto&& da_dv, auto&& db_dv) {
+                return detail::simplify_plus(da_dv, db_dv);
+            }
         );
     }
 };
@@ -186,8 +218,10 @@ struct differentiator<op::subtract, A, B> {
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
             [] (auto&& da_dv) { return da_dv; },
-            [] (auto&& db_dv) { return cval<-1>*db_dv; },
-            [] (auto&& da_dv, auto&& db_dv) { return da_dv - db_dv; }
+            [] (auto&& db_dv) { return detail::simplify_mul(cval<-1>, db_dv); },
+            [] (auto&& da_dv, auto&& db_dv) {
+                return detail::simplify_plus(da_dv, detail::simplify_mul(cval<-1>, db_dv));
+            }
         );
     }
 };
@@ -199,9 +233,11 @@ struct differentiator<op::multiply, A, B> {
         return detail::simplified(
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
-            [] (auto&& da_dv) { return da_dv*B{}; },
-            [] (auto&& db_dv) { return A{}*db_dv; },
-            [] (auto&& da_dv, auto&& db_dv) { return da_dv*B{} + A{}*db_dv; }
+            [] (auto&& da_dv) { return detail::simplify_mul(std::move(da_dv), B{}); },
+            [] (auto&& db_dv) { return detail::simplify_mul(A{}, std::move(db_dv)); },
+            [] (auto&& da_dv, auto&& db_dv) {
+                return detail::simplify_mul(std::move(da_dv), B{}) + detail::simplify_mul(A{}, std::move(db_dv));
+            }
         );
     }
 };
@@ -213,9 +249,28 @@ struct differentiator<op::divide, A, B> {
         return detail::simplified(
             A{}.differentiate_wrt(v),
             B{}.differentiate_wrt(v),
-            [] (auto&& da_dv) { return da_dv/B{}; },
-            [] (auto&& db_dv) { return cval<-1>*A{}*db_dv/(B{}*B{}); },
-            [] (auto&& da_dv, auto&& db_dv) { return da_dv/B{} - A{}*db_dv/(B{}*B{}); }
+            [] (auto&& da_dv) { return detail::simplify_division(da_dv, B{}); },
+            [] (auto&& db_dv) {
+                return detail::simplify_division(
+                    detail::simplify_mul(
+                        detail::simplify_mul(cval<-1>, A{}),
+                        db_dv
+                    ),
+                    detail::simplify_mul(B{}, B{})
+                );
+            },
+            [] (auto&& da_dv, auto&& db_dv) {
+                return detail::simplify_plus(
+                    detail::simplify_division(da_dv, B{}),
+                    detail::simplify_division(
+                        detail::simplify_mul(
+                            detail::simplify_mul(cval<-1>, A{}),
+                            db_dv
+                        ),
+                        detail::simplify_mul(B{}, B{})
+                    )
+                );
+            }
         );
     }
 };
@@ -224,11 +279,7 @@ template<typename A>
 struct differentiator<op::exp, A> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        const auto da_dv = A{}.differentiate_wrt(v);
-        if constexpr (detail::is_zero(da_dv))
-            return cval<0>;
-        else
-            return exp(A{})*A{}.differentiate_wrt(v);
+        return detail::simplify_mul(exp(A{}), A{}.differentiate_wrt(v));
     }
 };
 
