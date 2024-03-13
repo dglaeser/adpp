@@ -199,8 +199,8 @@ struct differentiator<op::add, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
         return detail::simplified(
-            A{}.differentiate_wrt(v),
-            B{}.differentiate_wrt(v),
+            A{}.differentiate(v),
+            B{}.differentiate(v),
             [] (auto&& da_dv) { return da_dv; },
             [] (auto&& db_dv) { return db_dv; },
             [] (auto&& da_dv, auto&& db_dv) {
@@ -215,8 +215,8 @@ struct differentiator<op::subtract, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
         return detail::simplified(
-            A{}.differentiate_wrt(v),
-            B{}.differentiate_wrt(v),
+            A{}.differentiate(v),
+            B{}.differentiate(v),
             [] (auto&& da_dv) { return da_dv; },
             [] (auto&& db_dv) { return detail::simplify_mul(cval<-1>, db_dv); },
             [] (auto&& da_dv, auto&& db_dv) {
@@ -231,8 +231,8 @@ struct differentiator<op::multiply, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
         return detail::simplified(
-            A{}.differentiate_wrt(v),
-            B{}.differentiate_wrt(v),
+            A{}.differentiate(v),
+            B{}.differentiate(v),
             [] (auto&& da_dv) { return detail::simplify_mul(std::move(da_dv), B{}); },
             [] (auto&& db_dv) { return detail::simplify_mul(A{}, std::move(db_dv)); },
             [] (auto&& da_dv, auto&& db_dv) {
@@ -247,8 +247,8 @@ struct differentiator<op::divide, A, B> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
         return detail::simplified(
-            A{}.differentiate_wrt(v),
-            B{}.differentiate_wrt(v),
+            A{}.differentiate(v),
+            B{}.differentiate(v),
             [] (auto&& da_dv) { return detail::simplify_division(da_dv, B{}); },
             [] (auto&& db_dv) {
                 return detail::simplify_division(
@@ -279,7 +279,7 @@ template<typename A>
 struct differentiator<op::exp, A> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return detail::simplify_mul(exp(A{}), A{}.differentiate_wrt(v));
+        return detail::simplify_mul(exp(A{}), A{}.differentiate(v));
     }
 };
 
