@@ -165,3 +165,28 @@ inline constexpr auto where(B&&... b) {
 }
 
 }  // namespace adpp
+
+#include <format>
+#include <sstream>
+
+template<typename E, typename B>
+struct std::formatter<adpp::backward::bound_expression<E, B>> {
+    // todo: precision formatter?
+
+    template<typename parse_ctx>
+    constexpr parse_ctx::iterator parse(parse_ctx& ctx) {
+        auto it = ctx.begin();
+        if (it == ctx.end())
+            return it;
+        if (*it != '}')
+            throw std::format_error("adpp::backward::bound_expression does not support format args.");
+        return it;
+    }
+
+    template<typename fmt_ctx>
+    fmt_ctx::iterator format(const adpp::backward::bound_expression<E, B>& e, fmt_ctx& ctx) const {
+        std::ostringstream out;
+        e.export_to(out);
+        return std::ranges::copy(std::move(out).str(), ctx.out()).out;
+    }
+};
