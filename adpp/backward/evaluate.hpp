@@ -19,8 +19,7 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<typename E>
-    requires(is_expression_v<E>)
+template<term E>
 struct function {
  public:
     constexpr function(E&& e) noexcept
