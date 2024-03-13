@@ -86,6 +86,64 @@ struct bindings<> {
 template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
+
+template<typename T>
+struct is_binding : std::false_type {};
+template<typename... B>
+struct is_binding<bindings<B...>> : std::true_type {};
+template<typename T>
+inline constexpr bool is_binding_v = is_binding<T>::value;
+
+template<typename E, typename B>
+    requires(is_expression_v<std::remove_cvref_t<E>>, expression_for<E, B>)
+class bound_expression {
+ public:
+    constexpr bound_expression(E e, B b)
+    : _expression{std::forward<E>(e)}
+    , _bindings{std::forward<B>(b)}
+    {}
+
+    constexpr decltype(auto) evaluate() const {
+        return _expression.get().evaluate(_bindings.get());
+    }
+
+    template<scalar R, typename Self, typename... V>
+    constexpr auto back_propagate(this Self&& self, const type_list<V...>& vars) {
+        auto [value, derivs] = self._expression.get().template back_propagate<R>(self._bindings.get(), vars);
+        if constexpr (contains_decayed_v<Self, V...>)
+            derivs[self] = 1.0;
+        return std::make_pair(std::move(value), std::move(derivs));
+    }
+
+    template<typename Self, typename V>
+    constexpr auto differentiate(this Self&& self, const type_list<V>& var) {
+        if constexpr (std::is_lvalue_reference_v<Self>)
+            return _make(self._expression.get().differentiate(var), self._bindings.get());
+        else
+            return _make(
+                std::move(self._expression).get().differentiate(var),
+                std::move(self._bindings).get()
+            );
+    }
+
+    constexpr void export_to(std::ostream& out) const {
+        _expression.get().export_to(out, _bindings.get());
+    }
+
+ private:
+    template<typename _E, typename _B>
+    static constexpr auto _make(_E&& e, _B&& b) {
+        return bound_expression<_E, _B>{std::forward<_E>(e), std::forward<_B>(b)};
+    }
+
+    storage<E> _expression;
+    storage<B> _bindings;
+};
+
+template<typename E, typename B>
+bound_expression(E&&, B&&) -> bound_expression<E, B>;
+
+
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto bind(B&&... b) {
     return bindings{std::forward<B>(b)...};

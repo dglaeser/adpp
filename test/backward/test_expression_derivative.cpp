@@ -16,6 +16,14 @@ using adpp::backward::let;
 using adpp::backward::cval;
 using adpp::backward::function;
 
+template<typename T> struct expression_type;
+template<typename T> struct bindings_type;
+
+template<typename E, typename B>
+struct expression_type<adpp::backward::bound_expression<E, B>> : std::type_identity<E> {};
+template<typename E, typename B>
+struct bindings_type<adpp::backward::bound_expression<E, B>> : std::type_identity<B> {};
+
 int main() {
 
     "derivatives"_test = [] () {
@@ -192,6 +200,65 @@ int main() {
                 std::exp((1.0 + 2.0)*2.0)
             ));
         }
+    };
+
+    "bound_expression_back_propagate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        constexpr auto formula = ((a + b)*a).with(a = 2.0, b = 4.0);
+
+        using exp_type = typename expression_type<std::remove_cvref_t<decltype(formula)>>::type;
+        using bin_type = typename bindings_type<std::remove_cvref_t<decltype(formula)>>::type;
+        static_assert(!std::is_lvalue_reference_v<exp_type>);
+        static_assert(!std::is_lvalue_reference_v<bin_type>);
+
+        static_assert(formula.template back_propagate<double>(wrt(a)).second[a] == 8.0);
+        expect(eq(formula.template back_propagate<double>(wrt(a)).second[a], 8.0));
+    };
+
+    "bound_expression_referencing_back_propagate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto expression = (a + b)*a;
+        constexpr auto formula = expression.with(a = 2.0, b = 4.0);
+
+        using exp_type = typename expression_type<std::remove_cvref_t<decltype(formula)>>::type;
+        using bin_type = typename bindings_type<std::remove_cvref_t<decltype(formula)>>::type;
+        static_assert(std::is_lvalue_reference_v<exp_type>);
+        static_assert(!std::is_lvalue_reference_v<bin_type>);
+
+        static_assert(formula.template back_propagate<double>(wrt(a)).second[a] == 8.0);
+        expect(eq(formula.template back_propagate<double>(wrt(a)).second[a], 8.0));
+    };
+
+    "bound_expression_differentiate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto formula = ((a + b)*a).with(a = 2.0, b = 4.0);
+        constexpr auto derivative = formula.differentiate(wrt(a));
+
+        using exp_type = typename expression_type<std::remove_cvref_t<decltype(derivative)>>::type;
+        using bin_type = typename bindings_type<std::remove_cvref_t<decltype(derivative)>>::type;
+        static_assert(!std::is_lvalue_reference_v<exp_type>);
+        static_assert(std::is_lvalue_reference_v<bin_type>);
+
+        static_assert(derivative.evaluate() == 8.0);
+        expect(eq(derivative.evaluate(), 8.0));
+    };
+
+    "bound_expression_differentiate_on_temporary"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto expression = (a + b)*a;
+        static constexpr auto derivative = expression.with(a = 2.0, b = 4.0).differentiate(wrt(a));
+
+        using exp_type = typename expression_type<std::remove_cvref_t<decltype(derivative)>>::type;
+        using bin_type = typename bindings_type<std::remove_cvref_t<decltype(derivative)>>::type;
+        static_assert(!std::is_lvalue_reference_v<exp_type>);
+        static_assert(!std::is_lvalue_reference_v<bin_type>);
+
+        static_assert(derivative.evaluate() == 8.0);
+        expect(eq(derivative.evaluate(), 8.0));
     };
 
     return EXIT_SUCCESS;

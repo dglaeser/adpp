@@ -10,15 +10,6 @@
 
 namespace adpp::backward {
 
-#ifndef DOXYGEN
-namespace detail {
-
-    template<typename... B> struct is_binding : std::false_type {};
-    template<typename... B> struct is_binding<bindings<B...>> : std::true_type {};
-
-}  // namespace detail
-#endif  // DOXYGEN
-
 template<term E>
 struct function {
  public:
@@ -32,7 +23,7 @@ struct function {
     }
 
     template<typename... B>
-        requires(!detail::is_binding<B...>::value)
+        requires(sizeof...(B) != 1 or !is_binding_v<B...>)
     constexpr decltype(auto) operator()(B&&... values) const {
         return evaluate(at(std::forward<B>(values)...));
     }
