@@ -40,7 +40,7 @@ template<int cur, int requested, typename R, typename E, typename V, typename...
 inline constexpr auto higher_order_derivative_of_impl(E&& expression, const type_list<V>& var, const bindings<B...>& bindings) {
     static_assert(cur <= requested);
     if constexpr (cur < requested) {
-        return higher_order_derivative_of_impl<cur + 1, requested, R>(expression.differentiate_wrt(var), var, bindings);
+        return higher_order_derivative_of_impl<cur + 1, requested, R>(expression.differentiate(var), var, bindings);
     } else {
         return derivative_of<R>(expression, var, bindings);
     }
@@ -56,7 +56,7 @@ inline constexpr auto derivative_of(const E& expression, const type_list<V>& var
 
 template<typename E, typename V>
 inline constexpr auto differentiate(const E& expression, const type_list<V>& var) {
-    return expression.differentiate_wrt(var);
+    return expression.differentiate(var);
 }
 
 }  // namespace adpp::backward

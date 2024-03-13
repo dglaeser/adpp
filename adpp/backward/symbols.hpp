@@ -35,7 +35,7 @@ struct constant {
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
+    constexpr auto differentiate(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
             return constant<1>{};
         else
@@ -101,7 +101,7 @@ struct val {
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
+    constexpr auto differentiate(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
             return constant<1>{};
         else
@@ -189,7 +189,7 @@ struct symbol {
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
+    constexpr auto differentiate(this Self&&, const type_list<V>&) {
         if constexpr (same_remove_cvref_t_as<Self, V>)
             return cval<1>;
         else

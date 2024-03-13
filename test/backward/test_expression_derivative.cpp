@@ -78,7 +78,7 @@ int main() {
         var y;
         let mu;
         const auto expr = 1.5*(x + y) - exp(-1*mu*x);
-        const auto deriv = expr.differentiate_wrt(wrt(x));
+        const auto deriv = expr.differentiate(wrt(x));
         expect(eq(deriv.evaluate(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
     };
 

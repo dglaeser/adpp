@@ -49,8 +49,8 @@ struct function {
     }
 
     template<typename V>
-    constexpr decltype(auto) differentiate_wrt(const V& var) const {
-        return _e.differentiate_wrt(var);
+    constexpr decltype(auto) differentiate(const V& var) const {
+        return _e.differentiate(var);
     }
 
     template<typename... Args>

@@ -22,11 +22,12 @@ constexpr double newton_solve() {
 
     var x;
     function f = x*x*cval<2.0> - cval<4.0>;
-    const auto args = bind(x = solution);
+    function df_dx = f.differentiate(wrt(x));
 
+    const auto args = bind(x = solution);
     double residual = f(args);
     int it = 0; while (residual > 1e-6 && it < 100) {
-        solution -= residual/derivative_of(f, wrt(x), args);
+        solution -= residual/df_dx(args);
         residual = f(args);
         ++it;
     }

@@ -110,7 +110,7 @@ struct expression {
     }
 
     template<typename V>
-    constexpr auto differentiate_wrt(const type_list<V>& var) const {
+    constexpr auto differentiate(const type_list<V>& var) const {
         return differentiator<op, Ts...>{}(var);
     }
 
