@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <utility>
 #include <type_traits>
 
 #include <adpp/type_traits.hpp>
@@ -95,6 +96,11 @@ template<typename op, term... Ts>
 struct expression {
     constexpr expression() = default;
     constexpr expression(const op&, const Ts&...) noexcept {}
+
+    template<typename Self, typename... Bs>
+    constexpr auto with(this Self&& self, Bs&&... binders) {
+        return bound_expression{std::forward<Self>(self), bind(std::forward<Bs>(binders)...)};
+    }
 
     template<typename... B>
     constexpr decltype(auto) evaluate(const bindings<B...>& operands) const {
