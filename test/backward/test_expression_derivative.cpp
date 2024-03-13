@@ -52,6 +52,45 @@ int main() {
         static_assert(5.0*3.0 == gradient[b]);
     };
 
+    "expression_with_cval_derivative"_test = [] () {
+        var x;
+        var y;
+        var z;
+        const auto expr = x - 2*y - x + exp(cval<3.0>/z);
+        const auto derivs = derivatives_of(expr, wrt(x, y, z), at(x = 3, y = 2, z = 4.0));
+        expect(eq(derivs[x], 0));
+        expect(eq(derivs[y], -2));
+        expect(eq(derivs[z], std::exp(3.0/4.0)*(-3.0/16.0)));
+    };
+
+    "expression_with_cval_gradient"_test = [] () {
+        var x;
+        var y;
+        const auto expression = cval<2>*(x + y)*x;
+        const auto gradient = grad(expression, at(x = 3, y = 2));
+        expect(eq(gradient[x], 4.0*3.0 + 2.0*2.0));
+        expect(eq(gradient[y], 2.0*3.0));
+    };
+
+    "expression_with_val_derivative"_test  = [] () {
+        var x;
+        var y;
+        let mu;
+        const auto expr = 1.5*(x + y) - exp(-1*mu*x);
+        const auto deriv = expr.differentiate_wrt(wrt(x));
+        expect(eq(deriv.evaluate(at(x = 2, y = 3, mu = 4)), 1.5 - std::exp(-1.0*4*2)*(-1.0*4)));
+    };
+
+    "expression_derivative_wrt_expression"_test = [] () {
+        var x;
+        var y;
+        const auto tmp = x + y;
+        const auto expr = cval<2>*tmp;
+        const auto [value, derivs] = expr.template back_propagate<double>(at(x = 3, y = 2), wrt(tmp));
+        expect(eq(value, 10));
+        expect(eq(derivs[tmp], 2));
+    };
+
     "higher_order_derivatives"_test = [] () {
         static constexpr var a;
         static constexpr var b;
