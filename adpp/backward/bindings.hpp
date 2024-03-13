@@ -75,6 +75,14 @@ struct bindings : variadic_accessor<B...> {
     }
 };
 
+template<>
+struct bindings<> {
+    template<typename... T>
+    static constexpr bool contains_bindings_for = false;
+
+    using common_value_type = double;
+};
+
 template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
