@@ -7,18 +7,136 @@
 #include <adpp/dtype.hpp>
 #include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
+#include <adpp/type_traits.hpp>
 
 #include <adpp/backward/concepts.hpp>
-#include <adpp/backward/operand.hpp>
-#include <adpp/backward/derivative.hpp>
+#include <adpp/backward/bindings.hpp>
+#include <adpp/backward/derivatives.hpp>
 
 namespace adpp::backward {
+
+template<auto v>
+struct constant {
+    static constexpr auto value = v;
+
+    template<auto k> constexpr auto operator+(const constant<k>&) const noexcept { return constant<v+k>{}; }
+    template<auto k> constexpr auto operator-(const constant<k>&) const noexcept { return constant<v-k>{}; }
+    template<auto k> constexpr auto operator*(const constant<k>&) const noexcept { return constant<v*k>{}; }
+    template<auto k> constexpr auto operator/(const constant<k>&) const noexcept { return constant<v/k>{}; }
+
+    template<typename... B>
+    constexpr auto evaluate(const bindings<B...>&) const noexcept {
+        return value;
+    }
+
+    template<scalar R, typename... B, typename... V>
+    constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
+        return std::make_pair(value, derivatives<R, V...>{});
+    }
+
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
+        if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
+            return constant<1>{};
+        else
+            return constant<0>{};
+    }
+
+    template<typename... B>
+    constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
+        out << value;
+    }
+};
+
+template<auto v>
+struct is_symbol<constant<v>> : std::true_type {};
+
+template<auto value>
+inline constexpr constant<value> cval;
+
+
+template<typename T, auto _ = [] () {}>
+struct val {
+ private:
+    static constexpr bool is_reference = std::is_lvalue_reference_v<T>;
+    using stored_t = std::conditional_t<
+        is_reference,
+        std::add_pointer_t<std::remove_reference_t<T>>,
+        std::remove_cvref_t<T>
+    >;
+    static stored_t _value;
+
+ public:
+    using stored_type = stored_t;
+
+    constexpr val() = default;
+    constexpr val(val&&) = default;
+    constexpr val(const val&) = default;
+
+    template<typename _T>
+        requires(contains_decayed_v<_T, T>)
+    constexpr val(_T&& v) noexcept {
+        if constexpr (is_reference) {
+            static_assert(std::is_lvalue_reference_v<T>, "Provided value is not an lvalue reference");
+            val<T, _>::_value = &v;
+        } else {
+            val<T, _>::_value = std::forward<_T>(v);
+        }
+    }
+
+    template<typename _T, auto __ = [] () {}>
+        requires(contains_decayed_v<_T, T>)
+    constexpr auto operator=(_T&& v) noexcept {
+        return val<T, __>{v};
+    }
+
+    template<typename... B>
+    constexpr decltype(auto) evaluate(const bindings<B...>&) const noexcept {
+        return get();
+    }
+
+    template<scalar R, typename... B, typename... V>
+    constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
+        return std::make_pair(get(), derivatives<R, V...>{});
+    }
+
+    template<typename Self, typename V>
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) noexcept {
+        if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
+            return constant<1>{};
+        else
+            return constant<0>{};
+    }
+
+    template<typename... B>
+    constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
+        out << get();
+    }
+
+    const T& get() const {
+        if constexpr (is_reference)
+            return *val<T, _>::_value;
+        else
+            return val<T, _>::_value;
+    }
+};
+
+template<typename T, auto _>
+typename val<T, _>::stored_t val<T, _>::_value = {};
+
+template<typename T, auto _ = [] () {}>
+val(T&&) -> val<T, _>;
+
+template<typename T, auto _>
+struct is_symbol<val<T, _>> : std::true_type {};
+
 
 template<typename S, typename V>
 struct value_binder {
     using symbol_type = std::remove_cvref_t<S>;
+    using value_type = std::remove_cvref_t<V>;
 
-    template<concepts::same_decay_t_as<V> _V>
+    template<same_remove_cvref_t_as<V> _V>
     constexpr value_binder(const S&, _V&& v) noexcept
     : _value{std::forward<_V>(v)}
     {}
@@ -39,50 +157,49 @@ template<typename S, typename V>
     requires(std::is_lvalue_reference_v<S>)
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
+
 template<typename T>
-struct symbol : operand {
+struct symbol {
     constexpr symbol() = default;
     constexpr symbol(symbol&&) = default;
     constexpr symbol(const symbol&) = delete;
 
-    template<typename Self, typename V>
-        requires(concepts::accepts<T, V>)
+    template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
 
-    template<typename Self, typename V>
-        requires(concepts::accepts<T, V>)
+    template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto operator=(this Self&& self, V&& value) noexcept {
         return self.bind(std::forward<V>(value));
     }
 
-    template<typename Self, typename B>
-    constexpr decltype(auto) evaluate_at(this Self&& self, const B& bindings) noexcept {
-        return bindings[self];
+    template<typename Self, typename... B>
+        requires(bindings<B...>::template contains_bindings_for<Self>)
+    constexpr decltype(auto) evaluate(this Self&& self, const bindings<B...>& b) noexcept {
+        return b[self];
     }
 
-    template<typename Self, typename B, typename... V>
-    constexpr auto back_propagate(this Self&& self, const B& bindings, const V&... vars) {
-        using value_type = std::remove_cvref_t<decltype(bindings[self])>;
-        derivatives derivs{value_type{}, vars...};
-        if constexpr (contains_decay_v<Self, V...>)
+    template<scalar R, typename Self, typename B, typename... V>
+    constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
+        derivatives<R, V...> derivs{};
+        if constexpr (contains_decayed_v<Self, V...>)
             derivs[self] = 1.0;
-        return std::make_pair(self.evaluate_at(bindings), std::move(derivs));
+        return std::make_pair(self.evaluate(bindings), std::move(derivs));
     }
 
     template<typename Self, typename V>
-    constexpr auto differentiate_wrt(this Self&&, V&&) {
-        if constexpr (concepts::same_decay_t_as<Self, V>)
-            return val<int>{1};
+    constexpr auto differentiate_wrt(this Self&&, const type_list<V>&) {
+        if constexpr (same_remove_cvref_t_as<Self, V>)
+            return cval<1>;
         else
-            return val<int>{0};
+            return cval<0>;
     }
 
     template<typename Self, typename... V>
-    constexpr std::ostream& stream(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
+        requires(bindings<V...>::template contains_bindings_for<Self>)
+    constexpr void export_to(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
         out << name_bindings[self];
-        return out;
     }
 };
 
@@ -104,39 +221,9 @@ struct let : symbol<T> {
     constexpr let& operator=(const let<_T, __>&) = delete;
 };
 
-namespace traits {
-
-template<typename T, auto _> struct is_leaf_expression<var<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_symbol<var<T, _>> : public std::true_type {};
-template<typename T, auto _> struct is_var<var<T, _>> : public std::true_type {};
-
-template<typename T, auto _> struct is_leaf_expression<let<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type {};
-template<typename T, auto _> struct is_let<let<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_unbound_symbol<var<T, _>> : public std::true_type {};
+template<typename T, auto _> struct is_unbound_symbol<let<T, _>> : public std::true_type {};
 
-template<concepts::arithmetic T>
-struct into_operand<T> {
-    template<concepts::same_decay_t_as<T> _T>
-    static constexpr auto get(_T&& t) noexcept {
-        return val{std::forward<_T>(t)};
-    }
-};
-
-template<typename T, auto _>
-struct into_operand<var<T, _>> {
-    template<concepts::same_decay_t_as<var<T, _>> V>
-    static constexpr decltype(auto) get(V&& var) noexcept {
-        return std::forward<V>(var);
-    }
-};
-
-template<typename T, auto _>
-struct into_operand<let<T, _>> {
-    template<concepts::same_decay_t_as<let<T, _>> L>
-    static constexpr decltype(auto) get(L&& let) noexcept {
-        return std::forward<L>(let);
-    }
-};
-
-}  // namespace traits
 }  // namespace adpp::backward

@@ -5,6 +5,15 @@
 
 using adpp::backward::var;
 
+template<adpp::scalar T>
+void check(const T& value, const T& expected, const std::string& name) {
+    if (value != expected)
+        throw std::runtime_error(
+            name + " is incorrect: " + std::to_string(value)
+            + " (expected " + std::to_string(expected) + ")"
+        );
+}
+
 int main() {
     var x;
     var y;
@@ -16,12 +25,8 @@ int main() {
     std::cout << "∂e/∂x = " << de_dx << std::endl;
     std::cout << "∂e/∂y = " << de_dy << std::endl;
 
-    if (value != (6 + 80)*10)
-        throw std::runtime_error("e.value() is incorrect");
-    if (de_dx != 3*10)
-        throw std::runtime_error("∂e/∂x is incorrect");
-    if (de_dy != (6 + 80) + 80)
-        throw std::runtime_error("∂e/∂y is incorrect");
-
+    check(value, (2*3 + 10*8)*10, "value");
+    check(de_dx, 3*10, "∂e/∂x");
+    check(de_dy, (6 + 80) + 80, "∂e/∂y");
     std::cout << "All checks passed" << std::endl;
 }

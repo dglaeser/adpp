@@ -1,5 +1,6 @@
-adpp_add_benchmark(backward_autodiff backwards.cpp)
-adpp_add_benchmark(backward_adpp backwards.cpp)
+adpp_add_benchmark(gradient gradient.cpp)
+adpp_add_benchmark(derivatives derivatives.cpp)
+adpp_add_benchmark(derivatives_autodiff derivatives.cpp)
 
-target_compile_definitions(backward_autodiff PRIVATE USE_AUTODIFF=1)
-target_compile_definitions(backward_adpp PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(derivatives PRIVATE USE_AUTODIFF=0)
+target_compile_definitions(derivatives_autodiff PRIVATE USE_AUTODIFF=1)

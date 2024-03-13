@@ -6,9 +6,13 @@
 #include <adpp/backward/symbols.hpp>
 
 using boost::ut::operator""_test;
+using boost::ut::expect;
+using boost::ut::eq;
 
 using adpp::backward::var;
 using adpp::backward::let;
+using adpp::backward::val;
+using adpp::backward::constant;
 using adpp::backward::value_binder;
 
 using adpp::dtype::real;
@@ -118,6 +122,28 @@ int main() {
         constexpr auto b = a = 42;
         static_assert(!holds_reference(b));
         static_assert(b.unwrap() == 42);
+    };
+
+    "val_construction_by_value"_test = [] () {
+        val v{42};
+        static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, int>);
+        expect(eq(v.get(), 42));
+    };
+
+    "val_construction_by_reference"_test = [] () {
+        {
+            int _v = 42;
+            val v{_v};
+            static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, int*>);
+            expect(eq(v.get(), 42));
+        }
+        {
+
+            const int _v = 42;
+            val v{_v};
+            static_assert(std::is_same_v<typename std::remove_cvref_t<decltype(v)>::stored_type, const int*>);
+            expect(eq(v.get(), 42));
+        }
     };
 
     return EXIT_SUCCESS;
