@@ -1,5 +1,6 @@
 adpp_add_test(test_bw_newton test_newton_solver.cpp)
 adpp_add_test(test_bw_symbols test_symbols.cpp)
+adpp_add_test(test_bw_symbol_traits test_symbol_traits.cpp)
 adpp_add_test(test_bw_symbols_operators test_symbols_operators.cpp)
 adpp_add_test(test_bw_expression_evaluate test_expression_evaluate.cpp)
 adpp_add_test(test_bw_expression_derivative test_expression_derivative.cpp)
