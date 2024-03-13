@@ -99,5 +99,14 @@ int main() {
         }
     };
 
+    "bound_expression_derivative_io"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto derivative = ((a + b)*a).with(a = 2.0, b = 4.0).differentiate(wrt(a));
+        std::stringstream s;
+        derivative.export_to(s);
+        expect(eq(s.str(), std::string{"1*2 + (2 + 4)*1"}));
+    };
+
     return EXIT_SUCCESS;
 }

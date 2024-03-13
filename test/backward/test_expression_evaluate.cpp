@@ -123,5 +123,13 @@ int main() {
         static_assert(evaluate(formula, at(a = 2.0, b = 4.0)) == 12.0);
     };
 
+    "bound_expression_evaluate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        constexpr auto formula = ((a + b)*a).with(a = 2.0, b = 4.0);
+        static_assert(formula.evaluate() == 12.0);
+        expect(eq(formula.evaluate(), 12.0));
+    };
+
     return EXIT_SUCCESS;
 }

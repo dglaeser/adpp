@@ -194,5 +194,30 @@ int main() {
         }
     };
 
+    "bound_expression_back_propagate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        constexpr auto formula = ((a + b)*a).with(a = 2.0, b = 4.0);
+        static_assert(formula.template back_propagate<double>(wrt(a)).second[a] == 8.0);
+        expect(eq(formula.template back_propagate<double>(wrt(a)).second[a], 8.0));
+    };
+
+    "bound_expression_differentiate"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto formula = ((a + b)*a).with(a = 2.0, b = 4.0);
+        constexpr auto derivative = formula.differentiate(wrt(a));
+        static_assert(derivative.evaluate() == 8.0);
+        expect(eq(derivative.evaluate(), 8.0));
+    };
+
+    "bound_expression_differentiate_on_temporary"_test = [] () {
+        static constexpr var a;
+        static constexpr let b;
+        static constexpr auto derivative = ((a + b)*a).with(a = 2.0, b = 4.0).differentiate(wrt(a));
+        static_assert(derivative.evaluate() == 8.0);
+        expect(eq(derivative.evaluate(), 8.0));
+    };
+
     return EXIT_SUCCESS;
 }
