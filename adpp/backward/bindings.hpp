@@ -94,8 +94,7 @@ struct is_binding<bindings<B...>> : std::true_type {};
 template<typename T>
 inline constexpr bool is_binding_v = is_binding<T>::value;
 
-template<typename E, typename B>
-    requires(is_expression_v<std::remove_cvref_t<E>>)
+template<term E, typename B>
 class bound_expression {
  public:
     constexpr bound_expression(E e, B b)
@@ -147,6 +146,13 @@ class bound_expression {
 
 template<typename E, typename B>
 bound_expression(E&&, B&&) -> bound_expression<E, B>;
+
+struct bindable {
+    template<typename Self, typename... Bs>
+    constexpr auto with(this Self&& self, Bs&&... binders) noexcept {
+        return bound_expression{std::forward<Self>(self), bind(std::forward<Bs>(binders)...)};
+    }
+};
 
 
 template<typename... B> requires(detail::are_binders<B...>)

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <sstream>
+#include <format>
 
 #include <boost/ut.hpp>
 
@@ -15,7 +16,6 @@ using boost::ut::eq;
 using adpp::backward::var;
 using adpp::backward::let;
 using adpp::backward::cval;
-using adpp::backward::formatted;
 
 int main() {
 
@@ -23,7 +23,7 @@ int main() {
         let a;
         let b;
         std::ostringstream s;
-        s << formatted{a + b, where(a = "a", b = "b")};
+        s << (a + b).with(a = "a", b = "b");
         expect(eq(std::string{s.str()}, std::string{"a + b"}));
     };
 
@@ -32,7 +32,7 @@ int main() {
         let b;
         let c;
         auto expr = exp(a + b)*c + b*(a + b);
-        auto text = formatted{expr, where(a = "a", b = "b", c = "c")}.to_string();
+        auto text = std::format("{}", expr.with(a = "a", b = "b", c = "c"));
         expect(eq(text, std::string{"(exp(a + b))*c + b*(a + b)"}));
     };
 
@@ -42,7 +42,7 @@ int main() {
         let c;
         auto expr = a + b + c;
         expect(eq(
-            formatted{expr, where(a = "a", b = "b", c = "c")}.to_string(),
+            std::format("{}", expr.with(a = "a", b = "b", c = "c")),
             std::string{"a + b + c"}
         ));
     };
@@ -52,7 +52,7 @@ int main() {
         var y;
         let mu;
         std::stringstream s;
-        exp((x + y/x)*mu).export_to(s, with(x = "x", y = "y", mu = "µ"));
+        s << exp((x + y/x)*mu).with(x = "x", y = "y", mu = "µ");
         expect(eq(s.str(), std::string{"exp((x + y/x)*µ)"}));
     };
 
@@ -63,7 +63,7 @@ int main() {
             const auto deriv = expr.differentiate(wrt(x));
             expect(eq(deriv.evaluate(at(x = 2)), 2));
             std::stringstream s;
-            s << adpp::backward::formatted{deriv, where(x = "x")};
+            s << deriv.with(x = "x");
             expect(eq(s.str(), std::string{"2"}));
         }
         {
@@ -72,13 +72,13 @@ int main() {
             const auto deriv_x = expr.differentiate(wrt(x)); {
                 expect(eq(deriv_x.evaluate(at(x = 2, y = 3)), 3));
                 std::stringstream s;
-                s << adpp::backward::formatted{deriv_x, where(x = "x", y = "y")};
+                s << deriv_x.with(x = "x", y = "y");
                 expect(eq(s.str(), std::string{"1*y"}));
             }
             const auto deriv_y = expr.differentiate(wrt(y)); {
                 expect(eq(deriv_y.evaluate(at(x = 2, y = 3)), 2 + 1));
                 std::stringstream s;
-                s << adpp::backward::formatted{deriv_y, where(x = "x", y = "y")};
+                s << deriv_y.with(x = "x", y = "y");
                 expect(eq(s.str(), std::string{"x*1 + 1"}));
             }
         }
