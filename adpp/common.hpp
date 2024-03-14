@@ -66,6 +66,10 @@ namespace detail {
         template<same_remove_cvref_t_as<T> _T>
         constexpr index index_of() const noexcept { return {}; }
         constexpr index index_of(const T&) const noexcept { return {}; }
+
+        constexpr auto make(index) const noexcept requires(std::default_initializable<T>) {
+            return T{};
+        }
     };
 
     template<typename... Ts>
@@ -74,6 +78,7 @@ namespace detail {
     template<std::size_t... I, typename... Ts>
     struct indexed<std::index_sequence<I...>, Ts...> : indexed_element<I, Ts>... {
         using indexed_element<I, Ts>::index_of...;
+        using indexed_element<I, Ts>::make...;
     };
 
 }  // namespace detail
@@ -136,5 +141,22 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
 
 template<typename... Ts>
 variadic_accessor(Ts&&...) -> variadic_accessor<Ts...>;
+
+
+// template<typename... T>
+// class tuple : variadic_accessor<T...> {
+//     using base = variadic_accessor<T...>;
+
+//  public:
+//     using base::base;
+
+//     template<std::size_t i>
+//     constexpr decltype(auto) operator[](const index_constant<i>& idx) noexcept {
+//         return this->get(idx);
+//     }
+// };
+
+// template<typename... T>
+// tuple(T&&...) -> tuple<std::remove_cvref_t<T>...>;
 
 }  // namespace adpp
