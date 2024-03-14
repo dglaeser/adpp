@@ -7,7 +7,6 @@
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/operators.hpp>
 #include <adpp/backward/differentiate.hpp>
-#include <adpp/backward/io.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
