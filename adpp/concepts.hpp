@@ -12,7 +12,13 @@ template<typename T>
 concept scalar = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
 
 template<typename T>
-concept static_vec = is_complete_v<static_size<std::remove_cvref_t<T>>>;
+concept indexable = requires(const T& t) {
+    typename T::value_type;
+    { t[std::size_t{0}] } -> std::convertible_to<typename T::value_type>;
+};
+
+template<typename T>
+concept static_vec = is_complete_v<static_size<std::remove_cvref_t<T>>> and indexable<T>;
 
 template<typename T, std::size_t N>
 concept static_vec_n = static_vec<T> and static_size_v<std::remove_cvref_t<T>> == N;

@@ -13,6 +13,9 @@ struct always_false : std::false_type {};
 
 template<std::size_t i>
 using index_constant = std::integral_constant<std::size_t, i>;
+template<std::size_t idx>
+inline constexpr index_constant<idx> ic;
+
 
 template<template<typename> typename trait>
 struct decayed_trait {
@@ -61,6 +64,14 @@ template<typename T, typename... Ts>
 struct first_type<type_list<T, Ts...>> : std::type_identity<T> {};
 template<typename... T>
 using first_type_t = typename first_type<T...>::type;
+
+
+template<typename... T>
+struct drop_first_type;
+template<typename T, typename... Ts>
+struct drop_first_type<type_list<T, Ts...>> : std::type_identity<type_list<Ts...>> {};
+template<typename... T>
+using drop_first_type_t = typename drop_first_type<T...>::type;
 
 
 template<typename T, typename... Ts>

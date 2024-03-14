@@ -163,7 +163,6 @@ struct value_binder {
 };
 
 template<typename S, typename V>
-    requires(std::is_lvalue_reference_v<S>)
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
 

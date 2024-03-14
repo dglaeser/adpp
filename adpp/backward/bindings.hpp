@@ -155,9 +155,73 @@ struct bindable {
 };
 
 
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    concept binder_collection = requires {
+        T::number_of_sub_binders;
+    };
+
+    template<typename... Ts, typename T>
+    constexpr auto concat_with(std::tuple<Ts...>&& tuple, T&& t) {
+        if constexpr (std::is_lvalue_reference_v<T>)
+            return std::tuple_cat(std::move(tuple), std::forward_as_tuple(std::forward<T>(t)));
+        else
+            return std::tuple_cat(std::move(tuple), std::tuple<std::remove_cvref_t<T>>{std::move(t)});
+    }
+
+    template<typename... Ts, typename F, typename... R> requires(sizeof...(R) > 0)
+    constexpr auto concat_with(std::tuple<Ts...>&& tuple, F&& first, R&&... rest) {
+        return concat_with(
+            concat_with(std::move(tuple), std::forward<F>(first)),
+            std::forward<R>(rest)...
+        );
+    }
+
+    template<typename C, typename F> requires(binder_collection<std::remove_cvref_t<C>>)
+    constexpr auto unpack_binder_collection(C&& collection, const F& callback) {
+        return std::apply([&] <typename... SB> (SB&&... sub_binders) {
+            return callback(std::forward<SB>(sub_binders)...);
+        }, std::forward<C>(collection).sub_binders());
+    }
+
+    template<typename F, typename... U, typename T0, typename... Ts>
+    constexpr auto unpack_binders(const F& callback, std::tuple<U...>&& unpacked, T0&& t0, Ts&&... ts) {
+        static constexpr bool stop_recursion = sizeof...(Ts) == 0;
+        if constexpr (binder_collection<std::remove_cvref_t<T0>>) {
+            return unpack_binder_collection(std::forward<T0>(t0), [&] <typename... SB> (SB&&... sub_binders) {
+                auto concatenated = concat_with(std::move(unpacked), std::forward<SB>(sub_binders)...);
+                if constexpr (stop_recursion)
+                    return callback(std::move(concatenated));
+                else
+                    return unpack_binders(callback, std::move(concatenated), std::forward<Ts>(ts)...);
+            });
+        } else {
+            auto concatenated = concat_with(std::move(unpacked), std::forward<T0>(t0));
+            if constexpr (stop_recursion)
+                return callback(std::move(concatenated));
+            else
+                return unpack_binders(callback, std::move(concatenated), std::forward<Ts>(ts)...);
+        }
+    }
+
+    template<typename F>
+    constexpr auto unpack_binders(const F& callback, std::tuple<>&& t) {
+        return callback(std::move(t));
+    }
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto bind(B&&... b) {
-    return bindings{std::forward<B>(b)...};
+    return detail::unpack_binders([] <typename T> (T&& binder_tuple) {
+        return std::apply([] <typename... SB> (SB&&... sub_binders) {
+            return bindings{std::forward<SB>(sub_binders)...};
+        }, std::forward<T>(binder_tuple));
+    }, std::tuple{}, std::forward<B>(b)...);
 }
 
 template<typename... B> requires(detail::are_binders<B...>)
