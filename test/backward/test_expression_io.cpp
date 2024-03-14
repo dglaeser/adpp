@@ -94,7 +94,7 @@ int main() {
         const auto deriv_y = expr.differentiate(wrt(y)); {
             expect(eq(deriv_y.evaluate(at(x = 2.0, y = 3.0)), ((-1*2.0)*1)/(3.0*3.0) + 1.5));
             std::stringstream s;
-            s << adpp::backward::formatted{deriv_y, where(x = "x", y = "y")};
+            s << deriv_y.with(x = "x", y = "y");
             expect(eq(s.str(), std::string{"((-1*x)*1)/(y*y) + 1.5"}));
         }
     };

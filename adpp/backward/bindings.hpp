@@ -95,7 +95,7 @@ template<typename T>
 inline constexpr bool is_binding_v = is_binding<T>::value;
 
 template<typename E, typename B>
-    requires(is_expression_v<std::remove_cvref_t<E>>, expression_for<E, B>)
+    requires(is_expression_v<std::remove_cvref_t<E>>)
 class bound_expression {
  public:
     constexpr bound_expression(E e, B b)
@@ -103,7 +103,7 @@ class bound_expression {
     , _bindings{std::forward<B>(b)}
     {}
 
-    constexpr decltype(auto) evaluate() const {
+    constexpr decltype(auto) evaluate() const requires(expression_for<E, B>) {
         return _expression.get().evaluate(_bindings.get());
     }
 
@@ -128,6 +128,11 @@ class bound_expression {
 
     constexpr void export_to(std::ostream& out) const {
         _expression.get().export_to(out, _bindings.get());
+    }
+
+    friend constexpr std::ostream& operator<<(std::ostream& out, const bound_expression& e) {
+        e.export_to(out);
+        return out;
     }
 
  private:
