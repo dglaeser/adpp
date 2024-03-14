@@ -8,6 +8,7 @@
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/derivatives.hpp>
+#include <adpp/backward/symbols.hpp>
 
 namespace adpp::backward {
 
