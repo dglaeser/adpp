@@ -2,7 +2,7 @@
 
 #include <type_traits>
 #include <utility>
-
+#include <array>
 
 namespace adpp {
 
@@ -29,6 +29,14 @@ template<typename... T>
 struct type_list_size<type_list<T...>> : std::integral_constant<std::size_t, sizeof...(T)> {};
 template<typename T>
 inline constexpr std::size_t type_list_size_v = type_list_size<T>::value;
+
+
+template<typename T>
+struct static_size;
+template<typename T, std::size_t N>
+struct static_size<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
+template<typename T>
+inline constexpr std::size_t static_size_v = static_size<T>::value;
 
 
 #ifndef DOXYGEN
