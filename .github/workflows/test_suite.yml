@@ -14,7 +14,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: dglaeser/compiler-images:${{ matrix.compiler }}
     strategy:
       matrix:
