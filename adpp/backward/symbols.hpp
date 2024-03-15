@@ -235,4 +235,12 @@ template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type
 template<typename T, auto _> struct is_unbound_symbol<var<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_unbound_symbol<let<T, _>> : public std::true_type {};
 
+template<into_term T, auto _ = [] () {}>
+inline constexpr decltype(auto) as_term(T&& t) noexcept {
+    if constexpr (term<std::remove_cvref_t<T>>)
+        return std::forward<T>(t);
+    else
+        return val<T, _>{std::forward<T>(t)};
+}
+
 }  // namespace adpp::backward
