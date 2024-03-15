@@ -18,7 +18,7 @@ jobs:
     container: dglaeser/compiler-images:${{ matrix.compiler }}
     strategy:
       matrix:
-          compiler: [gcc-14, clang-18]
+          compiler: [gcc-14, clang-19-git]
     steps:
       - name: checkout-repository
         uses: actions/checkout@v2
