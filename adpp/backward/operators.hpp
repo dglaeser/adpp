@@ -41,14 +41,6 @@ namespace detail {
     template<typename... Ts>
     inline constexpr bool all_cvals_v = std::conjunction_v<is_cval<std::remove_cvref_t<Ts>>...>;
 
-    template<into_term T, auto _ = [] () {}>
-    inline constexpr decltype(auto) as_term(T&& t) noexcept {
-        if constexpr (term<std::remove_cvref_t<T>>)
-            return std::forward<T>(t);
-        else
-            return val<T, _>{std::forward<T>(t)};
-    }
-
 }  // namespace detail
 #endif  // DOXYGEN
 
@@ -61,23 +53,23 @@ using arithmetic_op_result_t = op_result_t<op, Ts...>;
 
 template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
 inline constexpr auto operator+(A&& a, B&& b) {
-    return expression{op::add{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::add{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
 inline constexpr auto operator-(A&& a, B&& b) {
-    return expression{op::subtract{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::subtract{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
 inline constexpr auto operator*(A&& a, B&& b) {
-    return expression{op::multiply{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::multiply{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
 inline constexpr auto operator/(A&& a, B&& b) {
-    return expression{op::divide{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::divide{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A>
 inline constexpr op_result_t<op::exp, A> exp(A&& a) {
-    return expression{op::exp{}, detail::as_term(std::forward<A>(a))};
+    return expression{op::exp{}, as_term(std::forward<A>(a))};
 }
 
 
