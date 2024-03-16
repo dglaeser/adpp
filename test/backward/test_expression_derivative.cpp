@@ -51,6 +51,13 @@ int main() {
         static_assert(2.0 == derivative_of(expr, wrt(a), at(a = 1.0, b = 2.0)));
     };
 
+    "negated_expression_derivative"_test = [] () {
+        static constexpr var a;
+        static constexpr var b;
+        constexpr auto expr = -b*(a + b);
+        static_assert(-5.0 == derivative_of(expr, wrt(b), at(a = 1.0, b = 2.0)));
+    };
+
     "expression_gradient"_test = [] () {
         static constexpr var a;
         static constexpr var b;

@@ -26,6 +26,14 @@ int main() {
         expect(eq(std::string{s.str()}, std::string{"a + b"}));
     };
 
+    "negated_expression_simple_stream"_test = [] () {
+        let a;
+        std::ostringstream s;
+        auto expr = -a;
+        s << expr.with(a = "a");
+        expect(eq(std::string{s.str()}, std::string{"-1*a"}));
+    };
+
     "expression_nested_stream"_test = [] () {
         let a;
         let b;

@@ -67,6 +67,13 @@ int main() {
         expect(eq(expr.evaluate(at(x = 3, y = 2)), std::exp(1.0)));
     };
 
+    "expression_negated"_test = [] () {
+        var x;
+        var y;
+        const auto expr = -exp((x + y)*(x - y)/(x + y))*y;
+        expect(eq(expr.evaluate(at(x = 3, y = 2)), -1.0*std::exp(1.0)*2.0));
+    };
+
     "expression_operators_multiple_expression"_test = [] () {
         var x;
         var y;

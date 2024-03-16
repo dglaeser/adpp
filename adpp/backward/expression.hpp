@@ -93,7 +93,7 @@ template<typename op, typename... T> struct formatter;
 template<typename op, typename... T> struct differentiator;
 
 template<typename op, term... Ts>
-struct expression : bindable {
+struct expression : bindable, negatable {
     constexpr expression() = default;
     constexpr expression(const op&, const Ts&...) noexcept {}
 
