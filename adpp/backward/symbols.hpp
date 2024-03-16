@@ -16,7 +16,7 @@
 namespace adpp::backward {
 
 template<auto v>
-struct constant {
+struct constant : bindable {
     static constexpr auto value = v;
 
     template<auto k> constexpr auto operator+(const constant<k>&) const noexcept { return constant<v+k>{}; }
@@ -56,7 +56,7 @@ inline constexpr constant<value> cval;
 
 
 template<typename T, auto _ = [] () {}>
-struct val {
+struct val : bindable {
  private:
     static constexpr bool is_reference = std::is_lvalue_reference_v<T>;
     using stored_t = std::conditional_t<
@@ -159,7 +159,7 @@ value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
 
 template<typename T>
-struct symbol {
+struct symbol : bindable {
     constexpr symbol() = default;
     constexpr symbol(symbol&&) = default;
     constexpr symbol(const symbol&) = delete;

@@ -94,8 +94,7 @@ struct is_binding<bindings<B...>> : std::true_type {};
 template<typename T>
 inline constexpr bool is_binding_v = is_binding<T>::value;
 
-template<typename E, typename B>
-    requires(is_expression_v<std::remove_cvref_t<E>>, expression_for<E, B>)
+template<term E, typename B>
 class bound_expression {
  public:
     constexpr bound_expression(E e, B b)
@@ -103,7 +102,7 @@ class bound_expression {
     , _bindings{std::forward<B>(b)}
     {}
 
-    constexpr decltype(auto) evaluate() const {
+    constexpr decltype(auto) evaluate() const requires(expression_for<E, B>) {
         return _expression.get().evaluate(_bindings.get());
     }
 
@@ -130,6 +129,11 @@ class bound_expression {
         _expression.get().export_to(out, _bindings.get());
     }
 
+    friend constexpr std::ostream& operator<<(std::ostream& out, const bound_expression& e) {
+        e.export_to(out);
+        return out;
+    }
+
  private:
     template<typename _E, typename _B>
     static constexpr auto _make(_E&& e, _B&& b) {
@@ -142,6 +146,13 @@ class bound_expression {
 
 template<typename E, typename B>
 bound_expression(E&&, B&&) -> bound_expression<E, B>;
+
+struct bindable {
+    template<typename Self, typename... Bs>
+    constexpr auto with(this Self&& self, Bs&&... binders) noexcept {
+        return bound_expression{std::forward<Self>(self), bind(std::forward<Bs>(binders)...)};
+    }
+};
 
 
 template<typename... B> requires(detail::are_binders<B...>)
@@ -165,3 +176,28 @@ inline constexpr auto where(B&&... b) {
 }
 
 }  // namespace adpp
+
+#include <format>
+#include <sstream>
+
+template<typename E, typename B>
+struct std::formatter<adpp::backward::bound_expression<E, B>> {
+    // todo: precision formatter?
+
+    template<typename parse_ctx>
+    constexpr parse_ctx::iterator parse(parse_ctx& ctx) {
+        auto it = ctx.begin();
+        if (it == ctx.end())
+            return it;
+        if (*it != '}')
+            throw std::format_error("adpp::backward::bound_expression does not support format args.");
+        return it;
+    }
+
+    template<typename fmt_ctx>
+    fmt_ctx::iterator format(const adpp::backward::bound_expression<E, B>& e, fmt_ctx& ctx) const {
+        std::ostringstream out;
+        e.export_to(out);
+        return std::ranges::copy(std::move(out).str(), ctx.out()).out;
+    }
+};

@@ -93,14 +93,9 @@ template<typename op, typename... T> struct formatter;
 template<typename op, typename... T> struct differentiator;
 
 template<typename op, term... Ts>
-struct expression {
+struct expression : bindable {
     constexpr expression() = default;
     constexpr expression(const op&, const Ts&...) noexcept {}
-
-    template<typename Self, typename... Bs>
-    constexpr auto with(this Self&& self, Bs&&... binders) {
-        return bound_expression{std::forward<Self>(self), bind(std::forward<Bs>(binders)...)};
-    }
 
     template<typename... B>
     constexpr decltype(auto) evaluate(const bindings<B...>& operands) const {
