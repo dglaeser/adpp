@@ -1,9 +1,9 @@
 #pragma once
 
 #include <type_traits>
+#include <algorithm>
 #include <concepts>
 #include <utility>
-#include <memory>
 
 #include <adpp/type_traits.hpp>
 #include <adpp/concepts.hpp>
@@ -143,20 +143,13 @@ template<typename... Ts>
 variadic_accessor(Ts&&...) -> variadic_accessor<Ts...>;
 
 
-// template<typename... T>
-// class tuple : variadic_accessor<T...> {
-//     using base = variadic_accessor<T...>;
-
-//  public:
-//     using base::base;
-
-//     template<std::size_t i>
-//     constexpr decltype(auto) operator[](const index_constant<i>& idx) noexcept {
-//         return this->get(idx);
-//     }
-// };
-
-// template<typename... T>
-// tuple(T&&...) -> tuple<std::remove_cvref_t<T>...>;
+template<typename T, std::size_t N>
+struct to_array {
+    static constexpr auto from(T (&&values)[N]) noexcept {
+        std::array<T, N> result;
+        std::ranges::move(values, result.begin());
+        return result;
+    }
+};
 
 }  // namespace adpp
