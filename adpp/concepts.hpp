@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <limits>
 #include <utility>
 #include <concepts>
@@ -12,9 +13,9 @@ template<typename T>
 concept scalar = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
 
 template<typename T>
-concept indexable = requires(const T& t) {
-    typename T::value_type;
-    { t[std::size_t{0}] } -> std::convertible_to<typename T::value_type>;
+concept indexable = is_complete_v<value_type<T>> and requires(const T& t) {
+    typename value_type<T>::type;
+    { t[std::size_t{0}] } -> std::convertible_to<typename value_type<T>::type>;
 };
 
 template<typename T>
