@@ -60,7 +60,7 @@ struct vector_value_binder {
     template<std::size_t i, bool copy>
     constexpr decltype(auto) _get() const noexcept {
         if constexpr (copy)
-            return typename V::value_type{_value.get()[i]};
+            return typename std::remove_cvref_t<V>::value_type{_value.get()[i]};
         else
             return _value.get()[i];
     }
@@ -80,24 +80,21 @@ struct vector_expression : bindable, indexed<Es...> {
     constexpr vector_expression() = default;
     constexpr vector_expression(const Es&...) {}
 
-    template<typename Self, static_vec_n<size> V>
+    template<typename Self, typename V>
+        requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return vector_value_binder{std::forward<Self>(self), std::forward<V>(value)};
     }
 
-    template<typename Self, static_vec_n<size> V>
+    template<typename Self, typename V>
+        requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto operator=(this Self&& self, V&& values) noexcept {
         return self.bind(std::forward<V>(values));
     }
 
-    template<typename Self> // TODO: generalize double somewhow?
-    constexpr auto operator=(this Self&& self, std::array<double, size>&& values) noexcept {
-        return self.bind(std::move(values));
-    }
-
-    template<typename Self> // TODO: generalize string/double somewhow?
-    constexpr auto operator=(this Self&& self, std::array<std::string, size>&& values) noexcept {
-        return self.bind(std::move(values));
+    template<typename Self, typename T>
+    constexpr auto operator=(this Self&& self, T (&&values)[size]) noexcept {
+        return self.bind(to_array<T, size>::from(std::move(values)));
     }
 
     template<typename... B>

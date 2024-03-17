@@ -15,6 +15,7 @@ using boost::ut::eq;
 using adpp::ic;
 using adpp::backward::var;
 using adpp::backward::vec;
+using adpp::backward::cval;
 using adpp::backward::vector_expression;
 using adpp::backward::vector_value_binder;
 using adpp::backward::value_binder;
@@ -43,13 +44,13 @@ int main() {
         auto binding = v = {1, 2};
         using binding_t = std::remove_cvref_t<decltype(binding)>;
         static_assert(is_vec_value_binder<binding_t>::value);
-        static_assert(std::is_same_v<typename bound_value_type<binding_t>::type, std::array<double, 2>>);
+        static_assert(std::is_same_v<typename bound_value_type<binding_t>::type, std::array<int, 2>>);
 
         auto sub_binders = binding.sub_binders();
         using sub_binders_t = std::remove_cvref_t<decltype(sub_binders)>;
         static_assert(std::is_same_v<sub_binders_t, std::tuple<
-            value_binder<X, const double&>,
-            value_binder<Y, const double&>
+            value_binder<X, const int&>,
+            value_binder<Y, const int&>
         >>);
     };
 
@@ -67,6 +68,24 @@ int main() {
         expect(eq(result[0], 0));
         expect(eq(result[1], 1));
         expect(eq(result[2], 2));
+    };
+
+    "vec_binding_by_reference"_test = [] () {
+        vec<3> v;
+        std::array<double, 3> values{42, 43, 44};
+        // TODO: v*2 does not yield nice error messages.
+        // The overloaded operators should be deactivated for vectors? Or properly implemented?
+        auto expr = v.scaled_with(cval<2>);
+        expect(std::ranges::equal(
+            evaluate(expr, at(v = values)),
+            std::array{84, 86, 88}
+        ));
+
+        values[0] = 13;
+        expect(std::ranges::equal(
+            evaluate(expr, at(v = values)),
+            std::array{26, 86, 88}
+        ));
     };
 
     "vec_expression"_test = [] () {
