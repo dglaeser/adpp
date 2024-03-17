@@ -73,8 +73,6 @@ int main() {
     "vec_binding_by_reference"_test = [] () {
         vec<3> v;
         std::array<double, 3> values{42, 43, 44};
-        // TODO: v*2 does not yield nice error messages.
-        // The overloaded operators should be deactivated for vectors? Or properly implemented?
         auto expr = v.scaled_with(cval<2>);
         expect(std::ranges::equal(
             evaluate(expr, at(v = values)),
@@ -111,7 +109,21 @@ int main() {
             ));
         }
         {
+            constexpr auto e = v*cval<3>;
+            static_assert(std::ranges::equal(
+                evaluate(e, at(v = {1, 2, 3})),
+                std::array{3, 6, 9}
+            ));
+        }
+        {
             auto e = v.scaled_with(3);
+            expect(std::ranges::equal(
+                evaluate(e, at(v = {1, 2, 3})),
+                std::array{3, 6, 9}
+            ));
+        }
+        {
+            auto e = v*3;
             expect(std::ranges::equal(
                 evaluate(e, at(v = {1, 2, 3})),
                 std::array{3, 6, 9}
@@ -120,9 +132,21 @@ int main() {
     };
 
     "vec_expression_dot"_test = [] () {
-        vec<3> v;
-        constexpr auto e = v.dot(v);
-        static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+        {
+            vec<3> v;
+            constexpr auto e = v.dot(v);
+            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+        {
+            vec<3> v;
+            constexpr auto e = v*v;
+            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+        {
+            vec<3> v;
+            auto e = v.dot(v);
+            expect(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
     };
 
     "vec_io"_test = [] () {
