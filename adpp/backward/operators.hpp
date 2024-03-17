@@ -37,38 +37,36 @@ namespace detail {
     struct is_cval : std::false_type {};
     template<auto v>
     struct is_cval<constant<v>> : std::true_type {};
+    template<typename T>
+    struct is_scalar : std::bool_constant<scalar<T> or is_scalar_expression_v<T>> {};
 
     template<typename... Ts>
     inline constexpr bool all_cvals_v = std::conjunction_v<is_cval<std::remove_cvref_t<Ts>>...>;
 
+    template<typename... Ts>
+    inline constexpr bool all_scalars = std::conjunction_v<is_scalar<std::remove_cvref_t<Ts>>...>;
+
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<typename op, term... Ts>
-using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
-
-// for arithmetic operations between cvals, we use the operators defined in-class
-template<typename op, term... Ts> requires(!detail::all_cvals_v<Ts...>)
-using arithmetic_op_result_t = op_result_t<op, Ts...>;
-
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator+(A&& a, B&& b) {
     return expression{op::add{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator-(A&& a, B&& b) {
     return expression{op::subtract{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator*(A&& a, B&& b) {
     return expression{op::multiply{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator/(A&& a, B&& b) {
     return expression{op::divide{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A>
-inline constexpr op_result_t<op::exp, A> exp(A&& a) {
+inline constexpr auto exp(A&& a) {
     return expression{op::exp{}, as_term(std::forward<A>(a))};
 }
 

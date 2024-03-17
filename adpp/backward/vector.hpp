@@ -123,6 +123,17 @@ struct vector_expression : bindable, indexed<Es...> {
     }
 
     template<into_term V>
+        requires(is_scalar_expression_v<std::remove_cvref_t<V>>)
+    constexpr auto operator*(V&& value) const {
+        return scaled_with(std::forward<V>(value));
+    }
+
+   template<typename... T> requires(sizeof...(T) == size)
+    constexpr auto operator*(const vector_expression<T...>& other) const {
+        return dot(other);
+    }
+
+    template<into_term V>
         requires(is_scalar_expression_v<std::remove_cvref_t<decltype(as_term(std::declval<const V&>()))>>)
     constexpr auto scaled_with(V&& value) const noexcept {
         auto results_tuple = _apply_to_all([&] (auto, auto&& v) {
