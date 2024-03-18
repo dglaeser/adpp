@@ -15,24 +15,10 @@ namespace adpp::backward {
 
 template<typename S, typename V>
     requires(static_vec_n<std::remove_cvref_t<V>, S::size>)
-struct vector_value_binder {
+struct vector_value_binder : value_binder<S, V>{
     static constexpr std::size_t number_of_sub_binders = S::size;
 
-    using symbol_type = std::remove_cvref_t<S>;
-    using value_type = std::remove_cvref_t<V>;
-
-    template<same_remove_cvref_t_as<V> _V>
-    constexpr vector_value_binder(const S&, _V&& v) noexcept
-    : _value{std::forward<_V>(v)}
-    {}
-
-    template<typename Self>
-    constexpr decltype(auto) unwrap(this Self&& self) {
-        if constexpr (!std::is_lvalue_reference_v<Self>)
-            return std::move(self._value).get();
-        else
-            return self._value.get();
-    }
+    using value_binder<S, V>::value_binder;
 
     template<typename Self>
     constexpr auto sub_binders(this Self&& self) noexcept {
@@ -60,12 +46,10 @@ struct vector_value_binder {
     template<std::size_t i, bool copy>
     constexpr decltype(auto) _get() const noexcept {
         if constexpr (copy)
-            return typename std::remove_cvref_t<V>::value_type{_value.get()[i]};
+            return typename std::remove_cvref_t<V>::value_type{this->unwrap()[i]};
         else
-            return _value.get()[i];
+            return this->unwrap()[i];
     }
-
-    storage<V> _value;
 };
 
 template<typename E, typename S>
