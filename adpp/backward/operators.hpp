@@ -44,24 +44,24 @@ namespace detail {
     inline constexpr bool all_cvals_v = std::conjunction_v<is_cval<std::remove_cvref_t<Ts>>...>;
 
     template<typename... Ts>
-    inline constexpr bool all_scalars = std::conjunction_v<is_scalar<std::remove_cvref_t<Ts>>...>;
+    inline constexpr bool all_scalars_v = std::conjunction_v<is_scalar<std::remove_cvref_t<Ts>>...>;
 
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator+(A&& a, B&& b) {
     return expression{op::add{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator-(A&& a, B&& b) {
     return expression{op::subtract{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator*(A&& a, B&& b) {
     return expression{op::multiply{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(detail::all_scalars<A, B> and !detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator/(A&& a, B&& b) {
     return expression{op::divide{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
