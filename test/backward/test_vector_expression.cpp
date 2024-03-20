@@ -149,6 +149,14 @@ int main() {
         }
     };
 
+    "vec_expression_l2_norm"_test = [] () {
+        {
+            vec<3> v;
+            auto e = v.l2_norm();
+            expect(eq(evaluate(e, at(v = {1, 2, 3})), std::sqrt(14)));
+        }
+    };
+
     "vec_expression_l2_norm_2"_test = [] () {
         {
             vec<3> v;

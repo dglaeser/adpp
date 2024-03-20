@@ -181,7 +181,7 @@ int main() {
         }
     };
 
-    "derivative_expression_complex"_test = [] () {
+    "derivative_expression_exp"_test = [] () {
         var a;
         var b;
         let mu;
@@ -207,6 +207,18 @@ int main() {
                 std::exp((1.0 + 2.0)*2.0)
             ));
         }
+    };
+
+    "derivative_expression_sqrt"_test = [] () {
+        var a;
+        var b;
+        let mu;
+        auto expr = sqrt((a + b)*b)*mu;
+        auto derivative = differentiate(expr, wrt(a));
+        expect(eq(
+            evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
+            (1.0/std::sqrt((1.0 + 2.0)*2.0))*3.0*2.0
+        ));
     };
 
     "bound_expression_back_propagate"_test = [] () {

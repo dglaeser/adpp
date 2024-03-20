@@ -139,6 +139,10 @@ struct vector_expression : bindable, indexed<Es...> {
         return dot(*this);
     }
 
+    constexpr auto l2_norm() const {
+        return sqrt(l2_norm_squared());
+    }
+
  private:
     template<typename A>
     constexpr auto _apply_to_all(const A& action) const {

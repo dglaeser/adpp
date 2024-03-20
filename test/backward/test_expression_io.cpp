@@ -59,8 +59,8 @@ int main() {
         var y;
         let mu;
         std::stringstream s;
-        s << exp((x + y/x)*mu).with(x = "x", y = "y", mu = "µ");
-        expect(eq(s.str(), std::string{"exp((x + y/x)*µ)"}));
+        s << sqrt(exp((x + y/x)*mu)).with(x = "x", y = "y", mu = "µ");
+        expect(eq(s.str(), std::string{"√(exp((x + y/x)*µ))"}));
     };
 
     "expression_multiplication_derivative_simplification"_test  = [] () {
