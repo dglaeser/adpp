@@ -22,6 +22,14 @@ struct exp {
     }
 };
 
+struct sqrt {
+    template<typename T>
+    constexpr auto operator()(const T& t) const {
+        using std::sqrt;
+        return sqrt(t);
+    }
+};
+
 struct add : std::plus<void> {};
 struct subtract : std::minus<void> {};
 struct multiply : std::multiplies<void> {};
@@ -69,7 +77,10 @@ template<into_term A>
 inline constexpr auto exp(A&& a) {
     return expression{op::exp{}, as_term(std::forward<A>(a))};
 }
-
+template<into_term A>
+inline constexpr auto sqrt(A&& a) {
+    return expression{op::sqrt{}, as_term(std::forward<A>(a))};
+}
 
 // traits implementations
 template<typename R, typename A, typename B>
@@ -129,6 +140,17 @@ struct back_propagator<R, op::exp, A> {
         return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(result));
     }
 };
+
+template<typename R, typename A>
+struct back_propagator<R, op::sqrt, A> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto result = op::sqrt{}(value_inner);
+        return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(-1.0/result));
+    }
+};
+
 
 
 #ifndef DOXYGEN
@@ -273,6 +295,14 @@ struct differentiator<op::exp, A> {
     }
 };
 
+template<typename A>
+struct differentiator<op::sqrt, A> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_mul(cval<1>/sqrt(A{}), A{}.differentiate(v));
+    }
+};
+
 
 #ifndef DOXYGEN
 namespace detail {
@@ -333,6 +363,16 @@ struct formatter<op::exp, A> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
         out << "exp(";
+        A{}.export_to(out, name_map);
+        out << ")";
+    }
+};
+
+template<typename A>
+struct formatter<op::sqrt, A> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        out << "√(";
         A{}.export_to(out, name_map);
         out << ")";
     }
