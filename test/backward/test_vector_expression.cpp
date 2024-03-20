@@ -149,6 +149,19 @@ int main() {
         }
     };
 
+    "vec_expression_l2_norm_2"_test = [] () {
+        {
+            vec<3> v;
+            constexpr auto e = v.l2_norm_squared();
+            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+        {
+            vec<3> v;
+            auto e = v.l2_norm_squared();
+            expect(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+    };
+
     "vec_io"_test = [] () {
         vec<3> v;
         std::ostringstream s;
