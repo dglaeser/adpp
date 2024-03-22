@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include <sstream>
+#include <array>
 
 #include <boost/ut.hpp>
 
@@ -17,18 +18,19 @@ using adpp::backward::var;
 using adpp::backward::vec;
 using adpp::backward::cval;
 using adpp::backward::vector_expression;
-using adpp::backward::vector_value_binder;
+using adpp::backward::tensor_expression;
+using adpp::backward::tensor_value_binder;
 using adpp::backward::value_binder;
 
 template<typename T>
 struct is_vec_value_binder : std::false_type {};
 template<typename E, typename T>
-struct is_vec_value_binder<vector_value_binder<E, T>> : std::true_type {};
+struct is_vec_value_binder<tensor_value_binder<E, T>> : std::true_type {};
 
 template<typename T>
 struct bound_value_type;
 template<typename E, typename T>
-struct bound_value_type<vector_value_binder<E, T>> : std::type_identity<T> {};
+struct bound_value_type<tensor_value_binder<E, T>> : std::type_identity<T> {};
 
 int main() {
 
@@ -60,7 +62,7 @@ int main() {
         static_assert(adpp::backward::is_symbol_v<std::remove_cvref_t<decltype(v)>>);
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(result)>,
-            std::array<int, 3>
+            adpp::backward::tensor<int, adpp::dimensions<3, 1>{}>
         >);
         static_assert(result[0] == 0);
         static_assert(result[1] == 1);
@@ -182,6 +184,29 @@ int main() {
         std::ostringstream s;
         s << v.with(v = {"vx", "vy", "vz"});
         expect(eq(s.str(), std::string{"[vx, vy, vz]"}));
+    };
+
+    "tensor_expression"_test = [] () {
+        var x;
+        var y;
+        constexpr tensor_expression e = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr auto result = evaluate(e, at(x = 1, y = 2));
+        static_assert(result[0, 0] == 1);
+        static_assert(result[0, 1] == 2);
+        static_assert(result[1, 0] == 2);
+        static_assert(result[1, 1] == 2);
+    };
+
+    "tensor_expression_scaling"_test = [] () {
+        var x;
+        var y;
+        constexpr tensor_expression e = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr auto scaled = e.scaled_with(cval<2>);
+        constexpr auto result = evaluate(scaled, at(x = 1, y = 2));
+        static_assert(result[0, 0] == 2);
+        static_assert(result[0, 1] == 4);
+        static_assert(result[1, 0] == 4);
+        static_assert(result[1, 1] == 4);
     };
 
     return EXIT_SUCCESS;

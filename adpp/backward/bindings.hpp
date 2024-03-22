@@ -55,6 +55,7 @@ struct bindings : variadic_accessor<B...> {
     template<typename... T>
     static constexpr bool contains_bindings_for = std::conjunction_v<is_contained<T>...>;
 
+    // TODO: common_value_t?
     using common_value_type = std::common_type_t<typename std::remove_cvref_t<B>::value_type...>;
 
     constexpr bindings(B... binders) noexcept
@@ -147,13 +148,6 @@ class bound_expression {
 template<typename E, typename B>
 bound_expression(E&&, B&&) -> bound_expression<E, B>;
 
-struct bindable {
-    template<typename Self, typename... Bs>
-    constexpr auto with(this Self&& self, Bs&&... binders) noexcept {
-        return bound_expression{std::forward<Self>(self), bind(std::forward<Bs>(binders)...)};
-    }
-};
-
 
 #ifndef DOXYGEN
 namespace detail {
@@ -226,20 +220,28 @@ inline constexpr auto bind(B&&... b) {
 
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto at(B&&... b) {
-    return bind(std::forward<B>(b)...);
+    return adpp::backward::bind(std::forward<B>(b)...);
 }
 
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto with(B&&... b) {
-    return bind(std::forward<B>(b)...);
+    return adpp::backward::bind(std::forward<B>(b)...);
 }
 
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto where(B&&... b) {
-    return bind(std::forward<B>(b)...);
+    return adpp::backward::bind(std::forward<B>(b)...);
 }
 
-}  // namespace adpp
+
+struct bindable {
+    template<typename Self, typename... Bs>
+    constexpr auto with(this Self&& self, Bs&&... binders) noexcept {
+        return bound_expression{std::forward<Self>(self), adpp::backward::bind(std::forward<Bs>(binders)...)};
+    }
+};
+
+}  // namespace adpp::backward
 
 #include <format>
 #include <sstream>

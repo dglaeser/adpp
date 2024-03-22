@@ -1,10 +1,47 @@
 #pragma once
 
 #include <type_traits>
+#include <concepts>
 #include <utility>
 #include <array>
+#include <tuple>
 
 namespace adpp {
+
+template<auto a, auto b>
+struct is_less : std::bool_constant<(a < b)> {};
+template<auto a, auto b>
+inline constexpr bool is_less_v = is_less<a, b>::value;
+
+template<auto... v> requires(sizeof...(v) > 0)
+inline constexpr auto last_value_v = std::get<sizeof...(v)-1>(std::tuple{v...});
+template<auto v0, auto... v>
+inline constexpr auto first_value_v = v0;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename op, auto...>
+    struct accumulate;
+    template<typename op, auto current>
+    struct accumulate<op, current> {
+        static constexpr auto value = current;
+    };
+    template<typename op, auto current, auto next, auto... values>
+    struct accumulate<op, current, next, values...> {
+        static constexpr auto value = accumulate<op, op{}(current, next), values...>::value;
+    };
+
+    template<auto... v> struct last_value : std::integral_constant<std::size_t, last_value_v<v...>> {};
+    template<> struct last_value<> : std::integral_constant<std::size_t, 0> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<auto initial, typename op, auto... values>
+inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>::value;
+
 
 struct automatic {};
 
@@ -12,9 +49,209 @@ template<typename T>
 struct always_false : std::false_type {};
 
 template<std::size_t i>
-using index_constant = std::integral_constant<std::size_t, i>;
+struct index_constant : std::integral_constant<std::size_t, i> {
+    constexpr auto incremented() const {
+        return index_constant<i+1>{};
+    }
+
+    // TODO: Spaceship
+    template<std::size_t o>
+    constexpr bool operator>(index_constant<o>) const { return i > o; }
+    constexpr bool operator>(std::size_t o) const { return i > o; }
+};
 template<std::size_t idx>
 inline constexpr index_constant<idx> ic;
+
+
+template<std::size_t... n>
+struct dimensions {
+    static constexpr std::size_t size = sizeof...(n);
+    static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
+    static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
+
+    template<std::size_t idx>
+    static constexpr std::size_t get(index_constant<idx> = {}) {
+        return std::get<idx>(std::tuple{index_constant<n>{}...}).value;
+    }
+
+    template<std::size_t idx>
+    static constexpr auto operator[](index_constant<idx> = {}) {
+        return std::tuple{index_constant<n>{}...};
+    }
+
+    template<std::integral... I>
+        requires(sizeof...(I) == size)
+    static constexpr std::size_t to_flat_index(I&&... indices) {
+        if constexpr (size == 0)
+            return 0;
+        else
+            return _to_flat_index<n...>(0, std::forward<I>(indices)...);
+    }
+
+    template<std::size_t... _n>
+    constexpr bool operator==(const dimensions<_n...>&) const { return false; }
+    constexpr bool operator==(const dimensions&) const { return true; }
+
+ private:
+    template<std::size_t _n0, std::size_t... _n, std::integral I0, std::integral... I>
+    static constexpr auto _to_flat_index(std::size_t current, const I0& i0, I&&... indices) {
+        if constexpr (sizeof...(I) == 0)
+            return current + i0;
+        else
+            return _to_flat_index<_n...>(
+                current + i0*accumulate_v<1, std::multiplies<void>, _n...>,
+                std::forward<I>(indices)...
+            );
+    }
+};
+
+
+template<typename T>
+struct tensor_dimensions;
+template<typename T, std::size_t n>
+struct tensor_dimensions<std::array<T, n>> : std::type_identity<dimensions<n, 1>> {};
+template<typename T, std::size_t n, std::size_t m>
+struct tensor_dimensions<std::array<std::array<T, n>, m>> : std::type_identity<dimensions<m, n>> {};
+template<typename T>
+using tensor_dimensions_t = typename tensor_dimensions<T>::type;
+template<typename T>
+inline constexpr tensor_dimensions_t<T> tensor_dimensions_v;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename dims, std::size_t... indices>
+    struct flat_index_closure;
+    template<std::size_t dim1, std::size_t... dims, std::size_t i0, std::size_t... indices>
+    struct flat_index_closure<dimensions<dim1, dims...>, i0, indices...> {
+        static constexpr std::size_t value
+            = i0*dimensions<dim1, dims...>::number_of_elements
+            + flat_index_closure<dimensions<dims...>, indices...>::value;
+    };
+    template<std::size_t... dims, std::size_t iN>
+    struct flat_index_closure<dimensions<dims...>, iN>
+    : std::integral_constant<std::size_t, iN> {};
+
+    template<typename dims, std::size_t... indices>
+    struct flat_index;
+    template<std::size_t dim0, std::size_t... dims, std::size_t... indices>
+    struct flat_index<dimensions<dim0, dims...>, indices...> {
+        static constexpr std::size_t value = flat_index_closure<dimensions<dims...>, indices...>::value;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+
+template<std::size_t... i>
+struct md_index_constant {
+    static constexpr std::size_t size = sizeof...(i);
+
+    template<std::size_t _i>
+    constexpr md_index_constant(index_constant<_i>) requires(sizeof...(i) == 1) {}
+    constexpr md_index_constant() = default;
+
+    template<std::size_t idx>
+    static constexpr std::size_t get(index_constant<idx> = {}) {
+        return std::get<idx>(std::tuple{index_constant<i>{}...}).value;
+    }
+
+    static constexpr std::size_t last() {
+        static constexpr std::size_t idx = sizeof...(i) - 1;
+        return std::get<idx>(std::tuple{index_constant<i>{}...}).value;
+    }
+
+    template<std::size_t idx>
+    static constexpr auto operator[](index_constant<idx> = {}) {
+        return std::get<idx>(std::tuple{index_constant<i>{}...});
+    }
+
+    template<std::size_t... n> requires(sizeof...(n) == size)
+    static constexpr auto as_flat_index(const dimensions<n...>&) {
+        static_assert(std::conjunction_v<is_less<i, n>...>);
+        if constexpr (size == 0)
+            return index_constant<0>{};
+        else
+            return index_constant<detail::flat_index<dimensions<n...>, i...>::value>{};
+    }
+
+    template<std::size_t idx>
+    static constexpr auto with_prepended(index_constant<idx>) { return md_index_constant<idx, i...>{}; }
+    template<std::size_t idx>
+    static constexpr auto with_appended(index_constant<idx>) { return md_index_constant<i..., idx>{}; }
+
+    // TODO: md_index_constant and dimensions have much overlap!
+    template<std::size_t... _n>
+    constexpr bool operator==(const md_index_constant<_n...>&) const { return false; }
+    constexpr bool operator==(const md_index_constant&) const { return true; }
+};
+
+template<std::size_t i>
+md_index_constant(index_constant<i>) -> md_index_constant<i>;
+
+template<std::size_t... i>
+inline constexpr md_index_constant<i...> md_index;
+
+
+template<typename...>
+struct md_index_constant_iterator;
+
+template<std::size_t... n, std::size_t... i>
+    requires(sizeof...(n) == sizeof...(i))
+struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
+    constexpr md_index_constant_iterator(dimensions<n...>) {};
+    constexpr md_index_constant_iterator(dimensions<n...>, md_index_constant<i...>) {};
+
+    static constexpr auto index() {
+        return md_index_constant<i...>{};
+    }
+
+    static constexpr bool is_end() {
+        if constexpr (sizeof...(n) == 0)
+            return true;
+        else
+            return md_index_constant<i...>::get(index_constant<0>{}) >= first_value_v<n...>;
+    }
+
+    static constexpr auto next() {
+        static_assert(!is_end());
+        return adpp::md_index_constant_iterator{
+            dimensions<n...>{},
+            _increment<sizeof...(n)-1, true>(md_index_constant<>{})
+        };
+    }
+
+ private:
+    template<std::size_t dimension_to_increment, bool increment, std::size_t... collected>
+    static constexpr auto _increment(md_index_constant<collected...>&& tmp) {
+        const auto _recursion = [] <bool keep_incrementing> (std::bool_constant<keep_incrementing>, auto&& r) {
+            if constexpr (dimension_to_increment == 0)
+                return std::move(r);
+            else
+                return _increment<dimension_to_increment-1, keep_incrementing>(std::move(r));
+        };
+        if constexpr (increment) {
+            auto incremented = index()[index_constant<dimension_to_increment>()].incremented();
+            if constexpr (incremented.value >= dimensions<n...>::get(index_constant<dimension_to_increment>{})
+                            && dimension_to_increment > 0)
+                return _recursion(std::bool_constant<true>(), tmp.with_prepended(index_constant<0>{}));
+            else
+                return _recursion(std::bool_constant<false>{}, tmp.with_prepended(incremented));
+        } else {
+            return _recursion(std::bool_constant<false>{}, tmp.with_prepended(
+                index()[index_constant<dimension_to_increment>()])
+            );
+        }
+    }
+};
+
+template<std::size_t... n, std::size_t... i>
+md_index_constant_iterator(dimensions<n...>, md_index_constant<i...>)
+    -> md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>>;
+template<std::size_t... n>
+md_index_constant_iterator(dimensions<n...>)
+    -> md_index_constant_iterator<dimensions<n...>, md_index_constant<(n*0)...>>;
 
 
 template<template<typename> typename trait>

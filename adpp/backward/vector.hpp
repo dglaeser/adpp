@@ -4,19 +4,21 @@
 #include <tuple>
 #include <ranges>
 #include <type_traits>
+#include <functional>
 
 #include <adpp/common.hpp>
 #include <adpp/type_traits.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/expression.hpp>
+#include <adpp/backward/bindings.hpp>
 #include <adpp/backward/symbols.hpp>
 
 namespace adpp::backward {
 
 template<typename S, typename V>
-    requires(static_vec_n<std::remove_cvref_t<V>, S::size>)
-struct vector_value_binder : value_binder<S, V>{
-    static constexpr std::size_t number_of_sub_binders = S::size;
+    requires(tensor_with<std::remove_cvref_t<V>, S::dimensions>)
+struct tensor_value_binder : value_binder<S, V>{
+    static constexpr std::size_t number_of_sub_binders = S::dimensions.number_of_elements;
 
     using value_binder<S, V>::value_binder;
 
@@ -53,25 +55,58 @@ struct vector_value_binder : value_binder<S, V>{
 };
 
 template<typename E, typename S>
-vector_value_binder(E&&, S&&) -> vector_value_binder<std::remove_cvref_t<E>, S>;
+tensor_value_binder(E&&, S&&) -> tensor_value_binder<std::remove_cvref_t<E>, S>;
 
-template<term... Es>
-    requires(sizeof...(Es) > 0 and are_unique_v<Es...>)
-struct vector_expression : bindable, indexed<Es...> {
-    static constexpr std::size_t size = sizeof...(Es);
+template<typename T, auto dims>
+class tensor {
+ public:
+    constexpr tensor() = default;
+
+    template<typename Self, std::size_t... i>
+    constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>& idx) {
+        static_assert(md_index_constant<i...>::as_flat_index(dims).value < dims.number_of_elements);
+        return self._values[idx.as_flat_index(dims)];
+    }
+
+    template<typename Self, std::integral... I>
+        requires(sizeof...(I) == dims.size)
+    constexpr decltype(auto) operator[](this Self&& self, I&&... indices) {
+        return self._values[dims.to_flat_index(std::forward<I>(indices)...)];
+    }
+
+    template<typename Self, std::integral I>
+        requires(dims.size == 1 or (dims.size == 2 && dims.last_axis_size == 1))
+    constexpr decltype(auto) operator[](this Self&& self, const I& index) {
+        return self._values[index];
+    }
+
+    template<typename Self> constexpr auto begin(this Self&& self) { return self._values.begin(); }
+    template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
+
+ private:
+    std::array<T, dims.number_of_elements> _values;
+};
+
+template<auto dims, term... Es>
+    requires(sizeof...(Es) > 0 and sizeof...(Es) == dims.number_of_elements and are_unique_v<Es...>)
+struct tensor_expression : bindable, indexed<Es...> {
+    static constexpr std::size_t size = dims.number_of_elements;
+    static constexpr auto dimensions = dims;
     using sub_expressions = type_list<Es...>;
 
-    constexpr vector_expression() = default;
-    constexpr vector_expression(const Es&...) {}
+    constexpr tensor_expression() = default;
+    constexpr tensor_expression(const Es&...) {}
+    template<std::size_t n, std::size_t m>
+    constexpr tensor_expression(adpp::dimensions<n, m> d, const Es&...) requires(d == dims) {}
 
     template<typename Self, typename V>
-        requires(static_vec_n<std::remove_cvref_t<V>, size>)
+        requires(tensor_with<std::remove_cvref_t<V>, dims>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
-        return vector_value_binder{std::forward<Self>(self), std::forward<V>(value)};
+        return tensor_value_binder{std::forward<Self>(self), std::forward<V>(value)};
     }
 
     template<typename Self, typename V>
-        requires(static_vec_n<std::remove_cvref_t<V>, size>)
+        requires(tensor_with<std::remove_cvref_t<V>, dims>)
     constexpr auto operator=(this Self&& self, V&& values) noexcept {
         return self.bind(std::forward<V>(values));
     }
@@ -83,25 +118,32 @@ struct vector_expression : bindable, indexed<Es...> {
 
     template<typename... B>
     constexpr auto evaluate(const bindings<B...>& b) const noexcept {
-        std::array<typename bindings<B...>::common_value_type, size> result;
-        _visit<0>([&] <auto i> (index_constant<i> idx) {
-            result[i] = (*this)[idx].evaluate(b);
-        });
+        tensor<typename bindings<B...>::common_value_type, dims> result;
+        _visit([&] <auto... i> (md_index_constant<i...> md_index) {
+            result[md_index] = (*this)[md_index].evaluate(b);
+        }, md_index_constant_iterator{dims});
         return result;
     }
 
     template<typename... V>
     constexpr void export_to(std::ostream& out, const bindings<V...>& name_bindings) const {
         out << "[";
-        _visit<0>([&] <auto i> (index_constant<i> idx) {
-            if constexpr (i > 0)
+        _visit([&] <auto... i> (md_index_constant<i...> idx) {
+            if constexpr (idx.get(ic<0>) > 0)
                 out << ", ";
             (*this)[idx].export_to(out, name_bindings);
-        });
+        }, md_index_constant_iterator{dims});
         out << "]";
     }
 
+    template<std::size_t... i>
+    constexpr auto operator[](const md_index_constant<i...>& idx) const {
+        static_assert(md_index_constant<i...>::as_flat_index(dims).value < size);
+        return this->make(idx.as_flat_index(dims));
+    }
+
     template<std::size_t i>
+        requires(dims.size == 1 or (dims.size == 2 && dims.last_axis_size == 1))
     constexpr auto operator[](const index_constant<i>& idx) const {
         return this->make(idx);
     }
@@ -112,8 +154,8 @@ struct vector_expression : bindable, indexed<Es...> {
         return scaled_with(std::forward<V>(value));
     }
 
-   template<typename... T> requires(sizeof...(T) == size)
-    constexpr auto operator*(const vector_expression<T...>& other) const {
+    template<auto other_dims, typename... T> requires(dims == other_dims)
+    constexpr auto operator*(const tensor_expression<other_dims, T...>& other) const {
         return dot(other);
     }
 
@@ -124,15 +166,16 @@ struct vector_expression : bindable, indexed<Es...> {
             return std::move(v)*as_term(value);
         });
         return std::apply([] <typename... R> (R&&... results) {
-            return backward::vector_expression{std::forward<R>(results)...};
+            return backward::tensor_expression{dims, std::forward<R>(results)...};
         }, std::move(results_tuple));
     }
 
-    template<typename... T> requires(sizeof...(T) == size)
-    constexpr auto dot(const vector_expression<T...>& other) const {
-        return _reduce<0>([&] (auto i, auto&& e) {
+    template<auto other_dims, typename... T> requires(dims == other_dims)
+    constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
+        static_assert(dims.last_axis_size == 1);
+        return _reduce([&] (auto i, auto&& e) {
             return std::move(e) + (*this)[i]*other[i];
-        }, cval<0>);
+        }, cval<0>, md_index_constant_iterator{dims});
     }
 
     constexpr auto l2_norm_squared() const {
@@ -146,35 +189,59 @@ struct vector_expression : bindable, indexed<Es...> {
  private:
     template<typename A>
     constexpr auto _apply_to_all(const A& action) const {
-        return _reduce<0>([&] (auto i, auto&& tup) {
+        return _reduce([&] (auto i, auto&& tup) {
             return std::tuple_cat(std::move(tup), std::tuple{action(i, (*this)[i])});
-        }, std::tuple{});
+        }, std::tuple{}, md_index_constant_iterator{dims});
     }
 
-    template<std::size_t i, typename A, typename V>
-    constexpr auto _reduce(const A& action, V&& value) const {
-        if constexpr (i < size)
-            return _reduce<i+1>(action, action(index_constant<i>{}, std::move(value)));
+    template<typename A, typename V, typename I>
+    constexpr auto _reduce(const A& action, V&& value, I&& index_iterator) const {
+        if constexpr (!I::is_end())
+            return _reduce(action, action(index_iterator.index(), std::move(value)), index_iterator.next());
         else
             return std::move(value);
     }
 
-    template<std::size_t i, typename V>
-    constexpr void _visit(const V& visitor) const {
-        visitor(index_constant<i>{});
-        if constexpr (i < size - 1)
-            _visit<i+1>(visitor);
+    template<typename V, typename I>
+    constexpr void _visit(const V& visitor, const I& index_iterator) const {
+        if constexpr (!I::is_end()) {
+            visitor(index_iterator.index());
+            _visit(visitor, index_iterator.next());
+        }
     }
+};
+
+template<std::size_t n, std::size_t m, term... Es>
+tensor_expression(dimensions<n, m>, Es&&...) -> tensor_expression<dimensions<n, m>{}, std::remove_cvref_t<Es>...>;
+
+
+template<auto dims, typename... T>
+struct is_expression<tensor_expression<dims, T...>> : std::true_type {};
+template<auto dims, typename... T>
+struct is_scalar_expression<tensor_expression<dims, T...>> : std::false_type {};
+template<auto dims, typename... T> requires(std::conjunction_v<is_symbol<T>...>)
+struct is_symbol<tensor_expression<dims, T...>> : std::true_type {};
+
+
+template<term... Es>
+struct vector_expression : tensor_expression<dimensions<sizeof...(Es), 1>{}, Es...> {
+ private:
+    using base = tensor_expression<dimensions<sizeof...(Es), 1>{}, Es...>;
+ public:
+    using base::base;
+    using base::operator=;
 };
 
 template<term... Es>
 vector_expression(Es&&...) -> vector_expression<std::remove_cvref_t<Es>...>;
 
-
 template<typename... T>
 struct is_expression<vector_expression<T...>> : std::true_type {};
 template<typename... T>
 struct is_scalar_expression<vector_expression<T...>> : std::false_type {};
+template<typename... T> requires(std::conjunction_v<is_symbol<T>...>)
+struct is_symbol<vector_expression<T...>> : std::true_type {};
+
 
 #ifndef DOXYGEN
 namespace detail {
@@ -189,16 +256,12 @@ namespace detail {
     struct vec_type<N, type_list<T...>> : vec_type<N, type_list<var<dtype::any, [] () {}>, T...>> {};
 
     template<std::size_t N, typename... T> requires(sizeof...(T) == N)
-    struct vec_type<N, type_list<T...>> : std::type_identity<vector_expression<T...>> {};
+    struct vec_type<N, type_list<T...>> : std::type_identity<tensor_expression<dimensions<N, 1>{}, T...>> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
 
 template<std::size_t N>
 using vec = typename detail::vec_type<N, type_list<>>::type;
-
-template<typename... T>
-    requires(std::conjunction_v<is_symbol<T>...>)
-struct is_symbol<vector_expression<T...>> : std::true_type {};
 
 }  // namespace adpp::backward
