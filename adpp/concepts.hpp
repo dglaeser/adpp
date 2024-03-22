@@ -24,6 +24,12 @@ concept static_vec = is_complete_v<static_size<std::remove_cvref_t<T>>> and inde
 template<typename T, std::size_t N>
 concept static_vec_n = static_vec<T> and static_size_v<std::remove_cvref_t<T>> == N;
 
+template<typename T>
+concept tensor = is_complete_v<tensor_dimensions<std::remove_cvref_t<T>>>;
+
+template<typename T, dimensions dims>
+concept tensor_with = tensor<T> and tensor_dimensions_t<T>{} == dims;
+
 template<typename A, typename B>
 concept same_remove_cvref_t_as = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
 
