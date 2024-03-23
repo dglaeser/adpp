@@ -7,6 +7,17 @@
 int main() {
 
     {
+        static_assert(std::is_same_v<
+            adpp::drop_n_t<2, adpp::value_list<0, 1, 2, 3, 4>>,
+            adpp::value_list<2, 3, 4>
+        >);
+        static_assert(std::is_same_v<
+            adpp::drop_n_t<2, adpp::value_list<0, 1>>,
+            adpp::value_list<>
+        >);
+    }
+
+    {
         using unique = adpp::unique_types_t<int, char, int, double, int, double>;
         static_assert(adpp::type_list_size_v<unique> == 3);
         static_assert(adpp::contains_decayed_v<int, unique>);

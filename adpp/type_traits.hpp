@@ -8,6 +8,38 @@
 
 namespace adpp {
 
+template<auto... v>
+struct value_list { static constexpr std::size_t size = sizeof...(v); };
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<std::size_t, std::size_t, auto...>
+    struct drop_n;
+
+    template<std::size_t n, std::size_t i, auto v0, auto... v>
+        requires(i < n)
+    struct drop_n<n, i, v0, v...> : drop_n<n, i+1, v...> {};
+
+    template<std::size_t n, std::size_t i>
+        requires(i < n)
+    struct drop_n<n, i> : std::type_identity<value_list<>> {};
+
+    template<std::size_t n, std::size_t i, auto... v>
+        requires(i == n)
+    struct drop_n<n, i, v...> : std::type_identity<value_list<v...>> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<std::size_t, typename> struct drop_n;
+template<std::size_t n, auto... v> requires(sizeof...(v) >= n)
+struct drop_n<n, value_list<v...>> : detail::drop_n<n, 0, v...> {};
+template<std::size_t n, typename T>
+using drop_n_t = typename drop_n<n, T>::type;
+
+
 template<auto a, auto b>
 struct is_less : std::bool_constant<(a < b)> {};
 template<auto a, auto b>
