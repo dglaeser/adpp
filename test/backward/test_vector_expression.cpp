@@ -194,6 +194,16 @@ int main() {
         expect(eq(s.str(), std::string{"[t11, t12 // t21, t22]"}));
     };
 
+    "tensor_elements_scaling"_test = [] () {
+        constexpr tensor<2, 2> t;
+        constexpr auto expr = t*cval<3>;
+        constexpr auto result = evaluate(expr, at(t = {1, 2, 3, 4}));
+        static_assert(result[0, 0] == 3);
+        static_assert(result[0, 1] == 6);
+        static_assert(result[1, 0] == 9);
+        static_assert(result[1, 1] == 12);
+    };
+
     "tensor_expression"_test = [] () {
         var x;
         var y;
