@@ -43,7 +43,7 @@ namespace detail {
 
     template<std::size_t i, auto v>
     struct value_i {
-        static constexpr auto get_at(index_constant<i>) {
+        static constexpr auto at(index_constant<i>) {
             return v;
         }
     };
@@ -52,7 +52,7 @@ namespace detail {
     struct values;
     template<std::size_t... i, auto... v> requires(sizeof...(i) == sizeof...(v))
     struct values<std::index_sequence<i...>, v...> : value_i<i, v>... {
-        using value_i<i, v>::get_at...;
+        using value_i<i, v>::at...;
     };
 
 }  // namespace detail
@@ -62,13 +62,10 @@ template<auto... v>
 struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...> {
     static constexpr std::size_t size = sizeof...(v);
 
-    template<std::size_t i>
-    static constexpr auto at = get_at(index_constant<i>{});
-
     template<std::size_t i> requires(i < sizeof...(v))
-    static constexpr auto get_at(index_constant<i> idx) {
+    static constexpr auto at(index_constant<i> idx) {
         using base = detail::values<std::make_index_sequence<sizeof...(v)>, v...>;
-        return base::get_at(idx);
+        return base::at(idx);
     }
 
     template<auto... _v>
