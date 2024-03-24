@@ -205,11 +205,11 @@ struct dimensions : value_list<n...> {
 
     template<std::integral... I>
         requires(sizeof...(I) == sizeof...(n))
-    static constexpr std::size_t to_flat_index(I&&... indices) {
+    friend constexpr std::size_t flat_index(const dimensions& dims, I&&... indices) {
         if constexpr (sizeof...(n) == 0)
             return 0;
         else
-            return _to_flat_index<n...>(0, std::forward<I>(indices)...);
+            return dims._to_flat_index<n...>(0, std::forward<I>(indices)...);
     }
 
     template<std::size_t... _n>

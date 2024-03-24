@@ -71,7 +71,7 @@ class md_array {
     template<typename Self, std::integral... I>
         requires(sizeof...(I) == dims.size)
     constexpr decltype(auto) operator[](this Self&& self, I&&... indices) {
-        return self._values[dims.to_flat_index(std::forward<I>(indices)...)];
+        return self._values[flat_index(dims, std::forward<I>(indices)...)];
     }
 
     template<typename Self, std::integral I>
