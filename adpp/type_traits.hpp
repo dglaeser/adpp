@@ -193,7 +193,7 @@ inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>:
 
 
 template<std::size_t... n>
-struct dimensions {
+struct md_shape {
     static constexpr std::size_t size = sizeof...(n);
     static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
@@ -201,8 +201,8 @@ struct dimensions {
     // TODO: remove?
     using as_list = adpp::value_list<n...>;
 
-    constexpr dimensions() = default;
-    constexpr dimensions(value_list<n...>) noexcept {}
+    constexpr md_shape() = default;
+    constexpr md_shape(value_list<n...>) noexcept {}
 
     template<std::size_t idx>
     static constexpr auto at(index_constant<idx> i) {
@@ -211,7 +211,7 @@ struct dimensions {
 
     template<std::integral... I>
         requires(sizeof...(I) == size)
-    friend constexpr std::size_t flat_index(const dimensions& dims, I&&... indices) {
+    friend constexpr std::size_t flat_index(const md_shape& dims, I&&... indices) {
         if constexpr (size == 0)
             return 0;
         else
@@ -219,8 +219,8 @@ struct dimensions {
     }
 
     template<std::size_t... _n>
-    constexpr bool operator==(const dimensions<_n...>&) const { return false; }
-    constexpr bool operator==(const dimensions&) const { return true; }
+    constexpr bool operator==(const md_shape<_n...>&) const { return false; }
+    constexpr bool operator==(const md_shape&) const { return true; }
 
  private:
     template<std::size_t _n0, std::size_t... _n, std::integral I0, std::integral... I>
@@ -242,20 +242,20 @@ namespace detail {
     template<typename dims, std::size_t... indices>
     struct flat_index_closure;
     template<std::size_t dim1, std::size_t... dims, std::size_t i0, std::size_t... indices>
-    struct flat_index_closure<dimensions<dim1, dims...>, i0, indices...> {
+    struct flat_index_closure<md_shape<dim1, dims...>, i0, indices...> {
         static constexpr std::size_t value
-            = i0*dimensions<dim1, dims...>::number_of_elements
-            + flat_index_closure<dimensions<dims...>, indices...>::value;
+            = i0*md_shape<dim1, dims...>::number_of_elements
+            + flat_index_closure<md_shape<dims...>, indices...>::value;
     };
     template<std::size_t... dims, std::size_t iN>
-    struct flat_index_closure<dimensions<dims...>, iN>
+    struct flat_index_closure<md_shape<dims...>, iN>
     : std::integral_constant<std::size_t, iN> {};
 
     template<typename dims, std::size_t... indices>
     struct flat_index;
     template<std::size_t dim0, std::size_t... dims, std::size_t... indices>
-    struct flat_index<dimensions<dim0, dims...>, indices...> {
-        static constexpr std::size_t value = flat_index_closure<dimensions<dims...>, indices...>::value;
+    struct flat_index<md_shape<dim0, dims...>, indices...> {
+        static constexpr std::size_t value = flat_index_closure<md_shape<dims...>, indices...>::value;
     };
 
 }  // namespace detail
@@ -290,12 +290,12 @@ struct md_index_constant {
     }
 
     template<std::size_t... n> requires(sizeof...(n) == size)
-    static constexpr auto as_flat_index(const dimensions<n...>&) {
+    static constexpr auto as_flat_index(const md_shape<n...>&) {
         static_assert(std::conjunction_v<is_less<i, n>...>);
         if constexpr (size == 0)
             return index_constant<0>{};
         else
-            return index_constant<detail::flat_index<dimensions<n...>, i...>::value>{};
+            return index_constant<detail::flat_index<md_shape<n...>, i...>::value>{};
     }
 
     template<std::size_t idx>
@@ -314,7 +314,7 @@ struct md_index_constant {
         return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + tail{}};
     }
 
-    // TODO: md_index_constant and dimensions have much overlap!
+    // TODO: md_index_constant and md_shape have much overlap!
     template<std::size_t... _n>
     constexpr bool operator==(const md_index_constant<_n...>&) const { return false; }
     constexpr bool operator==(const md_index_constant&) const { return true; }
@@ -334,9 +334,9 @@ struct md_index_constant_iterator;
 
 template<std::size_t... n, std::size_t... i>
     requires(sizeof...(n) == sizeof...(i))
-struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
-    constexpr md_index_constant_iterator(dimensions<n...>) {};
-    constexpr md_index_constant_iterator(dimensions<n...>, md_index_constant<i...>) {};
+struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
+    constexpr md_index_constant_iterator(md_shape<n...>) {};
+    constexpr md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>) {};
 
     static constexpr auto index() {
         return md_index_constant<i...>{};
@@ -352,7 +352,7 @@ struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
     static constexpr auto next() {
         static_assert(!is_end());
         return adpp::md_index_constant_iterator{
-            dimensions<n...>{},
+            md_shape<n...>{},
             _increment<sizeof...(n)-1, true>(md_index_constant<>{})
         };
     }
@@ -368,7 +368,7 @@ struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
         };
         if constexpr (increment) {
             auto incremented = index()[index_constant<dimension_to_increment>()].incremented();
-            if constexpr (incremented.value >= dimensions<n...>::at(index_constant<dimension_to_increment>{})
+            if constexpr (incremented.value >= md_shape<n...>::at(index_constant<dimension_to_increment>{})
                             && dimension_to_increment > 0)
                 return _recursion(std::bool_constant<true>(), tmp.with_prepended(index_constant<0>{}));
             else
@@ -382,11 +382,11 @@ struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
 };
 
 template<std::size_t... n, std::size_t... i>
-md_index_constant_iterator(dimensions<n...>, md_index_constant<i...>)
-    -> md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>>;
+md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>)
+    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>>;
 template<std::size_t... n>
-md_index_constant_iterator(dimensions<n...>)
-    -> md_index_constant_iterator<dimensions<n...>, md_index_constant<(n*0)...>>;
+md_index_constant_iterator(md_shape<n...>)
+    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
 
 template<template<typename> typename trait>

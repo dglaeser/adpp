@@ -16,9 +16,9 @@
 namespace adpp::backward {
 
 template<typename S, typename V>
-    requires(static_vec_n<std::remove_cvref_t<V>, S::dimensions.number_of_elements>)
+    requires(static_vec_n<std::remove_cvref_t<V>, S::shape.number_of_elements>)
 struct tensor_value_binder : value_binder<S, V>{
-    static constexpr std::size_t number_of_sub_binders = S::dimensions.number_of_elements;
+    static constexpr std::size_t number_of_sub_binders = S::shape.number_of_elements;
 
     using value_binder<S, V>::value_binder;
 
@@ -57,25 +57,25 @@ struct tensor_value_binder : value_binder<S, V>{
 template<typename E, typename S>
 tensor_value_binder(E&&, S&&) -> tensor_value_binder<std::remove_cvref_t<E>, S>;
 
-template<typename T, auto dims>
+template<typename T, auto shape>
 class md_array {
  public:
     constexpr md_array() = default;
 
     template<typename Self, std::size_t... i>
     constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>& idx) {
-        static_assert(md_index_constant<i...>::as_flat_index(dims).value < dims.number_of_elements);
-        return self._values[idx.as_flat_index(dims)];
+        static_assert(md_index_constant<i...>::as_flat_index(shape).value < shape.number_of_elements);
+        return self._values[idx.as_flat_index(shape)];
     }
 
     template<typename Self, std::integral... I>
-        requires(sizeof...(I) == dims.size)
+        requires(sizeof...(I) == shape.size)
     constexpr decltype(auto) operator[](this Self&& self, I&&... indices) {
-        return self._values[flat_index(dims, std::forward<I>(indices)...)];
+        return self._values[flat_index(shape, std::forward<I>(indices)...)];
     }
 
     template<typename Self, std::integral I>
-        requires(dims.size == 1 or (dims.size == 2 && dims.last_axis_size == 1))
+        requires(shape.size == 1 or (shape.size == 2 && shape.last_axis_size == 1))
     constexpr decltype(auto) operator[](this Self&& self, const I& index) {
         return self._values[index];
     }
@@ -84,20 +84,20 @@ class md_array {
     template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
 
  private:
-    std::array<T, dims.number_of_elements> _values;
+    std::array<T, shape.number_of_elements> _values;
 };
 
-template<auto dims, term... Es>
-    requires(sizeof...(Es) > 0 and sizeof...(Es) == dims.number_of_elements and are_unique_v<Es...>)
+template<auto md_shape, term... Es>
+    requires(sizeof...(Es) > 0 and sizeof...(Es) == md_shape.number_of_elements and are_unique_v<Es...>)
 struct tensor_expression : bindable, indexed<Es...> {
-    static constexpr std::size_t size = dims.number_of_elements;
-    static constexpr auto dimensions = dims;
+    static constexpr std::size_t size = md_shape.number_of_elements;
+    static constexpr auto shape = md_shape;
     using sub_expressions = type_list<Es...>;
 
     constexpr tensor_expression() = default;
     constexpr tensor_expression(const Es&...) {}
     template<std::size_t n, std::size_t m>
-    constexpr tensor_expression(adpp::dimensions<n, m> d, const Es&...) requires(d == dims) {}
+    constexpr tensor_expression(adpp::md_shape<n, m> d, const Es&...) requires(d == shape) {}
 
     template<typename Self, typename V>
         requires(static_vec_n<std::remove_cvref_t<V>, size>)
@@ -118,10 +118,10 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     template<typename... B>
     constexpr auto evaluate(const bindings<B...>& b) const noexcept {
-        md_array<typename bindings<B...>::common_value_type, dims> result;
+        md_array<typename bindings<B...>::common_value_type, shape> result;
         _visit([&] <auto... i> (md_index_constant<i...> md_index) {
             result[md_index] = (*this)[md_index].evaluate(b);
-        }, md_index_constant_iterator{dims});
+        }, md_index_constant_iterator{shape});
         return result;
     }
 
@@ -135,18 +135,18 @@ struct tensor_expression : bindable, indexed<Es...> {
             else if (!is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);
             first = false;
-        }, md_index_constant_iterator{dims});
+        }, md_index_constant_iterator{shape});
         out << "]";
     }
 
     template<std::size_t... i>
     constexpr auto operator[](const md_index_constant<i...>& idx) const {
-        static_assert(md_index_constant<i...>::as_flat_index(dims).value < size);
-        return this->make(idx.as_flat_index(dims));
+        static_assert(md_index_constant<i...>::as_flat_index(shape).value < size);
+        return this->make(idx.as_flat_index(shape));
     }
 
     template<std::size_t i>
-        requires(dims.size == 1 or (dims.size == 2 && dims.last_axis_size == 1))
+        requires(shape.size == 1 or (shape.size == 2 && shape.last_axis_size == 1))
     constexpr auto operator[](const index_constant<i>& idx) const {
         return this->make(idx);
     }
@@ -157,8 +157,8 @@ struct tensor_expression : bindable, indexed<Es...> {
         return scaled_with(std::forward<V>(value));
     }
 
-    template<auto other_dims, typename... T>
-    constexpr auto operator*(const tensor_expression<other_dims, T...>& other) const {
+    template<auto other_shape, typename... T>
+    constexpr auto operator*(const tensor_expression<other_shape, T...>& other) const {
         return dot(other);
     }
 
@@ -169,26 +169,26 @@ struct tensor_expression : bindable, indexed<Es...> {
             return std::move(v)*as_term(value);
         });
         return std::apply([] <typename... R> (R&&... results) {
-            return backward::tensor_expression{dims, std::forward<R>(results)...};
+            return backward::tensor_expression{shape, std::forward<R>(results)...};
         }, std::move(results_tuple));
     }
 
-    template<auto other_dims, typename... T>
-        requires(tensor_expression::is_vector() and dims.at(ic<0>) == other_dims.at(ic<0>))
-    constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
+    template<auto other_shape, typename... T>
+        requires(tensor_expression::is_vector() and shape.at(ic<0>) == other_shape.at(ic<0>))
+    constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
             return std::move(e) + (*this)[i]*other[i];
-        }, cval<0>, md_index_constant_iterator{dims});
+        }, cval<0>, md_index_constant_iterator{shape});
     }
 
-    template<auto other_dims, typename... T>
-        requires(!tensor_expression::is_vector() and dims.last_axis_size == other_dims.at(ic<0>))
-    constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
-        static constexpr auto my_dim = dims.size;
-        using head = typename split_at<my_dim - 1, typename decltype(dims)::as_list>::head;
-        using tail = typename split_at<1, typename decltype(other_dims)::as_list>::tail;
+    template<auto other_shape, typename... T>
+        requires(!tensor_expression::is_vector() and shape.last_axis_size == other_shape.at(ic<0>))
+    constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
+        static constexpr auto my_dim = shape.size;
+        using head = typename split_at<my_dim - 1, typename decltype(shape)::as_list>::head;
+        using tail = typename split_at<1, typename decltype(other_shape)::as_list>::tail;
 
-        static constexpr auto new_dims = adpp::dimensions{head{} + tail{}};
+        static constexpr auto new_shape = adpp::md_shape{head{} + tail{}};
         auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...> md_i, auto&& terms) {
             constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::head{};
             constexpr auto i_tail = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::tail{};
@@ -199,12 +199,12 @@ struct tensor_expression : bindable, indexed<Es...> {
                         static constexpr auto my_idx = md_index_constant{i_head + value_list<j...>{}};
                         static constexpr auto other_idx = md_index_constant{value_list<j...>{} + i_tail};
                         return std::move(e) + (*this)[my_idx]*other[other_idx];
-                    }, cval<0>, md_index_constant_iterator{adpp::dimensions<dims.last_axis_size>{}})
+                    }, cval<0>, md_index_constant_iterator{adpp::md_shape<shape.last_axis_size>{}})
                 }
             );
-        }, std::tuple{}, md_index_constant_iterator{new_dims});
+        }, std::tuple{}, md_index_constant_iterator{new_shape});
         return std::apply([] <typename... Terms> (Terms&&... ts) {
-            return backward::tensor_expression{new_dims, std::forward<Terms>(ts)...};
+            return backward::tensor_expression{new_shape, std::forward<Terms>(ts)...};
         }, std::move(result_tuple));
     }
 
@@ -217,7 +217,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     static constexpr bool is_vector() {
-        return dims.size == 2 and dims.last_axis_size == 1;
+        return shape.size == 2 and shape.last_axis_size == 1;
     }
 
  private:
@@ -225,7 +225,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     constexpr auto _apply_to_all(const A& action) const {
         return _reduce([&] (auto i, auto&& tup) {
             return std::tuple_cat(std::move(tup), std::tuple{action(i, (*this)[i])});
-        }, std::tuple{}, md_index_constant_iterator{dims});
+        }, std::tuple{}, md_index_constant_iterator{shape});
     }
 
     template<typename A, typename V, typename I>
@@ -246,21 +246,21 @@ struct tensor_expression : bindable, indexed<Es...> {
 };
 
 template<std::size_t n, std::size_t m, term... Es>
-tensor_expression(dimensions<n, m>, Es&&...) -> tensor_expression<dimensions<n, m>{}, std::remove_cvref_t<Es>...>;
+tensor_expression(md_shape<n, m>, Es&&...) -> tensor_expression<md_shape<n, m>{}, std::remove_cvref_t<Es>...>;
 
 
-template<auto dims, typename... T>
-struct is_expression<tensor_expression<dims, T...>> : std::true_type {};
-template<auto dims, typename... T>
-struct is_scalar_expression<tensor_expression<dims, T...>> : std::false_type {};
-template<auto dims, typename... T> requires(std::conjunction_v<is_symbol<T>...>)
-struct is_symbol<tensor_expression<dims, T...>> : std::true_type {};
+template<auto shape, typename... T>
+struct is_expression<tensor_expression<shape, T...>> : std::true_type {};
+template<auto shape, typename... T>
+struct is_scalar_expression<tensor_expression<shape, T...>> : std::false_type {};
+template<auto shape, typename... T> requires(std::conjunction_v<is_symbol<T>...>)
+struct is_symbol<tensor_expression<shape, T...>> : std::true_type {};
 
 
 template<term... Es>
-struct vector_expression : tensor_expression<dimensions<sizeof...(Es), 1>{}, Es...> {
+struct vector_expression : tensor_expression<md_shape<sizeof...(Es), 1>{}, Es...> {
  private:
-    using base = tensor_expression<dimensions<sizeof...(Es), 1>{}, Es...>;
+    using base = tensor_expression<md_shape<sizeof...(Es), 1>{}, Es...>;
  public:
     using base::base;
     using base::operator=;
@@ -293,12 +293,12 @@ namespace detail {
     template<typename T>
     struct vec_with;
     template<typename... T>
-    struct vec_with<type_list<T...>> : std::type_identity<tensor_expression<dimensions<sizeof...(T), 1>{}, T...>> {};
+    struct vec_with<type_list<T...>> : std::type_identity<tensor_expression<md_shape<sizeof...(T), 1>{}, T...>> {};
 
-    template<auto dims, typename T>
+    template<auto shape, typename T>
     struct tensor_with;
-    template<auto dims, typename... T>
-    struct tensor_with<dims, type_list<T...>> : std::type_identity<tensor_expression<dims, T...>> {};
+    template<auto shape, typename... T>
+    struct tensor_with<shape, type_list<T...>> : std::type_identity<tensor_expression<shape, T...>> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
@@ -308,8 +308,8 @@ using vec = typename detail::vec_with<typename detail::vars_n<N, type_list<>>::t
 
 template<std::size_t... N>
 using tensor = typename detail::tensor_with<
-    dimensions<N...>{},
-    typename detail::vars_n<dimensions<N...>{}.number_of_elements, type_list<>
+    md_shape<N...>{},
+    typename detail::vars_n<md_shape<N...>{}.number_of_elements, type_list<>
 >::type>::type;
 
 }  // namespace adpp::backward
