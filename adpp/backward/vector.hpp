@@ -174,7 +174,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_dims, typename... T>
-        requires(tensor_expression::is_vector() and dims.get(ic<0>) == other_dims.get(ic<0>))
+        requires(tensor_expression::is_vector() and dims.at(ic<0>) == other_dims.at(ic<0>))
     constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
             return std::move(e) + (*this)[i]*other[i];
@@ -182,7 +182,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_dims, typename... T>
-        requires(!tensor_expression::is_vector() and dims.last_axis_size == other_dims.get(ic<0>))
+        requires(!tensor_expression::is_vector() and dims.last_axis_size == other_dims.at(ic<0>))
     constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
         static constexpr auto my_dim = dims.size;
         using head = typename split_at<my_dim - 1, typename decltype(dims)::as_list>::head;
