@@ -96,8 +96,8 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     constexpr tensor_expression() = default;
     constexpr tensor_expression(const Es&...) {}
-    template<std::size_t n, std::size_t m>
-    constexpr tensor_expression(adpp::md_shape<n, m> d, const Es&...) requires(d == shape) {}
+    template<std::size_t... n>
+    constexpr tensor_expression(adpp::md_shape<n...> d, const Es&...) requires(d == shape) {}
 
     template<typename Self, typename V>
         requires(static_vec_n<std::remove_cvref_t<V>, size>)
@@ -177,7 +177,10 @@ struct tensor_expression : bindable, indexed<Es...> {
         requires(tensor_expression::is_vector() and shape.at(ic<0>) == other_shape.at(ic<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
-            return std::move(e) + (*this)[i]*other[i];
+            if constexpr (is_zero_constant_v<decltype(e)>)
+                return (*this)[i]*other[i];
+            else
+                return std::move(e) + (*this)[i]*other[i];
         }, cval<0>, md_index_constant_iterator{shape});
     }
 
@@ -198,7 +201,10 @@ struct tensor_expression : bindable, indexed<Es...> {
                     _reduce([&] <auto... j> (md_index_constant<j...>, auto&& e) {
                         static constexpr auto my_idx = md_index_constant{i_head + value_list<j...>{}};
                         static constexpr auto other_idx = md_index_constant{value_list<j...>{} + i_tail};
-                        return std::move(e) + (*this)[my_idx]*other[other_idx];
+                        if constexpr (is_zero_constant_v<decltype(e)>)
+                            return (*this)[my_idx]*other[other_idx];
+                        else
+                            return std::move(e) + (*this)[my_idx]*other[other_idx];
                     }, cval<0>, md_index_constant_iterator{adpp::md_shape<shape.last_axis_size>{}})
                 }
             );
@@ -245,8 +251,9 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 };
 
-template<std::size_t n, std::size_t m, term... Es>
-tensor_expression(md_shape<n, m>, Es&&...) -> tensor_expression<md_shape<n, m>{}, std::remove_cvref_t<Es>...>;
+template<std::size_t... n, term... Es>
+    requires(md_shape<n...>::number_of_elements == sizeof...(Es))
+tensor_expression(md_shape<n...>, Es&&...) -> tensor_expression<md_shape<n...>{}, std::remove_cvref_t<Es>...>;
 
 
 template<auto shape, typename... T>
