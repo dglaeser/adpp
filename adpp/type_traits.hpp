@@ -108,34 +108,8 @@ template<typename T, std::size_t n>
 concept value_list_with_size = is_value_list_v<T> and T::size == n;
 template<typename T, std::size_t n>
 concept value_list_with_min_size = is_value_list_v<T> and T::size >= n;
-
-
-#ifndef DOXYGEN
-namespace detail {
-
-    template<std::size_t, std::size_t, auto...>
-    struct drop_n;
-
-    template<std::size_t n, std::size_t i, auto v0, auto... v>
-        requires(i < n)
-    struct drop_n<n, i, v0, v...> : drop_n<n, i+1, v...> {};
-
-    template<std::size_t n, std::size_t i>
-        requires(i < n)
-    struct drop_n<n, i> : std::type_identity<value_list<>> {};
-
-    template<std::size_t n, std::size_t i, auto... v>
-        requires(i == n)
-    struct drop_n<n, i, v...> : std::type_identity<value_list<v...>> {};
-
-}  // namespace detail
-#endif  // DOXYGEN
-
-template<std::size_t, typename> struct drop_n;
-template<std::size_t n, auto... v> requires(sizeof...(v) >= n)
-struct drop_n<n, value_list<v...>> : detail::drop_n<n, 0, v...> {};
-template<std::size_t n, typename T>
-using drop_n_t = typename drop_n<n, T>::type;
+template<typename T, std::size_t n>
+concept value_list_with_max_size = is_value_list_v<T> and T::size <= n;
 
 
 #ifndef DOXYGEN
@@ -168,10 +142,15 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-// TODO: Api is weird?
 template<std::size_t n, value_list_with_min_size<n>> struct split_at;
 template<std::size_t n, auto... v>
 struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
+
+
+template<std::size_t n, value_list_with_min_size<n> values>
+struct drop_n : std::type_identity<typename split_at<n, values>::tail> {};
+template<std::size_t n, typename T>
+using drop_n_t = typename drop_n<n, T>::type;
 
 
 template<auto... v> requires(sizeof...(v) > 0)
