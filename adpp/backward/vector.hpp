@@ -183,12 +183,12 @@ struct tensor_expression : bindable, indexed<Es...> {
     constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
         static constexpr auto my_dim = dims.size;
         using head = typename split_at<my_dim - 1, typename decltype(dims)::as_list>::head;
-        using tail = typename split_at<0, typename decltype(other_dims)::as_list>::tail;
+        using tail = typename split_at<1, typename decltype(other_dims)::as_list>::tail;
 
         static constexpr auto new_dims = adpp::dimensions{head{} + tail{}};
         auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...> md_i, auto&& terms) {
             constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::head{};
-            constexpr auto i_tail = typename split_at<my_dim - 2, typename md_index_constant<i...>::as_list>::tail{};
+            constexpr auto i_tail = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::tail{};
             return std::tuple_cat(
                 std::move(terms),
                 std::tuple{

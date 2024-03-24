@@ -158,12 +158,7 @@ namespace detail {
     : split_at<n, i+1, value_list<h..., v0>, value_list<t...>, v...> {};
 
     template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
-        requires(i == n)
-    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
-    : split_at<n, i+1, value_list<h...>, value_list<t...>, v...> {};
-
-    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
-        requires(i > n)
+        requires(i >= n)
     struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
     : split_at<n, i+1, value_list<h...>, value_list<t..., v0>, v...> {};
 
@@ -177,7 +172,7 @@ namespace detail {
 #endif  // DOXYGEN
 
 // TODO: Api is weird?
-template<std::size_t n, value_list_with_min_size<n+1>> struct split_at;
+template<std::size_t n, value_list_with_min_size<n>> struct split_at;
 template<std::size_t n, auto... v>
 struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
 
@@ -353,7 +348,8 @@ struct md_index_constant {
     template<std::size_t pos, std::size_t idx> requires(pos < size)
     static constexpr auto with_index_at(index_constant<pos> p, index_constant<idx> v) {
         using split = split_at<pos, value_list<i...>>;
-        return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + typename split::tail{}};
+        using tail = drop_n_t<1, typename split::tail>;
+        return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + tail{}};
     }
 
     // TODO: md_index_constant and dimensions have much overlap!
