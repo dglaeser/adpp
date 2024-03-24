@@ -209,5 +209,31 @@ int main() {
         static_assert(result[1, 1] == 4);
     };
 
+    "tensor_expression_vector_dot"_test = [] () {
+        var x;
+        var y;
+        constexpr tensor_expression t = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr vector_expression v = {x, y};
+        constexpr auto expr = t*v;
+        constexpr auto result = evaluate(expr, at(x = 1, y = 2));
+        static_assert(expr.dimensions == adpp::dimensions<2, 1>{});
+        static_assert(result[0] == 1*1 + 1*2*2);
+        static_assert(result[1] == 1*2*1 + 2*2);
+    };
+
+    "tensor_expression_tensor_dot"_test = [] () {
+        var x;
+        var y;
+        constexpr tensor_expression t0 = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression t1 = {adpp::dimensions<2, 2>{}, x, x+y, y*y, y};
+        constexpr auto expr = t0*t1;
+        constexpr auto result = evaluate(expr, at(x = 1, y = 2));
+        static_assert(expr.dimensions == adpp::dimensions<2, 2>{});
+        static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
+        static_assert(result[0, 1] == 1*(1 + 2) + 1*2*2);
+        static_assert(result[1, 0] == (1*2)*1 + 2*2*2);
+        static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
+    };
+
     return EXIT_SUCCESS;
 }
