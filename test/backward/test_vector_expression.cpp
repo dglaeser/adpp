@@ -14,6 +14,7 @@ using boost::ut::expect;
 using boost::ut::eq;
 
 using adpp::ic;
+using adpp::shape;
 using adpp::backward::var;
 using adpp::backward::vec;
 using adpp::backward::cval;
@@ -136,8 +137,9 @@ int main() {
     "vec_expression_dot"_test = [] () {
         {
             vec<3> v;
-            constexpr auto e = v.dot(v);
-            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+            vec<3> v2;
+            constexpr auto e = v.dot(v2);
+            static_assert(evaluate(e, at(v = {1, 2, 3}, v2 = {1, 2, 3})) == 14);
         }
         {
             vec<3> v;
@@ -187,14 +189,14 @@ int main() {
     };
 
     "tensor_elements_expression"_test = [] () {
-        tensor<2, 2> t;
+        tensor<shape<2, 2>> t;
         std::ostringstream s;
         s << t.with(t = {"t11", "t12", "t21", "t22"});
         expect(eq(s.str(), std::string{"[t11, t12 // t21, t22]"}));
     };
 
     "tensor_elements_scaling"_test = [] () {
-        constexpr tensor<2, 2> t;
+        constexpr tensor<shape<2, 2>> t;
         constexpr auto expr = t*cval<3>;
         constexpr auto result = evaluate(expr, at(t = {1, 2, 3, 4}));
         static_assert(result[0, 0] == 3);
@@ -250,6 +252,30 @@ int main() {
         static_assert(result[0, 1] == 1*(1 + 2) + 1*2*2);
         static_assert(result[1, 0] == (1*2)*1 + 2*2*2);
         static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
+    };
+
+    "md_tensor_expression_tensor_dot"_test = [] () {
+        tensor<shape<1, 2, 3>> t0;
+        tensor<shape<3, 2>> t1;
+        constexpr auto expr = t0*t1;
+        static_assert(expr.shape == adpp::md_shape<1, 2, 2>{});
+        constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4, 5, 6}, t1 = {1, 2, 3, 4, 5, 6}));
+        static_assert(result[0, 0, 0] == 1*1 + 2*3 + 3*5);
+        static_assert(result[0, 0, 1] == 1*2 + 2*4 + 3*6);
+        static_assert(result[0, 1, 0] == 4*1 + 5*3 + 6*5);
+        static_assert(result[0, 1, 1] == 4*2 + 5*4 + 6*6);
+    };
+
+    "md_tensor_expression_tensor_dot_same_size"_test = [] () {
+        tensor<shape<2, 2>> t0;
+        tensor<shape<2, 2>> t1;
+        constexpr auto expr = t0*t1;
+        static_assert(expr.shape == adpp::md_shape<2, 2>{});
+        constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4}, t1 = {1, 2, 3, 4}));
+        static_assert(result[0, 0] == 1*1 + 2*3);
+        static_assert(result[0, 1] == 1*2 + 2*4);
+        static_assert(result[1, 0] == 3*1 + 4*3);
+        static_assert(result[1, 1] == 3*2 + 4*4);
     };
 
     return EXIT_SUCCESS;
