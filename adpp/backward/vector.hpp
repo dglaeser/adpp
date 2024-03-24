@@ -154,7 +154,7 @@ struct tensor_expression : bindable, indexed<Es...> {
         return scaled_with(std::forward<V>(value));
     }
 
-    template<auto other_dims, typename... T> requires(dims == other_dims)
+    template<auto other_dims, typename... T>
     constexpr auto operator*(const tensor_expression<other_dims, T...>& other) const {
         return dot(other);
     }
@@ -170,12 +170,39 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(results_tuple));
     }
 
-    template<auto other_dims, typename... T> requires(dims == other_dims)
+    template<auto other_dims, typename... T>
+        requires(tensor_expression::is_vector() and dims.get(ic<0>) == other_dims.get(ic<0>))
     constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
-        static_assert(dims.last_axis_size == 1);
         return _reduce([&] (auto i, auto&& e) {
             return std::move(e) + (*this)[i]*other[i];
         }, cval<0>, md_index_constant_iterator{dims});
+    }
+
+    template<auto other_dims, typename... T>
+        requires(!tensor_expression::is_vector() and dims.last_axis_size == other_dims.get(ic<0>))
+    constexpr auto dot(const tensor_expression<other_dims, T...>& other) const {
+        static constexpr auto my_dim = dims.size;
+        using head = typename split_at<my_dim - 1, typename decltype(dims)::as_list>::head;
+        using tail = typename split_at<0, typename decltype(other_dims)::as_list>::tail;
+
+        static constexpr auto new_dims = adpp::dimensions{head{} + tail{}};
+        auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...> md_i, auto&& terms) {
+            constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::head{};
+            constexpr auto i_tail = typename split_at<my_dim - 2, typename md_index_constant<i...>::as_list>::tail{};
+            return std::tuple_cat(
+                std::move(terms),
+                std::tuple{
+                    _reduce([&] <auto... j> (md_index_constant<j...>, auto&& e) {
+                        static constexpr auto my_idx = md_index_constant{i_head + value_list<j...>{}};
+                        static constexpr auto other_idx = md_index_constant{value_list<j...>{} + i_tail};
+                        return std::move(e) + (*this)[my_idx]*other[other_idx];
+                    }, cval<0>, md_index_constant_iterator{adpp::dimensions<dims.last_axis_size>{}})
+                }
+            );
+        }, std::tuple{}, md_index_constant_iterator{new_dims});
+        return std::apply([] <typename... Terms> (Terms&&... ts) {
+            return backward::tensor_expression{new_dims, std::forward<Terms>(ts)...};
+        }, std::move(result_tuple));
     }
 
     constexpr auto l2_norm_squared() const {
@@ -184,6 +211,10 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     constexpr auto l2_norm() const {
         return sqrt(l2_norm_squared());
+    }
+
+    static constexpr bool is_vector() {
+        return dims.size == 2 and dims.last_axis_size == 1;
     }
 
  private:

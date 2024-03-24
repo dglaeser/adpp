@@ -176,6 +176,7 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+// TODO: Api is weird?
 template<std::size_t n, value_list_with_min_size<n+1>> struct split_at;
 template<std::size_t n, auto... v>
 struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
@@ -222,6 +223,11 @@ struct dimensions {
     static constexpr std::size_t size = sizeof...(n);
     static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
+
+    using as_list = adpp::value_list<n...>;
+
+    constexpr dimensions() = default;
+    constexpr dimensions(value_list<n...>) noexcept {}
 
     template<std::size_t idx>
     static constexpr std::size_t get(index_constant<idx> = {}) {
@@ -301,6 +307,8 @@ namespace detail {
 template<std::size_t... i>
 struct md_index_constant {
     static constexpr std::size_t size = sizeof...(i);
+
+    using as_list = value_list<i...>;
 
     template<std::size_t _i>
     constexpr md_index_constant(index_constant<_i>) requires(sizeof...(i) == 1) {}
