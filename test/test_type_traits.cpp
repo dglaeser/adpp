@@ -173,6 +173,13 @@ int main() {
     }
 
     {
+        using adpp::ic;
+        using adpp::md_index;
+        using adpp::value_list;
+        static_assert(md_index<0, 0, 0>.with_index_at(ic<0>, ic<42>) == md_index<42, 0, 0>);
+    }
+
+    {
         using adpp::dimensions;
         using adpp::md_index_constant;
         using adpp::md_index_constant_iterator;
