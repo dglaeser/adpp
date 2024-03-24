@@ -130,7 +130,7 @@ struct tensor_expression : bindable, indexed<Es...> {
         out << "[";
         bool first = true;
         _visit([&] <auto... i> (md_index_constant<i...> idx) {
-            if constexpr (is_vector() && idx.get(ic<0>) > 0) out << ", ";
+            if constexpr (is_vector() && idx.at(ic<0>) > 0) out << ", ";
             if constexpr (!is_vector() && idx.last() > 0) out << ", ";
             else if (!is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);

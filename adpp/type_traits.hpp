@@ -257,9 +257,10 @@ namespace detail {
 
 
 template<std::size_t... i>
-struct md_index_constant {
+struct md_index_constant : value_list<i...> {
     static constexpr std::size_t size = sizeof...(i);
 
+    // TODO: remove?
     using as_list = value_list<i...>;
 
     template<std::size_t _i>
@@ -267,11 +268,6 @@ struct md_index_constant {
     template<std::size_t... _i>
     constexpr md_index_constant(value_list<_i...>) requires(std::conjunction_v<is_equal<i, _i>...>) {}
     constexpr md_index_constant() = default;
-
-    template<std::size_t idx>
-    static constexpr std::size_t get(index_constant<idx> _i = {}) {
-        return as_list::at(_i);
-    }
 
     static constexpr std::size_t last() {
         return as_list::at(index_constant<sizeof...(i) - 1>{});
@@ -339,7 +335,7 @@ struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
         if constexpr (sizeof...(n) == 0)
             return true;
         else
-            return md_index_constant<i...>::get(index_constant<0>{}) >= first_value_v<n...>;
+            return md_index_constant<i...>::at(index_constant<0>{}) >= first_value_v<n...>;
     }
 
     static constexpr auto next() {
