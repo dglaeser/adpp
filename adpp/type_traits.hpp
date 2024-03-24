@@ -71,6 +71,11 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
     }
 
     template<auto... _v>
+    constexpr auto operator+(const value_list<_v...>&) const {
+        return value_list<v..., _v...>{};
+    }
+
+    template<auto... _v>
     constexpr bool operator==(const value_list<_v...>&) const {
         if constexpr (sizeof...(_v) != size)
             return false;
