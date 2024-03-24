@@ -230,18 +230,6 @@ struct dimensions : value_list<n...> {
 };
 
 
-template<typename T>
-struct tensor_dimensions;
-template<typename T, std::size_t n>
-struct tensor_dimensions<std::array<T, n>> : std::type_identity<dimensions<n, 1>> {};
-template<typename T, std::size_t n, std::size_t m>
-struct tensor_dimensions<std::array<std::array<T, n>, m>> : std::type_identity<dimensions<m, n>> {};
-template<typename T>
-using tensor_dimensions_t = typename tensor_dimensions<T>::type;
-template<typename T>
-inline constexpr tensor_dimensions_t<T> tensor_dimensions_v;
-
-
 #ifndef DOXYGEN
 namespace detail {
 
