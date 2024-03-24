@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ostream>
 #include <type_traits>
 #include <concepts>
 #include <utility>
@@ -81,6 +82,24 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
             return false;
         else
             return std::conjunction_v<is_equal<v, _v>...>;
+    }
+
+    friend std::ostream& operator<<(std::ostream& s, const value_list& vl) {
+        s << "[";
+        if constexpr (sizeof...(v) > 0)
+            vl._push_to<v...>(s);
+        s << "]";
+        return s;
+    }
+
+ private:
+    template<auto v0, auto... _v>
+    void _push_to(std::ostream& s) const {
+        s << v0;
+        if constexpr (sizeof...(_v) > 0) {
+            s << ", ";
+            _push_to<_v...>(s);
+        }
     }
 };
 
