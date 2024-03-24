@@ -16,7 +16,7 @@
 namespace adpp::backward {
 
 template<typename S, typename V>
-    requires(tensor_with<std::remove_cvref_t<V>, S::dimensions>)
+    requires(static_vec_n<std::remove_cvref_t<V>, S::dimensions.number_of_elements>)
 struct tensor_value_binder : value_binder<S, V>{
     static constexpr std::size_t number_of_sub_binders = S::dimensions.number_of_elements;
 
@@ -100,13 +100,13 @@ struct tensor_expression : bindable, indexed<Es...> {
     constexpr tensor_expression(adpp::dimensions<n, m> d, const Es&...) requires(d == dims) {}
 
     template<typename Self, typename V>
-        requires(tensor_with<std::remove_cvref_t<V>, dims>)
+        requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return tensor_value_binder{std::forward<Self>(self), std::forward<V>(value)};
     }
 
     template<typename Self, typename V>
-        requires(tensor_with<std::remove_cvref_t<V>, dims>)
+        requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto operator=(this Self&& self, V&& values) noexcept {
         return self.bind(std::forward<V>(values));
     }
@@ -128,10 +128,13 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename... V>
     constexpr void export_to(std::ostream& out, const bindings<V...>& name_bindings) const {
         out << "[";
+        bool first = true;
         _visit([&] <auto... i> (md_index_constant<i...> idx) {
-            if constexpr (idx.get(ic<0>) > 0)
-                out << ", ";
+            if constexpr (is_vector() && idx.get(ic<0>) > 0) out << ", ";
+            if constexpr (!is_vector() && idx.last() > 0) out << ", ";
+            else if (!is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);
+            first = false;
         }, md_index_constant_iterator{dims});
         out << "]";
     }
@@ -281,18 +284,32 @@ namespace detail {
     constexpr auto new_lambda() { return _; }
 
     template<std::size_t N, typename... T>
-    struct vec_type;
-
+    struct vars_n;
     template<std::size_t N, typename... T> requires(sizeof...(T) < N)
-    struct vec_type<N, type_list<T...>> : vec_type<N, type_list<var<dtype::any, [] () {}>, T...>> {};
-
+    struct vars_n<N, type_list<T...>> : vars_n<N, type_list<var<dtype::any, [] () {}>, T...>> {};
     template<std::size_t N, typename... T> requires(sizeof...(T) == N)
-    struct vec_type<N, type_list<T...>> : std::type_identity<tensor_expression<dimensions<N, 1>{}, T...>> {};
+    struct vars_n<N, type_list<T...>> : std::type_identity<type_list<T...>> {};
+
+    template<typename T>
+    struct vec_with;
+    template<typename... T>
+    struct vec_with<type_list<T...>> : std::type_identity<tensor_expression<dimensions<sizeof...(T), 1>{}, T...>> {};
+
+    template<auto dims, typename T>
+    struct tensor_with;
+    template<auto dims, typename... T>
+    struct tensor_with<dims, type_list<T...>> : std::type_identity<tensor_expression<dims, T...>> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
 
 template<std::size_t N>
-using vec = typename detail::vec_type<N, type_list<>>::type;
+using vec = typename detail::vec_with<typename detail::vars_n<N, type_list<>>::type>::type;
+
+template<std::size_t... N>
+using tensor = typename detail::tensor_with<
+    dimensions<N...>{},
+    typename detail::vars_n<dimensions<N...>{}.number_of_elements, type_list<>
+>::type>::type;
 
 }  // namespace adpp::backward
