@@ -58,9 +58,9 @@ template<typename E, typename S>
 tensor_value_binder(E&&, S&&) -> tensor_value_binder<std::remove_cvref_t<E>, S>;
 
 template<typename T, auto dims>
-class tensor {
+class md_array {
  public:
-    constexpr tensor() = default;
+    constexpr md_array() = default;
 
     template<typename Self, std::size_t... i>
     constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>& idx) {
@@ -118,7 +118,7 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     template<typename... B>
     constexpr auto evaluate(const bindings<B...>& b) const noexcept {
-        tensor<typename bindings<B...>::common_value_type, dims> result;
+        md_array<typename bindings<B...>::common_value_type, dims> result;
         _visit([&] <auto... i> (md_index_constant<i...> md_index) {
             result[md_index] = (*this)[md_index].evaluate(b);
         }, md_index_constant_iterator{dims});
