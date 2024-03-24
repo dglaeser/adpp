@@ -17,6 +17,7 @@ using adpp::ic;
 using adpp::backward::var;
 using adpp::backward::vec;
 using adpp::backward::cval;
+using adpp::backward::tensor;
 using adpp::backward::vector_expression;
 using adpp::backward::tensor_expression;
 using adpp::backward::tensor_value_binder;
@@ -184,6 +185,13 @@ int main() {
         std::ostringstream s;
         s << v.with(v = {"vx", "vy", "vz"});
         expect(eq(s.str(), std::string{"[vx, vy, vz]"}));
+    };
+
+    "tensor_elements_expression"_test = [] () {
+        tensor<2, 2> t;
+        std::ostringstream s;
+        s << t.with(t = {"t11", "t12", "t21", "t22"});
+        expect(eq(s.str(), std::string{"[t11, t12 // t21, t22]"}));
     };
 
     "tensor_expression"_test = [] () {
