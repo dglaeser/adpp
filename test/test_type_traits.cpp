@@ -1,8 +1,15 @@
 #include <cstdlib>
 #include <type_traits>
 #include <functional>
+#include <sstream>
+
+#include <boost/ut.hpp>
 
 #include <adpp/type_traits.hpp>
+
+using boost::ut::operator""_test;
+using boost::ut::expect;
+using boost::ut::eq;
 
 int main() {
 
@@ -42,6 +49,12 @@ int main() {
         static_assert(value_list<1>{} + value_list<>{} == value_list<1>{});
         static_assert(value_list<1, 2>{} + value_list<3, 4>{} == value_list<1, 2, 3, 4>{});
     }
+
+    "value_list_stream_operator"_test = [] () {
+        std::stringstream s;
+        s << adpp::value_list<42, 43, 44>{};
+        expect(eq(s.str(), std::string{"[42, 43, 44]"}));
+    };
 
     {
         using adpp::split_at;
