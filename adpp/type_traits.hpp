@@ -193,8 +193,9 @@ inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>:
 
 
 template<std::size_t... n>
-struct dimensions : value_list<n...> {
-    static constexpr std::size_t number_of_elements = sizeof...(n) > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
+struct dimensions {
+    static constexpr std::size_t size = sizeof...(n);
+    static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
 
     // TODO: remove?
@@ -203,10 +204,15 @@ struct dimensions : value_list<n...> {
     constexpr dimensions() = default;
     constexpr dimensions(value_list<n...>) noexcept {}
 
+    template<std::size_t idx>
+    static constexpr auto at(index_constant<idx> i) {
+        return as_list::at(i);
+    }
+
     template<std::integral... I>
-        requires(sizeof...(I) == sizeof...(n))
+        requires(sizeof...(I) == size)
     friend constexpr std::size_t flat_index(const dimensions& dims, I&&... indices) {
-        if constexpr (sizeof...(n) == 0)
+        if constexpr (size == 0)
             return 0;
         else
             return dims._to_flat_index<n...>(0, std::forward<I>(indices)...);
@@ -257,7 +263,7 @@ namespace detail {
 
 
 template<std::size_t... i>
-struct md_index_constant : value_list<i...> {
+struct md_index_constant {
     static constexpr std::size_t size = sizeof...(i);
 
     // TODO: remove?
@@ -268,6 +274,11 @@ struct md_index_constant : value_list<i...> {
     template<std::size_t... _i>
     constexpr md_index_constant(value_list<_i...>) requires(std::conjunction_v<is_equal<i, _i>...>) {}
     constexpr md_index_constant() = default;
+
+    template<std::size_t idx>
+    static constexpr auto at(index_constant<idx> _i) {
+        return as_list::at(_i);
+    }
 
     static constexpr std::size_t last() {
         return as_list::at(index_constant<sizeof...(i) - 1>{});
