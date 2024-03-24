@@ -337,6 +337,10 @@ struct md_index_constant {
     static constexpr auto with_prepended(index_constant<idx>) { return md_index_constant<idx, i...>{}; }
     template<std::size_t idx>
     static constexpr auto with_appended(index_constant<idx>) { return md_index_constant<i..., idx>{}; }
+    template<std::size_t... _i>
+    static constexpr auto with_appended(md_index_constant<_i...>) {
+        return adpp::md_index_constant{value_list<i..., _i...>{}};
+    }
 
     template<std::size_t pos, std::size_t idx> requires(pos < size)
     static constexpr auto with_index_at(index_constant<pos> p, index_constant<idx> v) {

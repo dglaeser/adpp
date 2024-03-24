@@ -180,6 +180,13 @@ int main() {
     }
 
     {
+        using adpp::ic;
+        using adpp::md_index;
+        static_assert(md_index<0, 0, 0>.with_appended(ic<42>) == md_index<0, 0, 0, 42>);
+        static_assert(md_index<0, 0, 0>.with_appended(md_index<42, 43>) == md_index<0, 0, 0, 42, 43>);
+    }
+
+    {
         using adpp::dimensions;
         using adpp::md_index_constant;
         using adpp::md_index_constant_iterator;
