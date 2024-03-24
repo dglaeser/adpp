@@ -23,10 +23,10 @@ int main() {
     {
         using adpp::ic;
         using adpp::value_list;
-        static_assert(value_list<0, 1, 2, 3>::get_at(ic<0>) == 0);
-        static_assert(value_list<0, 1, 2, 3>::get_at(ic<1>) == 1);
-        static_assert(value_list<0, 1, 2, 3>::get_at(ic<2>) == 2);
-        static_assert(value_list<0, 1, 2, 42>::get_at(ic<3>) == 42);
+        static_assert(value_list<0, 1, 2, 3>::at(ic<0>) == 0);
+        static_assert(value_list<0, 1, 2, 3>::at(ic<1>) == 1);
+        static_assert(value_list<0, 1, 2, 3>::at(ic<2>) == 2);
+        static_assert(value_list<0, 1, 2, 42>::at(ic<3>) == 42);
     }
 
     {
