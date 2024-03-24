@@ -26,12 +26,10 @@ struct index_constant : std::integral_constant<std::size_t, i> {
         return index_constant<i+1>{};
     }
 
-    // TODO: conversion operator to size_t?
-
-    // TODO: Spaceship
     template<std::size_t o>
-    constexpr bool operator>(index_constant<o>) const { return i > o; }
-    constexpr bool operator>(std::size_t o) const { return i > o; }
+    constexpr auto operator<=>(index_constant<o>) const { return i <=> o; }
+    constexpr auto operator<=>(std::size_t o) const { return i <=> o; }
+    constexpr operator std::size_t() const { return i; }
 };
 template<std::size_t idx>
 inline constexpr index_constant<idx> ic;
