@@ -192,7 +192,7 @@ struct tensor_expression : bindable, indexed<Es...> {
         using tail = typename split_at<1, typename decltype(other_shape)::as_list>::tail;
 
         static constexpr auto new_shape = adpp::md_shape{head{} + tail{}};
-        auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...> md_i, auto&& terms) {
+        auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...>, auto&& terms) {
             constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::head{};
             constexpr auto i_tail = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::tail{};
             return std::tuple_cat(
@@ -287,20 +287,17 @@ struct operands<vector_expression<T...>> : std::type_identity<type_list<T...>> {
 #ifndef DOXYGEN
 namespace detail {
 
-    template<std::size_t, auto _ = [] () {}>
-    constexpr auto new_lambda() { return _; }
-
-    template<std::size_t N, typename... T>
+    template<auto lambda, std::size_t N, typename... T>
     struct vars_n;
-    template<std::size_t N, typename... T> requires(sizeof...(T) < N)
-    struct vars_n<N, type_list<T...>> : vars_n<N, type_list<var<dtype::any, [] () {}>, T...>> {};
-    template<std::size_t N, typename... T> requires(sizeof...(T) == N)
-    struct vars_n<N, type_list<T...>> : std::type_identity<type_list<T...>> {};
+    template<auto lambda, std::size_t N, typename... T> requires(sizeof...(T) < N)
+    struct vars_n<lambda, N, type_list<T...>> : vars_n<lambda, N, type_list<var<dtype::any, [] () {}>, T...>> {};
+    template<auto lambda, std::size_t N, typename... T> requires(sizeof...(T) == N)
+    struct vars_n<lambda, N, type_list<T...>> : std::type_identity<type_list<T...>> {};
 
     template<typename T>
     struct vec_with;
     template<typename... T>
-    struct vec_with<type_list<T...>> : std::type_identity<tensor_expression<md_shape<sizeof...(T), 1>{}, T...>> {};
+    struct vec_with<type_list<T...>> : std::type_identity<vector_expression<T...>> {};
 
     template<auto shape, typename T>
     struct tensor_with;
@@ -310,13 +307,12 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<std::size_t N>
-using vec = typename detail::vec_with<typename detail::vars_n<N, type_list<>>::type>::type;
+template<std::size_t N, auto _ = [] () {}>
+using vec = typename detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
 
-template<std::size_t... N>
+template<auto shape, auto _ = [] () {}>
 using tensor = typename detail::tensor_with<
-    md_shape<N...>{},
-    typename detail::vars_n<md_shape<N...>{}.number_of_elements, type_list<>
->::type>::type;
+    shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type
+>::type;
 
 }  // namespace adpp::backward

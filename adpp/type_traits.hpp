@@ -235,6 +235,9 @@ struct md_shape {
     }
 };
 
+template<std::size_t... n>
+inline constexpr md_shape<n...> shape;
+
 
 #ifndef DOXYGEN
 namespace detail {
@@ -308,7 +311,7 @@ struct md_index_constant {
     }
 
     template<std::size_t pos, std::size_t idx> requires(pos < size)
-    static constexpr auto with_index_at(index_constant<pos> p, index_constant<idx> v) {
+    static constexpr auto with_index_at(index_constant<pos>, index_constant<idx>) {
         using split = split_at<pos, value_list<i...>>;
         using tail = drop_n_t<1, typename split::tail>;
         return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + tail{}};
