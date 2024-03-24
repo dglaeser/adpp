@@ -35,6 +35,15 @@ int main() {
     }
 
     {
+        using adpp::value_list;
+        static_assert(value_list<>{} + value_list<>{} == value_list<>{});
+        static_assert(value_list<>{} + value_list<1>{} == value_list<1>{});
+        static_assert(value_list<1>{} + value_list<1>{} == value_list<1, 1>{});
+        static_assert(value_list<1>{} + value_list<>{} == value_list<1>{});
+        static_assert(value_list<1, 2>{} + value_list<3, 4>{} == value_list<1, 2, 3, 4>{});
+    }
+
+    {
         using adpp::split_at;
         using adpp::value_list;
 
