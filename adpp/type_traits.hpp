@@ -8,8 +8,68 @@
 
 namespace adpp {
 
+template<std::size_t i>
+struct index_constant : std::integral_constant<std::size_t, i> {
+    constexpr auto incremented() const {
+        return index_constant<i+1>{};
+    }
+
+    // TODO: conversion operator to size_t?
+
+    // TODO: Spaceship
+    template<std::size_t o>
+    constexpr bool operator>(index_constant<o>) const { return i > o; }
+    constexpr bool operator>(std::size_t o) const { return i > o; }
+};
+template<std::size_t idx>
+inline constexpr index_constant<idx> ic;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<std::size_t i, auto v>
+    struct value_i {
+        static constexpr auto get_at(index_constant<i>) {
+            return v;
+        }
+    };
+
+    template<typename I, auto...>
+    struct values;
+    template<std::size_t... i, auto... v> requires(sizeof...(i) == sizeof...(v))
+    struct values<std::index_sequence<i...>, v...> : value_i<i, v>... {
+        using value_i<i, v>::get_at...;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
 template<auto... v>
-struct value_list { static constexpr std::size_t size = sizeof...(v); };
+struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...> {
+    static constexpr std::size_t size = sizeof...(v);
+
+    template<std::size_t i>
+    static constexpr auto at = get_at(index_constant<i>{});
+
+    template<std::size_t i> requires(i < sizeof...(v))
+    static constexpr auto get_at(index_constant<i> idx) {
+        using base = detail::values<std::make_index_sequence<sizeof...(v)>, v...>;
+        return base::get_at(idx);
+    }
+};
+
+template<typename T>
+struct is_value_list : std::false_type {};
+template<auto... v>
+struct is_value_list<value_list<v...>> : std::true_type {};
+template<typename T>
+inline constexpr bool is_value_list_v = is_value_list<T>::value;
+
+template<typename T, std::size_t n>
+concept value_list_with_size = is_value_list_v<T> and T::size == n;
+template<typename T, std::size_t n>
+concept value_list_with_min_size = is_value_list_v<T> and T::size >= n;
 
 
 #ifndef DOXYGEN
@@ -38,6 +98,46 @@ template<std::size_t n, auto... v> requires(sizeof...(v) >= n)
 struct drop_n<n, value_list<v...>> : detail::drop_n<n, 0, v...> {};
 template<std::size_t n, typename T>
 using drop_n_t = typename drop_n<n, T>::type;
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<
+        std::size_t,
+        std::size_t,
+        typename head,
+        typename tail,
+        auto...>
+    struct split_at;
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
+        requires(i < n)
+    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
+    : split_at<n, i+1, value_list<h..., v0>, value_list<t...>, v...> {};
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
+        requires(i == n)
+    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
+    : split_at<n, i+1, value_list<h...>, value_list<t...>, v...> {};
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
+        requires(i > n)
+    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
+    : split_at<n, i+1, value_list<h...>, value_list<t..., v0>, v...> {};
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t>
+    struct split_at<n, i, value_list<h...>, value_list<t...>> {
+        using head = value_list<h...>;
+        using tail = value_list<t...>;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<std::size_t n, value_list_with_min_size<n+1>> struct split_at;
+template<std::size_t n, auto... v>
+struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
 
 
 template<auto a, auto b>
@@ -79,20 +179,6 @@ struct automatic {};
 
 template<typename T>
 struct always_false : std::false_type {};
-
-template<std::size_t i>
-struct index_constant : std::integral_constant<std::size_t, i> {
-    constexpr auto incremented() const {
-        return index_constant<i+1>{};
-    }
-
-    // TODO: Spaceship
-    template<std::size_t o>
-    constexpr bool operator>(index_constant<o>) const { return i > o; }
-    constexpr bool operator>(std::size_t o) const { return i > o; }
-};
-template<std::size_t idx>
-inline constexpr index_constant<idx> ic;
 
 
 template<std::size_t... n>

@@ -7,14 +7,40 @@
 int main() {
 
     {
-        static_assert(std::is_same_v<
-            adpp::drop_n_t<2, adpp::value_list<0, 1, 2, 3, 4>>,
-            adpp::value_list<2, 3, 4>
-        >);
-        static_assert(std::is_same_v<
-            adpp::drop_n_t<2, adpp::value_list<0, 1>>,
-            adpp::value_list<>
-        >);
+        using adpp::drop_n_t;
+        using adpp::value_list;
+        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1, 2, 3, 4>>, value_list<2, 3, 4>>);
+        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1>>, value_list<>>);
+    }
+
+    {
+        using adpp::ic;
+        using adpp::value_list;
+        static_assert(value_list<0, 1, 2, 3>::get_at(ic<0>) == 0);
+        static_assert(value_list<0, 1, 2, 3>::get_at(ic<1>) == 1);
+        static_assert(value_list<0, 1, 2, 3>::get_at(ic<2>) == 2);
+        static_assert(value_list<0, 1, 2, 42>::get_at(ic<3>) == 42);
+    }
+
+    {
+        using adpp::split_at;
+        using adpp::value_list;
+
+        using values = value_list<0, 1, 2, 3, 4>;
+        static_assert(std::is_same_v<typename split_at<0, values>::head, value_list<>>);
+        static_assert(std::is_same_v<typename split_at<0, values>::tail, value_list<1, 2, 3, 4>>);
+
+        static_assert(std::is_same_v<typename split_at<1, values>::head, value_list<0>>);
+        static_assert(std::is_same_v<typename split_at<1, values>::tail, value_list<2, 3, 4>>);
+
+        static_assert(std::is_same_v<typename split_at<2, values>::head, value_list<0, 1>>);
+        static_assert(std::is_same_v<typename split_at<2, values>::tail, value_list<3, 4>>);
+
+        static_assert(std::is_same_v<typename split_at<3, values>::head, value_list<0, 1, 2>>);
+        static_assert(std::is_same_v<typename split_at<3, values>::tail, value_list<4>>);
+
+        static_assert(std::is_same_v<typename split_at<4, values>::head, value_list<0, 1, 2, 3>>);
+        static_assert(std::is_same_v<typename split_at<4, values>::tail, value_list<>>);
     }
 
     {
@@ -90,24 +116,26 @@ int main() {
     }
 
     {
-        static_assert(adpp::md_index_constant<0, 0, 0>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 0);
-        static_assert(adpp::md_index_constant<0, 0, 1>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 1);
-        static_assert(adpp::md_index_constant<0, 0, 2>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 2);
-        static_assert(adpp::md_index_constant<0, 0, 0>{}.last() == 0);
-        static_assert(adpp::md_index_constant<0, 0, 1>{}.last() == 1);
-        static_assert(adpp::md_index_constant<0, 0, 2>{}.last() == 2);
+        using adpp::md_index_constant;
+        using adpp::dimensions;
+        static_assert(md_index_constant<0, 0, 0>::as_flat_index(dimensions<2, 2, 3>{}) == 0);
+        static_assert(md_index_constant<0, 0, 1>::as_flat_index(dimensions<2, 2, 3>{}) == 1);
+        static_assert(md_index_constant<0, 0, 2>::as_flat_index(dimensions<2, 2, 3>{}) == 2);
+        static_assert(md_index_constant<0, 0, 0>{}.last() == 0);
+        static_assert(md_index_constant<0, 0, 1>{}.last() == 1);
+        static_assert(md_index_constant<0, 0, 2>{}.last() == 2);
 
-        static_assert(adpp::md_index_constant<0, 1, 0>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 3);
-        static_assert(adpp::md_index_constant<0, 1, 1>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 4);
-        static_assert(adpp::md_index_constant<0, 1, 2>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 5);
+        static_assert(md_index_constant<0, 1, 0>::as_flat_index(dimensions<2, 2, 3>{}) == 3);
+        static_assert(md_index_constant<0, 1, 1>::as_flat_index(dimensions<2, 2, 3>{}) == 4);
+        static_assert(md_index_constant<0, 1, 2>::as_flat_index(dimensions<2, 2, 3>{}) == 5);
 
-        static_assert(adpp::md_index_constant<1, 0, 0>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 6);
-        static_assert(adpp::md_index_constant<1, 0, 1>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 7);
-        static_assert(adpp::md_index_constant<1, 0, 2>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 8);
+        static_assert(md_index_constant<1, 0, 0>::as_flat_index(dimensions<2, 2, 3>{}) == 6);
+        static_assert(md_index_constant<1, 0, 1>::as_flat_index(dimensions<2, 2, 3>{}) == 7);
+        static_assert(md_index_constant<1, 0, 2>::as_flat_index(dimensions<2, 2, 3>{}) == 8);
 
-        static_assert(adpp::md_index_constant<1, 1, 0>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 9);
-        static_assert(adpp::md_index_constant<1, 1, 1>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 10);
-        static_assert(adpp::md_index_constant<1, 1, 2>::as_flat_index(adpp::dimensions<2, 2, 3>{}) == 11);
+        static_assert(md_index_constant<1, 1, 0>::as_flat_index(dimensions<2, 2, 3>{}) == 9);
+        static_assert(md_index_constant<1, 1, 1>::as_flat_index(dimensions<2, 2, 3>{}) == 10);
+        static_assert(md_index_constant<1, 1, 2>::as_flat_index(dimensions<2, 2, 3>{}) == 11);
     }
 
     {
