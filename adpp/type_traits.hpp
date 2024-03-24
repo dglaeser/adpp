@@ -8,6 +8,11 @@
 
 namespace adpp {
 
+struct automatic {};
+
+template<typename T>
+struct always_false : std::false_type {};
+
 template<auto a, auto b>
 struct is_less : std::bool_constant<(a < b)> {};
 template<auto a, auto b>
@@ -181,12 +186,6 @@ namespace detail {
 
 template<auto initial, typename op, auto... values>
 inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>::value;
-
-
-struct automatic {};
-
-template<typename T>
-struct always_false : std::false_type {};
 
 
 template<std::size_t... n>
