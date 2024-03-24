@@ -304,8 +304,11 @@ struct md_index_constant {
 
     template<std::size_t _i>
     constexpr md_index_constant(index_constant<_i>) requires(sizeof...(i) == 1) {}
+    template<std::size_t... _i>
+    constexpr md_index_constant(value_list<_i...>) requires(std::conjunction_v<is_equal<i, _i>...>) {}
     constexpr md_index_constant() = default;
 
+    // TODO: remove and require users to do i[ic<0>].value?
     template<std::size_t idx>
     static constexpr std::size_t get(index_constant<idx> = {}) {
         return std::get<idx>(std::tuple{index_constant<i>{}...}).value;
@@ -335,6 +338,12 @@ struct md_index_constant {
     template<std::size_t idx>
     static constexpr auto with_appended(index_constant<idx>) { return md_index_constant<i..., idx>{}; }
 
+    template<std::size_t pos, std::size_t idx> requires(pos < size)
+    static constexpr auto with_index_at(index_constant<pos> p, index_constant<idx> v) {
+        using split = split_at<pos, value_list<i...>>;
+        return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + typename split::tail{}};
+    }
+
     // TODO: md_index_constant and dimensions have much overlap!
     template<std::size_t... _n>
     constexpr bool operator==(const md_index_constant<_n...>&) const { return false; }
@@ -343,6 +352,8 @@ struct md_index_constant {
 
 template<std::size_t i>
 md_index_constant(index_constant<i>) -> md_index_constant<i>;
+template<std::size_t... i>
+md_index_constant(value_list<i...>) -> md_index_constant<i...>;
 
 template<std::size_t... i>
 inline constexpr md_index_constant<i...> md_index;
