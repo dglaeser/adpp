@@ -5,7 +5,6 @@
 #include <concepts>
 #include <utility>
 #include <array>
-#include <tuple>
 
 namespace adpp {
 
@@ -178,7 +177,7 @@ struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, valu
 
 
 template<auto... v> requires(sizeof...(v) > 0)
-inline constexpr auto last_value_v = std::get<sizeof...(v)-1>(std::tuple{v...});
+inline constexpr auto last_value_v = split_at<sizeof...(v)-1, value_list<v...>>::tail::at(ic<0>);
 template<auto v0, auto... v>
 inline constexpr auto first_value_v = v0;
 
@@ -226,12 +225,12 @@ struct dimensions {
 
     template<std::size_t idx>
     static constexpr std::size_t get(index_constant<idx> = {}) {
-        return std::get<idx>(std::tuple{index_constant<n>{}...}).value;
+        return split_at<idx, value_list<n...>>::tail::at(ic<0>);
     }
 
     template<std::size_t idx>
     static constexpr auto operator[](index_constant<idx> = {}) {
-        return std::tuple{index_constant<n>{}...};
+        return split_at<idx, value_list<index_constant<n>{}...>>::tail::at(ic<0>);
     }
 
     template<std::integral... I>
@@ -311,20 +310,18 @@ struct md_index_constant {
     constexpr md_index_constant(value_list<_i...>) requires(std::conjunction_v<is_equal<i, _i>...>) {}
     constexpr md_index_constant() = default;
 
-    // TODO: remove and require users to do i[ic<0>].value?
     template<std::size_t idx>
-    static constexpr std::size_t get(index_constant<idx> = {}) {
-        return std::get<idx>(std::tuple{index_constant<i>{}...}).value;
+    static constexpr std::size_t get(index_constant<idx> _i = {}) {
+        return as_list::at(_i);
     }
 
     static constexpr std::size_t last() {
-        static constexpr std::size_t idx = sizeof...(i) - 1;
-        return std::get<idx>(std::tuple{index_constant<i>{}...}).value;
+        return as_list::at(index_constant<sizeof...(i) - 1>{});
     }
 
     template<std::size_t idx>
-    static constexpr auto operator[](index_constant<idx> = {}) {
-        return std::get<idx>(std::tuple{index_constant<i>{}...});
+    static constexpr auto operator[](index_constant<idx> _i = {}) {
+        return value_list<index_constant<i>{}...>::at(_i);
     }
 
     template<std::size_t... n> requires(sizeof...(n) == size)
