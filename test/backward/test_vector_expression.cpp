@@ -62,7 +62,7 @@ int main() {
         static_assert(adpp::backward::is_symbol_v<std::remove_cvref_t<decltype(v)>>);
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(result)>,
-            adpp::backward::tensor<int, adpp::dimensions<3, 1>{}>
+            adpp::backward::md_array<int, adpp::dimensions<3, 1>{}>
         >);
         static_assert(result[0] == 0);
         static_assert(result[1] == 1);
