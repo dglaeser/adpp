@@ -311,8 +311,23 @@ template<std::size_t N, auto _ = [] () {}>
 using vec = typename detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
 
 template<auto shape, auto _ = [] () {}>
-using tensor = typename detail::tensor_with<
-    shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type
->::type;
+struct tensor
+: detail::tensor_with<shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type>::type {
+    using base = detail::tensor_with<shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type>::type;
+    using base::operator=;
+
+    template<std::size_t... n>
+    constexpr tensor(md_shape<n...>) noexcept {}
+};
+
+template<std::size_t... n, auto _ = [] () {}>
+tensor(md_shape<n...>) -> tensor<md_shape<n...>{}, _>;
+
+template<auto shape, auto _>
+struct is_expression<tensor<shape, _>> : is_expression<typename tensor<shape, _>::base> {};
+template<auto shape, auto _>
+struct is_scalar_expression<tensor<shape, _>> : is_scalar_expression<typename tensor<shape, _>::base> {};
+template<auto shape, auto _>
+struct operands<tensor<shape, _>> : operands<typename tensor<shape, _>::base> {};
 
 }  // namespace adpp::backward

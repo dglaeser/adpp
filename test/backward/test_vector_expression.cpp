@@ -189,14 +189,14 @@ int main() {
     };
 
     "tensor_elements_expression"_test = [] () {
-        tensor<shape<2, 2>> t;
+        tensor t{shape<2, 2>};
         std::ostringstream s;
         s << t.with(t = {"t11", "t12", "t21", "t22"});
         expect(eq(s.str(), std::string{"[t11, t12 // t21, t22]"}));
     };
 
     "tensor_elements_scaling"_test = [] () {
-        constexpr tensor<shape<2, 2>> t;
+        constexpr tensor t{shape<2, 2>};
         constexpr auto expr = t*cval<3>;
         constexpr auto result = evaluate(expr, at(t = {1, 2, 3, 4}));
         static_assert(result[0, 0] == 3);
@@ -255,8 +255,8 @@ int main() {
     };
 
     "md_tensor_expression_tensor_dot"_test = [] () {
-        tensor<shape<1, 2, 3>> t0;
-        tensor<shape<3, 2>> t1;
+        tensor t0{shape<1, 2, 3>};
+        tensor t1{shape<3, 2>};
         constexpr auto expr = t0*t1;
         static_assert(expr.shape == adpp::md_shape<1, 2, 2>{});
         constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4, 5, 6}, t1 = {1, 2, 3, 4, 5, 6}));
@@ -267,8 +267,8 @@ int main() {
     };
 
     "md_tensor_expression_tensor_dot_same_size"_test = [] () {
-        tensor<shape<2, 2>> t0;
-        tensor<shape<2, 2>> t1;
+        tensor t0{shape<2, 2>};
+        tensor t1{shape<2, 2>};
         constexpr auto expr = t0*t1;
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
         constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4}, t1 = {1, 2, 3, 4}));
