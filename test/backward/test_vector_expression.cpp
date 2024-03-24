@@ -63,7 +63,7 @@ int main() {
         static_assert(adpp::backward::is_symbol_v<std::remove_cvref_t<decltype(v)>>);
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(result)>,
-            adpp::backward::md_array<int, adpp::dimensions<3, 1>{}>
+            adpp::backward::md_array<int, adpp::md_shape<3, 1>{}>
         >);
         static_assert(result[0] == 0);
         static_assert(result[1] == 1);
@@ -207,7 +207,7 @@ int main() {
     "tensor_expression"_test = [] () {
         var x;
         var y;
-        constexpr tensor_expression e = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression e = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr auto result = evaluate(e, at(x = 1, y = 2));
         static_assert(result[0, 0] == 1);
         static_assert(result[0, 1] == 2);
@@ -218,7 +218,7 @@ int main() {
     "tensor_expression_scaling"_test = [] () {
         var x;
         var y;
-        constexpr tensor_expression e = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression e = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr auto scaled = e.scaled_with(cval<2>);
         constexpr auto result = evaluate(scaled, at(x = 1, y = 2));
         static_assert(result[0, 0] == 2);
@@ -230,11 +230,11 @@ int main() {
     "tensor_expression_vector_dot"_test = [] () {
         var x;
         var y;
-        constexpr tensor_expression t = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression t = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr vector_expression v = {x, y};
         constexpr auto expr = t*v;
         constexpr auto result = evaluate(expr, at(x = 1, y = 2));
-        static_assert(expr.dimensions == adpp::dimensions<2, 1>{});
+        static_assert(expr.shape == adpp::md_shape<2, 1>{});
         static_assert(result[0] == 1*1 + 1*2*2);
         static_assert(result[1] == 1*2*1 + 2*2);
     };
@@ -242,11 +242,11 @@ int main() {
     "tensor_expression_tensor_dot"_test = [] () {
         var x;
         var y;
-        constexpr tensor_expression t0 = {adpp::dimensions<2, 2>{}, x, x*y, y*x, y};
-        constexpr tensor_expression t1 = {adpp::dimensions<2, 2>{}, x, x+y, y*y, y};
+        constexpr tensor_expression t0 = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression t1 = {adpp::md_shape<2, 2>{}, x, x+y, y*y, y};
         constexpr auto expr = t0*t1;
         constexpr auto result = evaluate(expr, at(x = 1, y = 2));
-        static_assert(expr.dimensions == adpp::dimensions<2, 2>{});
+        static_assert(expr.shape == adpp::md_shape<2, 2>{});
         static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
         static_assert(result[0, 1] == 1*(1 + 2) + 1*2*2);
         static_assert(result[1, 0] == (1*2)*1 + 2*2*2);
