@@ -144,18 +144,22 @@ namespace detail {
         using tail = value_list<t...>;
     };
 
+    template<std::size_t, typename>
+    struct split_at_impl;
+    template<std::size_t n, auto... v>
+    struct split_at_impl<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
+
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<std::size_t n, value_list_with_min_size<n>> struct split_at;
-template<std::size_t n, auto... v>
-struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
+template<std::size_t n, value_list_with_min_size<n> values>
+struct split_at : detail::split_at_impl<n, values> {};
 
 
 template<std::size_t n, value_list_with_min_size<n> values>
 struct drop_n : std::type_identity<typename split_at<n, values>::tail> {};
-template<std::size_t n, typename T>
-using drop_n_t = typename drop_n<n, T>::type;
+template<std::size_t n, value_list_with_min_size<n> values>
+using drop_n_t = typename drop_n<n, values>::type;
 
 
 template<auto... v> requires(sizeof...(v) > 0)
