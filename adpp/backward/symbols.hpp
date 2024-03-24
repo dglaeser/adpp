@@ -56,6 +56,33 @@ template<auto value>
 inline constexpr constant<value> cval;
 
 
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    struct is_constant : std::false_type {};
+    template<auto v>
+    struct is_constant<constant<v>> : std::true_type {};
+
+    template<typename T>
+    struct constant_value;
+    template<auto v>
+    struct constant_value<constant<v>> { static constexpr auto value = v; };
+
+    template<typename T>
+    struct is_zero_constant;
+    template<typename T> requires(!is_constant<T>::value)
+    struct is_zero_constant<T> : std::false_type {};
+    template<typename T> requires(is_constant<T>::value)
+    struct is_zero_constant<T> : std::bool_constant<constant_value<T>::value == 0> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<typename T>
+inline constexpr bool is_zero_constant_v = detail::is_zero_constant<std::remove_cvref_t<T>>::value;
+
+
 struct negatable {
     template<typename Self>
     constexpr auto operator-(this Self&& self) {
