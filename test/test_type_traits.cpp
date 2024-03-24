@@ -144,12 +144,12 @@ int main() {
     {
         using md_index = adpp::md_index_constant<1, 2, 3>;
         static_assert(md_index::size == 3);
-        static_assert(md_index::get(adpp::index_constant<0>{}) == 1);
-        static_assert(md_index::get(adpp::index_constant<1>{}) == 2);
-        static_assert(md_index::get(adpp::index_constant<2>{}) == 3);
-        static_assert(adpp::md_index<1, 2, 3>.get(adpp::index_constant<0>{}) == 1);
-        static_assert(adpp::md_index<1, 2, 3>.get(adpp::index_constant<1>{}) == 2);
-        static_assert(adpp::md_index<1, 2, 3>.get(adpp::index_constant<2>{}) == 3);
+        static_assert(md_index::at(adpp::index_constant<0>{}) == 1);
+        static_assert(md_index::at(adpp::index_constant<1>{}) == 2);
+        static_assert(md_index::at(adpp::index_constant<2>{}) == 3);
+        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<0>{}) == 1);
+        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<1>{}) == 2);
+        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<2>{}) == 3);
     }
 
     {
