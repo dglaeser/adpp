@@ -260,8 +260,8 @@ template<auto shape, typename... T>
 struct is_expression<tensor_expression<shape, T...>> : std::true_type {};
 template<auto shape, typename... T>
 struct is_scalar_expression<tensor_expression<shape, T...>> : std::false_type {};
-template<auto shape, typename... T> requires(std::conjunction_v<is_symbol<T>...>)
-struct is_symbol<tensor_expression<shape, T...>> : std::true_type {};
+template<auto shape, typename... T>
+struct operands<tensor_expression<shape, T...>> : std::type_identity<type_list<T...>> {};
 
 
 template<term... Es>
@@ -280,8 +280,8 @@ template<typename... T>
 struct is_expression<vector_expression<T...>> : std::true_type {};
 template<typename... T>
 struct is_scalar_expression<vector_expression<T...>> : std::false_type {};
-template<typename... T> requires(std::conjunction_v<is_symbol<T>...>)
-struct is_symbol<vector_expression<T...>> : std::true_type {};
+template<typename... T>
+struct operands<vector_expression<T...>> : std::type_identity<type_list<T...>> {};
 
 
 #ifndef DOXYGEN

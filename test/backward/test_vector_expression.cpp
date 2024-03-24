@@ -60,7 +60,6 @@ int main() {
     "vec"_test = [] () {
         vec<3> v;
         static constexpr auto result = evaluate(v, at(v = std::array{0, 1, 2}));
-        static_assert(adpp::backward::is_symbol_v<std::remove_cvref_t<decltype(v)>>);
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(result)>,
             adpp::backward::md_array<int, adpp::md_shape<3, 1>{}>
