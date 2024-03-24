@@ -8,6 +8,18 @@
 
 namespace adpp {
 
+template<auto a, auto b>
+struct is_less : std::bool_constant<(a < b)> {};
+template<auto a, auto b>
+inline constexpr bool is_less_v = is_less<a, b>::value;
+
+
+template<auto a, auto b>
+struct is_equal : std::bool_constant<(a == b)> {};
+template<auto a, auto b>
+inline constexpr bool is_equal_v = is_equal<a, b>::value;
+
+
 template<std::size_t i>
 struct index_constant : std::integral_constant<std::size_t, i> {
     constexpr auto incremented() const {
@@ -56,6 +68,14 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
     static constexpr auto get_at(index_constant<i> idx) {
         using base = detail::values<std::make_index_sequence<sizeof...(v)>, v...>;
         return base::get_at(idx);
+    }
+
+    template<auto... _v>
+    constexpr bool operator==(const value_list<_v...>&) const {
+        if constexpr (sizeof...(_v) != size)
+            return false;
+        else
+            return std::conjunction_v<is_equal<v, _v>...>;
     }
 };
 
@@ -139,11 +159,6 @@ template<std::size_t n, value_list_with_min_size<n+1>> struct split_at;
 template<std::size_t n, auto... v>
 struct split_at<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
 
-
-template<auto a, auto b>
-struct is_less : std::bool_constant<(a < b)> {};
-template<auto a, auto b>
-inline constexpr bool is_less_v = is_less<a, b>::value;
 
 template<auto... v> requires(sizeof...(v) > 0)
 inline constexpr auto last_value_v = std::get<sizeof...(v)-1>(std::tuple{v...});
