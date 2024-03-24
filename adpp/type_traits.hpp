@@ -193,30 +193,20 @@ inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>:
 
 
 template<std::size_t... n>
-struct dimensions {
-    static constexpr std::size_t size = sizeof...(n);
-    static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
+struct dimensions : value_list<n...> {
+    static constexpr std::size_t number_of_elements = sizeof...(n) > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
 
+    // TODO: remove?
     using as_list = adpp::value_list<n...>;
 
     constexpr dimensions() = default;
     constexpr dimensions(value_list<n...>) noexcept {}
 
-    template<std::size_t idx>
-    static constexpr std::size_t get(index_constant<idx> = {}) {
-        return split_at<idx, value_list<n...>>::tail::at(ic<0>);
-    }
-
-    template<std::size_t idx>
-    static constexpr auto operator[](index_constant<idx> = {}) {
-        return split_at<idx, value_list<index_constant<n>{}...>>::tail::at(ic<0>);
-    }
-
     template<std::integral... I>
-        requires(sizeof...(I) == size)
+        requires(sizeof...(I) == sizeof...(n))
     static constexpr std::size_t to_flat_index(I&&... indices) {
-        if constexpr (size == 0)
+        if constexpr (sizeof...(n) == 0)
             return 0;
         else
             return _to_flat_index<n...>(0, std::forward<I>(indices)...);
@@ -383,7 +373,7 @@ struct md_index_constant_iterator<dimensions<n...>, md_index_constant<i...>> {
         };
         if constexpr (increment) {
             auto incremented = index()[index_constant<dimension_to_increment>()].incremented();
-            if constexpr (incremented.value >= dimensions<n...>::get(index_constant<dimension_to_increment>{})
+            if constexpr (incremented.value >= dimensions<n...>::at(index_constant<dimension_to_increment>{})
                             && dimension_to_increment > 0)
                 return _recursion(std::bool_constant<true>(), tmp.with_prepended(index_constant<0>{}));
             else
