@@ -130,7 +130,7 @@ struct tensor_expression : bindable, indexed<Es...> {
         out << "[";
         bool first = true;
         _visit([&] <auto... i> (md_index_constant<i...> idx) {
-            if constexpr (is_vector() && idx.at(ic<0>) > 0) out << ", ";
+            if constexpr (is_vector() && idx.at(indices::i<0>) > 0) out << ", ";
             if constexpr (!is_vector() && idx.last() > 0) out << ", ";
             else if (!is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);
@@ -174,7 +174,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_shape, typename... T>
-        requires(tensor_expression::is_vector() and shape.at(ic<0>) == other_shape.at(ic<0>))
+        requires(tensor_expression::is_vector() and shape.at(indices::i<0>) == other_shape.at(indices::i<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
             if constexpr (is_zero_constant_v<decltype(e)>)
@@ -185,7 +185,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_shape, typename... T>
-        requires(!tensor_expression::is_vector() and shape.last_axis_size == other_shape.at(ic<0>))
+        requires(!tensor_expression::is_vector() and shape.last_axis_size == other_shape.at(indices::i<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         static constexpr auto my_dim = shape.size;
         using head = typename split_at<my_dim - 1, typename decltype(shape)::as_list>::head;
