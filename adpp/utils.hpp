@@ -181,6 +181,67 @@ struct crop_n : std::type_identity<typename split_at<values::size - n, values>::
 template<std::size_t n, typename values>
 using crop_n_t = typename crop_n<n, values>::type;
 
+//! class representing multi-dimensional indices
+template<std::size_t... i>
+struct md_index_constant {
+    using as_value_list = value_list<i...>;
+
+    static constexpr std::size_t dimension = sizeof...(i);
+
+    template<std::size_t _i>
+    constexpr md_index_constant(index_constant<_i>) requires(sizeof...(i) == 1) {}
+    template<std::size_t... _i>
+    constexpr md_index_constant(value_list<_i...>) requires(std::conjunction_v<is_equal<i, _i>...>) {}
+    constexpr md_index_constant() = default;
+
+    template<std::size_t idx> requires(idx < dimension)
+    static constexpr auto at(index_constant<idx> _i) noexcept {
+        return as_value_list::at(_i);
+    }
+
+    static constexpr std::size_t first() noexcept requires(sizeof...(i) > 0) {
+        return as_value_list::at(indices::i<0>);
+    }
+
+    static constexpr std::size_t last() noexcept requires(sizeof...(i) > 0) {
+        return as_value_list::at(indices::i<sizeof...(i) - 1>);
+    }
+
+    template<std::size_t idx>
+    static constexpr auto operator[](index_constant<idx> _i = {}) noexcept {
+        return value_list<index_constant<i>{}...>::at(_i);
+    }
+
+    template<std::size_t idx>
+    static constexpr auto with_prepended(index_constant<idx>) { return md_index_constant<idx, i...>{}; }
+    template<std::size_t idx>
+    static constexpr auto with_appended(index_constant<idx>) { return md_index_constant<i..., idx>{}; }
+    template<std::size_t... _i>
+    static constexpr auto with_appended(md_index_constant<_i...>) {
+        return adpp::md_index_constant{value_list<i..., _i...>{}};
+    }
+
+    template<std::size_t pos, std::size_t idx> requires(pos < dimension)
+    static constexpr auto with_index_at(index_constant<pos>, index_constant<idx>) {
+        using split = split_at<pos, value_list<i...>>;
+        using tail = drop_n_t<1, typename split::tail>;
+        return adpp::md_index_constant{typename split::head{} + value_list<idx>{} + tail{}};
+    }
+
+    template<std::size_t... _n>
+    constexpr bool operator==(const md_index_constant<_n...>&) const { return false; }
+    constexpr bool operator==(const md_index_constant&) const { return true; }
+};
+
+template<std::size_t i>
+md_index_constant(index_constant<i>) -> md_index_constant<i>;
+template<std::size_t... i>
+md_index_constant(value_list<i...>) -> md_index_constant<i...>;
+
+// TODO: put in indices namespace as well?
+template<std::size_t... i>
+inline constexpr md_index_constant<i...> md_index;
+
 //! class representing the shape of a multidimensional array
 template<std::size_t... n>
 struct md_shape {
@@ -211,6 +272,12 @@ struct md_shape {
         if constexpr (dimension != 0)
             return _to_flat_index<n...>(0, std::forward<I>(indices)...);
         return 0;
+    }
+
+    template<std::size_t... i>
+        requires(sizeof...(i) == dimension)
+    constexpr auto flat_index_of(md_index_constant<i...>) const noexcept {
+        return indices::i<_to_flat_index<n...>(0, i...)>;
     }
 
     template<std::size_t... _n>

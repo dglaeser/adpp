@@ -63,9 +63,9 @@ class md_array {
     constexpr md_array() = default;
 
     template<typename Self, std::size_t... i>
-    constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>& idx) {
+    constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>&) {
         static_assert(shape.flat_index_of(i...) < shape.count);
-        return self._values[idx.as_flat_index(shape)];
+        return self._values[shape.flat_index_of(i...)];
     }
 
     template<typename Self, std::integral... I>
@@ -140,9 +140,9 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<std::size_t... i>
-    constexpr auto operator[](const md_index_constant<i...>& idx) const {
-        static_assert(md_index_constant<i...>::as_flat_index(shape).value < size);
-        return this->make(idx.as_flat_index(shape));
+    constexpr auto operator[](const md_index_constant<i...>&) const {
+        static_assert(shape.flat_index_of(i...) < size);
+        return this->make(shape.flat_index_of(md_index<i...>));
     }
 
     template<std::size_t i>
