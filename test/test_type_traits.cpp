@@ -48,26 +48,6 @@ int main() {
     }
 
     {
-        static_assert(adpp::md_shape<>::size == 0);
-        static_assert(adpp::md_shape<1>::size == 1);
-        static_assert(adpp::md_shape<1, 2>::size == 2);
-        static_assert(adpp::md_shape<1, 2, 3>::size == 3);
-        static_assert(adpp::md_shape<1, 2, 3, 4>::size == 4);
-
-        static_assert(adpp::md_shape<>::number_of_elements == 0);
-        static_assert(adpp::md_shape<1>::number_of_elements == 1);
-        static_assert(adpp::md_shape<1, 2>::number_of_elements == 2);
-        static_assert(adpp::md_shape<2, 2>::number_of_elements == 4);
-        static_assert(adpp::md_shape<1, 2, 3>::number_of_elements == 6);
-
-        static_assert(adpp::md_shape<>::last_axis_size == 0);
-        static_assert(adpp::md_shape<1>::last_axis_size == 1);
-        static_assert(adpp::md_shape<1, 2>::last_axis_size == 2);
-        static_assert(adpp::md_shape<2, 3>::last_axis_size == 3);
-        static_assert(adpp::md_shape<1, 2, 3>::last_axis_size == 3);
-    }
-
-    {
         using md_index = adpp::md_index_constant<1, 2, 3>;
         static_assert(md_index::size == 3);
         static_assert(md_index::at(adpp::index_constant<0>{}) == 1);

@@ -16,9 +16,9 @@
 namespace adpp::backward {
 
 template<typename S, typename V>
-    requires(static_vec_n<std::remove_cvref_t<V>, S::shape.number_of_elements>)
+    requires(static_vec_n<std::remove_cvref_t<V>, S::shape.count>)
 struct tensor_value_binder : value_binder<S, V>{
-    static constexpr std::size_t number_of_sub_binders = S::shape.number_of_elements;
+    static constexpr std::size_t number_of_sub_binders = S::shape.count;
 
     using value_binder<S, V>::value_binder;
 
@@ -64,18 +64,18 @@ class md_array {
 
     template<typename Self, std::size_t... i>
     constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>& idx) {
-        static_assert(md_index_constant<i...>::as_flat_index(shape).value < shape.number_of_elements);
+        static_assert(shape.flat_index_of(i...) < shape.count);
         return self._values[idx.as_flat_index(shape)];
     }
 
     template<typename Self, std::integral... I>
-        requires(sizeof...(I) == shape.size)
+        requires(sizeof...(I) == shape.dimension)
     constexpr decltype(auto) operator[](this Self&& self, I&&... indices) {
-        return self._values[flat_index(shape, std::forward<I>(indices)...)];
+        return self._values[shape.flat_index_of(std::forward<I>(indices)...)];
     }
 
     template<typename Self, std::integral I>
-        requires(shape.size == 1 or (shape.size == 2 && shape.last_axis_size == 1))
+        requires(shape.dimension == 1 or (shape.dimension == 2 && shape.last() == 1))
     constexpr decltype(auto) operator[](this Self&& self, const I& index) {
         return self._values[index];
     }
@@ -84,13 +84,13 @@ class md_array {
     template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
 
  private:
-    std::array<T, shape.number_of_elements> _values;
+    std::array<T, shape.count> _values;
 };
 
 template<auto md_shape, term... Es>
-    requires(sizeof...(Es) > 0 and sizeof...(Es) == md_shape.number_of_elements and are_unique_v<Es...>)
+    requires(sizeof...(Es) > 0 and sizeof...(Es) == md_shape.count and are_unique_v<Es...>)
 struct tensor_expression : bindable, indexed<Es...> {
-    static constexpr std::size_t size = md_shape.number_of_elements;
+    static constexpr std::size_t size = md_shape.count;
     static constexpr auto shape = md_shape;
     using sub_expressions = type_list<Es...>;
 
@@ -146,7 +146,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<std::size_t i>
-        requires(shape.size == 1 or (shape.size == 2 && shape.last_axis_size == 1))
+        requires(shape.dimension == 1 or (shape.dimension == 2 && shape.last() == 1))
     constexpr auto operator[](const index_constant<i>& idx) const {
         return this->make(idx);
     }
@@ -174,7 +174,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_shape, typename... T>
-        requires(tensor_expression::is_vector() and shape.at(indices::i<0>) == other_shape.at(indices::i<0>))
+        requires(tensor_expression::is_vector() and shape.extent_in(indices::i<0>) == other_shape.extent_in(indices::i<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
             if constexpr (is_zero_constant_v<decltype(e)>)
@@ -185,9 +185,9 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<auto other_shape, typename... T>
-        requires(!tensor_expression::is_vector() and shape.last_axis_size == other_shape.at(indices::i<0>))
+        requires(!tensor_expression::is_vector() and shape.last() == other_shape.extent_in(indices::i<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
-        static constexpr auto my_dim = shape.size;
+        static constexpr auto my_dim = shape.dimension;
         using head = typename split_at<my_dim - 1, typename decltype(shape)::as_value_list>::head;
         using tail = typename split_at<1, typename decltype(other_shape)::as_value_list>::tail;
 
@@ -205,7 +205,7 @@ struct tensor_expression : bindable, indexed<Es...> {
                             return (*this)[my_idx]*other[other_idx];
                         else
                             return std::move(e) + (*this)[my_idx]*other[other_idx];
-                    }, cval<0>, md_index_constant_iterator{adpp::md_shape<shape.last_axis_size>{}})
+                    }, cval<0>, md_index_constant_iterator{adpp::md_shape<shape.last()>{}})
                 }
             );
         }, std::tuple{}, md_index_constant_iterator{new_shape});
@@ -223,7 +223,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     static constexpr bool is_vector() {
-        return shape.size == 2 and shape.last_axis_size == 1;
+        return shape.dimension == 2 and shape.last() == 1;
     }
 
  private:
@@ -252,7 +252,7 @@ struct tensor_expression : bindable, indexed<Es...> {
 };
 
 template<std::size_t... n, term... Es>
-    requires(md_shape<n...>::number_of_elements == sizeof...(Es))
+    requires(md_shape<n...>::count == sizeof...(Es))
 tensor_expression(md_shape<n...>, Es&&...) -> tensor_expression<md_shape<n...>{}, std::remove_cvref_t<Es>...>;
 
 
@@ -307,13 +307,14 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+// TODO: streamline vec with tensor? (i.e. make class and construct with ctad)
 template<std::size_t N, auto _ = [] () {}>
 using vec = typename detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
 
 template<auto shape, auto _ = [] () {}>
 struct tensor
-: detail::tensor_with<shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type>::type {
-    using base = detail::tensor_with<shape, typename detail::vars_n<_, shape.number_of_elements, type_list<>>::type>::type;
+: detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type {
+    using base = detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type;
     using base::operator=;
 
     template<std::size_t... n>

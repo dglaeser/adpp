@@ -13,69 +13,12 @@ namespace adpp {
 #ifndef DOXYGEN
 namespace detail {
 
-    template<auto... v>
-    struct last_value : std::integral_constant<std::size_t, value_list<v...>::at(indices::i<sizeof...(v)-1>)> {};
-    template<>
-    struct last_value<> : std::integral_constant<std::size_t, 0> {};
-
-}  // namespace detail
-#endif  // DOXYGEN
-
-template<std::size_t... n>
-struct md_shape {
-    static constexpr std::size_t size = sizeof...(n);
-    static constexpr std::size_t number_of_elements = value_list<n...>::reduce_with(std::multiplies<void>{}, size > 0 ? 1 : 0);
-    static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
-
-    using as_value_list = adpp::value_list<n...>;
-
-    constexpr md_shape() = default;
-    constexpr md_shape(value_list<n...>) noexcept {}
-
-    template<std::size_t idx>
-    static constexpr auto at(index_constant<idx> i) {
-        return as_value_list::at(i);
-    }
-
-    template<std::integral... I>
-        requires(sizeof...(I) == size)
-    friend constexpr std::size_t flat_index(const md_shape& dims, I&&... indices) {
-        if constexpr (size == 0)
-            return 0;
-        else
-            return dims._to_flat_index<n...>(0, std::forward<I>(indices)...);
-    }
-
-    template<std::size_t... _n>
-    constexpr bool operator==(const md_shape<_n...>&) const { return false; }
-    constexpr bool operator==(const md_shape&) const { return true; }
-
- private:
-    template<std::size_t _n0, std::size_t... _n, std::integral I0, std::integral... I>
-    static constexpr auto _to_flat_index(std::size_t current, const I0& i0, I&&... indices) {
-        if constexpr (sizeof...(I) == 0)
-            return current + i0;
-        else
-            return _to_flat_index<_n...>(
-                current + i0*value_list<_n...>::reduce_with(std::multiplies<void>{}, 1),
-                std::forward<I>(indices)...
-            );
-    }
-};
-
-template<std::size_t... n>
-inline constexpr md_shape<n...> shape;
-
-
-#ifndef DOXYGEN
-namespace detail {
-
     template<typename dims, std::size_t... indices>
     struct flat_index_closure;
     template<std::size_t dim1, std::size_t... dims, std::size_t i0, std::size_t... indices>
     struct flat_index_closure<md_shape<dim1, dims...>, i0, indices...> {
         static constexpr std::size_t value
-            = i0*md_shape<dim1, dims...>::number_of_elements
+            = i0*md_shape<dim1, dims...>::count
             + flat_index_closure<md_shape<dims...>, indices...>::value;
     };
     template<std::size_t... dims, std::size_t iN>
@@ -197,7 +140,7 @@ struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
         };
         if constexpr (increment) {
             auto incremented = index()[index_constant<dimension_to_increment>()].incremented();
-            if constexpr (incremented.value >= md_shape<n...>::at(index_constant<dimension_to_increment>{})
+            if constexpr (incremented.value >= md_shape<n...>::extent_in(index_constant<dimension_to_increment>{})
                             && dimension_to_increment > 0)
                 return _recursion(std::bool_constant<true>(), tmp.with_prepended(index_constant<0>{}));
             else
