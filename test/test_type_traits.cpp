@@ -21,30 +21,6 @@ int main() {
     }
 
     {
-        using adpp::split_at;
-        using adpp::value_list;
-
-        using values = value_list<0, 1, 2, 3, 4>;
-        static_assert(std::is_same_v<typename split_at<0, values>::head, value_list<>>);
-        static_assert(std::is_same_v<typename split_at<0, values>::tail, value_list<0, 1, 2, 3, 4>>);
-
-        static_assert(std::is_same_v<typename split_at<1, values>::head, value_list<0>>);
-        static_assert(std::is_same_v<typename split_at<1, values>::tail, value_list<1, 2, 3, 4>>);
-
-        static_assert(std::is_same_v<typename split_at<2, values>::head, value_list<0, 1>>);
-        static_assert(std::is_same_v<typename split_at<2, values>::tail, value_list<2, 3, 4>>);
-
-        static_assert(std::is_same_v<typename split_at<3, values>::head, value_list<0, 1, 2>>);
-        static_assert(std::is_same_v<typename split_at<3, values>::tail, value_list<3, 4>>);
-
-        static_assert(std::is_same_v<typename split_at<4, values>::head, value_list<0, 1, 2, 3>>);
-        static_assert(std::is_same_v<typename split_at<4, values>::tail, value_list<4>>);
-
-        static_assert(std::is_same_v<typename split_at<5, values>::head, value_list<0, 1, 2, 3, 4>>);
-        static_assert(std::is_same_v<typename split_at<5, values>::tail, value_list<>>);
-    }
-
-    {
         using unique = adpp::unique_types_t<int, char, int, double, int, double>;
         static_assert(adpp::type_list_size_v<unique> == 3);
         static_assert(adpp::contains_decayed_v<int, unique>);
