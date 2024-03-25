@@ -10,28 +10,6 @@
 
 namespace adpp {
 
-template<typename T>
-struct is_value_list : std::false_type {};
-template<auto... v>
-struct is_value_list<value_list<v...>> : std::true_type {};
-template<typename T>
-inline constexpr bool is_value_list_v = is_value_list<T>::value;
-
-template<typename T, std::size_t n>
-concept value_list_with_size = is_value_list_v<T> and T::size == n;
-template<typename T, std::size_t n>
-concept value_list_with_min_size = is_value_list_v<T> and T::size >= n;
-template<typename T, std::size_t n>
-concept value_list_with_max_size = is_value_list_v<T> and T::size <= n;
-
-
-
-template<std::size_t n, value_list_with_min_size<n> values>
-struct drop_n : std::type_identity<typename split_at<n, values>::tail> {};
-template<std::size_t n, value_list_with_min_size<n> values>
-using drop_n_t = typename drop_n<n, values>::type;
-
-
 template<auto... v> requires(sizeof...(v) > 0)
 inline constexpr auto last_value_v = split_at<sizeof...(v)-1, value_list<v...>>::tail::at(indices::i<0>);
 template<auto v0, auto... v>

@@ -111,5 +111,19 @@ int main() {
         static_assert(std::is_same_v<typename split_at<5, values>::tail, value_list<>>);
     };
 
+    "drop_n"_test = [] ()  {
+        using adpp::drop_n_t;
+        using adpp::value_list;
+        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1, 2, 3, 4>>, value_list<2, 3, 4>>);
+        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1>>, value_list<>>);
+    };
+
+    "crop_n"_test = [] ()  {
+        using adpp::crop_n_t;
+        using adpp::value_list;
+        static_assert(std::is_same_v<crop_n_t<2, value_list<0, 1, 2, 3, 4>>, value_list<0, 1, 2>>);
+        static_assert(std::is_same_v<crop_n_t<2, value_list<0, 1>>, value_list<>>);
+    };
+
     return EXIT_SUCCESS;
 }

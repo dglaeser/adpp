@@ -147,6 +147,19 @@ template<std::size_t n, typename values>
     requires(detail::is_value_list<values>::value and values::size >= n)
 struct split_at : detail::split_at_impl<n, values> {};
 
+//! Metafunction to drop the first n values in a list
+template<std::size_t n, typename values>
+struct drop_n : std::type_identity<typename split_at<n, values>::tail> {};
+template<std::size_t n, typename values>
+using drop_n_t = typename drop_n<n, values>::type;
+
+//! Metafunction to crop the last n values in a list
+template<std::size_t n, typename values>
+    requires(detail::is_value_list<values>::value and values::size >= n)
+struct crop_n : std::type_identity<typename split_at<values::size - n, values>::head> {};
+template<std::size_t n, typename values>
+using crop_n_t = typename crop_n<n, values>::type;
+
 //! \} group Utilities
 
 }  // namespace adpp
