@@ -7,6 +7,9 @@
 
 #include <adpp/utils.hpp>
 
+template<std::size_t idx>
+inline constexpr auto i = adpp::index<idx>;
+
 int main() {
     using boost::ut::operator""_test;
     using boost::ut::expect;
@@ -34,7 +37,6 @@ int main() {
 
     "index_constant"_test = [] () {
         using adpp::index_constant;
-        using adpp::indices::i;
 
         static_assert(i<0> == i<0>);
         static_assert(i<0> == 0);
@@ -50,7 +52,6 @@ int main() {
     };
 
     "value_list_access"_test = [] () {
-        using adpp::indices::i;
         using vl = adpp::value_list<0, 1, 2, 3>;
         static_assert(vl::size == 4);
         static_assert(vl::at(i<0>) == 0);
@@ -60,7 +61,6 @@ int main() {
     };
 
     "value_list_merge"_test = [] () {
-        using adpp::indices::i;
         using vl = adpp::value_list<0, 1>;
         constexpr auto merged = vl{} + adpp::value_list_v<4, 5>;
         static_assert(merged.size == 4);
@@ -163,9 +163,9 @@ int main() {
         static_assert(adpp::md_shape<2, 3>::first() == 2);
         static_assert(adpp::md_shape<1, 2, 3>::first() == 1);
 
-        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<0>) == 1);
-        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<1>) == 2);
-        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<2>) == 3);
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<0>) == 1);
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<1>) == 2);
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<2>) == 3);
     };
 
     "shape_flat_index"_test = [] () {
@@ -184,7 +184,6 @@ int main() {
     };
 
     "md_index_constant"_test = [] () {
-        using adpp::indices::i;
         static_assert(adpp::md_index<1, 2, 3>.dimension == 3);
         static_assert(adpp::md_index<1, 2, 3>.at(i<0>) == 1);
         static_assert(adpp::md_index<1, 2, 3>.at(i<1>) == 2);

@@ -14,7 +14,6 @@ using boost::ut::expect;
 using boost::ut::eq;
 
 using adpp::shape;
-using adpp::indices::i;
 using adpp::backward::var;
 using adpp::backward::vec;
 using adpp::backward::cval;
@@ -90,11 +89,13 @@ int main() {
     };
 
     "vec_expression"_test = [] () {
+        using adpp::index;
+
         vec<3> v;
         constexpr vector_expression e = {
-            v[i<0>]*v[i<1>],
-            v[i<1>]*v[i<2>],
-            v[i<2>]*v[i<0>]
+            v[index<0>]*v[index<1>],
+            v[index<1>]*v[index<2>],
+            v[index<2>]*v[index<0>]
         };
         static constexpr auto result = evaluate(e, at(v = {42, 2, 10}));
         expect(eq(result[0],  84));
