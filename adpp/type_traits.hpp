@@ -10,12 +10,6 @@
 
 namespace adpp {
 
-template<auto... v> requires(sizeof...(v) > 0)
-inline constexpr auto last_value_v = split_at<sizeof...(v)-1, value_list<v...>>::tail::at(indices::i<0>);
-template<auto v0, auto... v>
-inline constexpr auto first_value_v = v0;
-
-
 #ifndef DOXYGEN
 namespace detail {
 
@@ -30,8 +24,10 @@ namespace detail {
         static constexpr auto value = accumulate<op, op{}(current, next), values...>::value;
     };
 
-    template<auto... v> struct last_value : std::integral_constant<std::size_t, last_value_v<v...>> {};
-    template<> struct last_value<> : std::integral_constant<std::size_t, 0> {};
+    template<auto... v>
+    struct last_value : std::integral_constant<std::size_t, value_list<v...>::at(indices::i<sizeof...(v)-1>)> {};
+    template<>
+    struct last_value<> : std::integral_constant<std::size_t, 0> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
@@ -194,10 +190,9 @@ struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
     }
 
     static constexpr bool is_end() {
-        if constexpr (sizeof...(n) == 0)
-            return true;
-        else
-            return md_index_constant<i...>::at(index_constant<0>{}) >= first_value_v<n...>;
+        if constexpr (sizeof...(n) != 0)
+            return value_list<i...>::at(indices::i<0>) >= value_list<n...>::at(indices::i<0>);
+        return true;
     }
 
     static constexpr auto next() {
