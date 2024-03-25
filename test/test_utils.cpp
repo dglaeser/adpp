@@ -29,5 +29,22 @@ int main() {
         static_assert(adpp::is_equal_v<2.0, 1> == false);
     };
 
+    "index_constant"_test = [] () {
+        using adpp::index_constant;
+        using adpp::indices::i;
+
+        static_assert(i<0> == i<0>);
+        static_assert(i<0> == 0);
+
+        static_assert(i<1> != i<0>);
+        static_assert(i<1> != 0);
+
+        static_assert(i<1> > i<0>);
+        static_assert(i<0> < i<1>);
+
+        static_assert(i<1>.incremented() == i<2>);
+        static_assert(i<2>.incremented() == i<3>);
+    };
+
     return EXIT_SUCCESS;
 }

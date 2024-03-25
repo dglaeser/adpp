@@ -10,17 +10,6 @@
 
 namespace adpp {
 
-template<std::size_t i>
-struct index_constant : std::integral_constant<std::size_t, i> {
-    constexpr auto incremented() const {
-        return index_constant<i+1>{};
-    }
-
-    template<std::size_t o>
-    constexpr auto operator<=>(index_constant<o>) const { return i <=> o; }
-    constexpr auto operator<=>(std::size_t o) const { return i <=> o; }
-    constexpr operator std::size_t() const { return i; }
-};
 template<std::size_t idx>
 inline constexpr index_constant<idx> ic;
 
