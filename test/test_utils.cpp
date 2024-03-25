@@ -166,12 +166,34 @@ int main() {
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<0>) == 1);
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<1>) == 2);
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<2>) == 3);
+    };
 
+    "shape_flat_index"_test = [] () {
         static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 0, 1) == 1);
         static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 0, 2) == 2);
         static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 1, 1) == 4);
         static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 1, 2) == 5);
         static_assert(adpp::shape<2, 2, 3>.flat_index_of(1, 0, 0) == 6);
+
+        using adpp::md_index;
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(md_index<0, 0, 1>) == 1);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(md_index<0, 0, 2>) == 2);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(md_index<0, 1, 1>) == 4);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(md_index<0, 1, 2>) == 5);
+        static_assert(adpp::shape<2, 2, 3>.flat_index_of(md_index<1, 0, 0>) == 6);
+    };
+
+    "md_index_constant"_test = [] () {
+        using adpp::indices::i;
+        static_assert(adpp::md_index<1, 2, 3>.dimension == 3);
+        static_assert(adpp::md_index<1, 2, 3>.at(i<0>) == 1);
+        static_assert(adpp::md_index<1, 2, 3>.at(i<1>) == 2);
+        static_assert(adpp::md_index<1, 2, 3>.at(i<2>) == 3);
+        static_assert(adpp::md_index<1, 2, 3>[i<0>] == 1);
+        static_assert(adpp::md_index<1, 2, 3>[i<1>] == 2);
+        static_assert(adpp::md_index<1, 2, 3>[i<2>] == 3);
+        static_assert(adpp::md_index<1, 2, 3>.first() == 1);
+        static_assert(adpp::md_index<1, 2, 3>.last() == 3);
     };
 
     return EXIT_SUCCESS;

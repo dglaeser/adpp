@@ -48,40 +48,6 @@ int main() {
     }
 
     {
-        using md_index = adpp::md_index_constant<1, 2, 3>;
-        static_assert(md_index::size == 3);
-        static_assert(md_index::at(adpp::index_constant<0>{}) == 1);
-        static_assert(md_index::at(adpp::index_constant<1>{}) == 2);
-        static_assert(md_index::at(adpp::index_constant<2>{}) == 3);
-        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<0>{}) == 1);
-        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<1>{}) == 2);
-        static_assert(adpp::md_index<1, 2, 3>.at(adpp::index_constant<2>{}) == 3);
-    }
-
-    {
-        using adpp::md_index_constant;
-        using adpp::md_shape;
-        static_assert(md_index_constant<0, 0, 0>::as_flat_index(md_shape<2, 2, 3>{}) == 0);
-        static_assert(md_index_constant<0, 0, 1>::as_flat_index(md_shape<2, 2, 3>{}) == 1);
-        static_assert(md_index_constant<0, 0, 2>::as_flat_index(md_shape<2, 2, 3>{}) == 2);
-        static_assert(md_index_constant<0, 0, 0>{}.last() == 0);
-        static_assert(md_index_constant<0, 0, 1>{}.last() == 1);
-        static_assert(md_index_constant<0, 0, 2>{}.last() == 2);
-
-        static_assert(md_index_constant<0, 1, 0>::as_flat_index(md_shape<2, 2, 3>{}) == 3);
-        static_assert(md_index_constant<0, 1, 1>::as_flat_index(md_shape<2, 2, 3>{}) == 4);
-        static_assert(md_index_constant<0, 1, 2>::as_flat_index(md_shape<2, 2, 3>{}) == 5);
-
-        static_assert(md_index_constant<1, 0, 0>::as_flat_index(md_shape<2, 2, 3>{}) == 6);
-        static_assert(md_index_constant<1, 0, 1>::as_flat_index(md_shape<2, 2, 3>{}) == 7);
-        static_assert(md_index_constant<1, 0, 2>::as_flat_index(md_shape<2, 2, 3>{}) == 8);
-
-        static_assert(md_index_constant<1, 1, 0>::as_flat_index(md_shape<2, 2, 3>{}) == 9);
-        static_assert(md_index_constant<1, 1, 1>::as_flat_index(md_shape<2, 2, 3>{}) == 10);
-        static_assert(md_index_constant<1, 1, 2>::as_flat_index(md_shape<2, 2, 3>{}) == 11);
-    }
-
-    {
         using adpp::md_index;
         using adpp::value_list;
         using adpp::indices::i;
