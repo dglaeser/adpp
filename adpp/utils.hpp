@@ -181,6 +181,58 @@ struct crop_n : std::type_identity<typename split_at<values::size - n, values>::
 template<std::size_t n, typename values>
 using crop_n_t = typename crop_n<n, values>::type;
 
+//! class representing the shape of a multidimensional array
+template<std::size_t... n>
+struct md_shape {
+    using as_value_list = adpp::value_list<n...>;
+
+    static constexpr std::size_t dimension = sizeof...(n);
+    static constexpr std::size_t count = value_list<n...>::reduce_with(std::multiplies<void>{}, dimension > 0 ? 1 : 0);
+
+    static constexpr std::size_t first() noexcept requires(dimension > 0) {
+        return value_list<n...>::at(indices::i<0>);
+    }
+
+    static constexpr std::size_t last() noexcept requires(dimension > 0) {
+        return value_list<n...>::at(indices::i<sizeof...(n)-1>);
+    }
+
+    constexpr md_shape() = default;
+    constexpr md_shape(value_list<n...>) noexcept {}
+
+    template<std::size_t idx>
+    static constexpr auto extent_in(index_constant<idx> i) noexcept {
+        return as_value_list::at(i);
+    }
+
+    template<std::integral... I>
+        requires(sizeof...(I) == dimension)
+    constexpr std::size_t flat_index_of(I&&... indices) const noexcept {
+        if constexpr (dimension != 0)
+            return _to_flat_index<n...>(0, std::forward<I>(indices)...);
+        return 0;
+    }
+
+    template<std::size_t... _n>
+    constexpr bool operator==(const md_shape<_n...>&) const noexcept { return false; }
+    constexpr bool operator==(const md_shape&) const noexcept { return true; }
+
+ private:
+    template<std::size_t _n0, std::size_t... _n, std::integral I0, std::integral... I>
+    static constexpr auto _to_flat_index(std::size_t current, const I0& i0, I&&... indices) noexcept {
+        if constexpr (sizeof...(I) == 0)
+            return current + i0;
+        else
+            return _to_flat_index<_n...>(
+                current + i0*value_list<_n...>::reduce_with(std::multiplies<void>{}, 1),
+                std::forward<I>(indices)...
+            );
+    }
+};
+
+template<std::size_t... n>
+inline constexpr md_shape<n...> shape;
+
 //! \} group Utilities
 
 }  // namespace adpp

@@ -134,5 +134,45 @@ int main() {
         static_assert(std::is_same_v<crop_n_t<2, value_list<0, 1>>, value_list<>>);
     };
 
+    "md_shape"_test = [] () {
+        static_assert(adpp::md_shape<>{} == adpp::shape<>);
+        static_assert(adpp::md_shape<0, 1>{} == adpp::shape<0, 1>);
+        static_assert(adpp::md_shape<0, 2>{} != adpp::shape<0, 1>);
+        static_assert(adpp::md_shape<0, 1, 2>{} != adpp::shape<0, 1>);
+        static_assert(adpp::md_shape<0, 1>{} != adpp::shape<0, 1, 2>);
+
+        static_assert(adpp::md_shape<>::dimension == 0);
+        static_assert(adpp::md_shape<1>::dimension == 1);
+        static_assert(adpp::md_shape<1, 2>::dimension == 2);
+        static_assert(adpp::md_shape<1, 2, 3>::dimension == 3);
+        static_assert(adpp::md_shape<1, 2, 3, 4>::dimension == 4);
+
+        static_assert(adpp::md_shape<>::count == 0);
+        static_assert(adpp::md_shape<1>::count == 1);
+        static_assert(adpp::md_shape<1, 2>::count == 2);
+        static_assert(adpp::md_shape<2, 2>::count == 4);
+        static_assert(adpp::md_shape<1, 2, 3>::count == 6);
+
+        static_assert(adpp::md_shape<1>::last() == 1);
+        static_assert(adpp::md_shape<1, 2>::last() == 2);
+        static_assert(adpp::md_shape<2, 3>::last() == 3);
+        static_assert(adpp::md_shape<1, 2, 3>::last() == 3);
+
+        static_assert(adpp::md_shape<1>::first() == 1);
+        static_assert(adpp::md_shape<1, 2>::first() == 1);
+        static_assert(adpp::md_shape<2, 3>::first() == 2);
+        static_assert(adpp::md_shape<1, 2, 3>::first() == 1);
+
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<0>) == 1);
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<1>) == 2);
+        static_assert(adpp::md_shape<1, 2, 3>::extent_in(adpp::indices::i<2>) == 3);
+
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 0, 1) == 1);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 0, 2) == 2);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 1, 1) == 4);
+        static_assert(adpp::shape<1, 2, 3>.flat_index_of(0, 1, 2) == 5);
+        static_assert(adpp::shape<2, 2, 3>.flat_index_of(1, 0, 0) == 6);
+    };
+
     return EXIT_SUCCESS;
 }
