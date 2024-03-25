@@ -15,10 +15,20 @@ namespace adpp {
 //! \addtogroup Utilities
 //! \{
 
-/*!
- * \brief Can be used to signal e.g. automatic type deduction.
- */
+//! Can be used to signal e.g. automatic type deduction.
 struct automatic {};
+
+//! type trait that signals if a is smaller than b.
+template<auto a, auto b>
+struct is_less : std::bool_constant<(a < b)> {};
+template<auto a, auto b>
+inline constexpr bool is_less_v = is_less<a, b>::value;
+
+//! type trait that signals if a is equal to b.
+template<auto a, auto b>
+struct is_equal : std::bool_constant<(a == b)> {};
+template<auto a, auto b>
+inline constexpr bool is_equal_v = is_equal<a, b>::value;
 
 //! \} group Common
 

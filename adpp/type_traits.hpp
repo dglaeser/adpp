@@ -6,22 +6,12 @@
 #include <utility>
 #include <array>
 
+#include "utils.hpp"
+
 namespace adpp {
 
 template<typename T>
 struct always_false : std::false_type {};
-
-template<auto a, auto b>
-struct is_less : std::bool_constant<(a < b)> {};
-template<auto a, auto b>
-inline constexpr bool is_less_v = is_less<a, b>::value;
-
-
-template<auto a, auto b>
-struct is_equal : std::bool_constant<(a == b)> {};
-template<auto a, auto b>
-inline constexpr bool is_equal_v = is_equal<a, b>::value;
-
 
 template<std::size_t i>
 struct index_constant : std::integral_constant<std::size_t, i> {
