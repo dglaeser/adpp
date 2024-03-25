@@ -25,44 +25,6 @@ template<typename T, std::size_t n>
 concept value_list_with_max_size = is_value_list_v<T> and T::size <= n;
 
 
-#ifndef DOXYGEN
-namespace detail {
-
-    template<
-        std::size_t,
-        std::size_t,
-        typename head,
-        typename tail,
-        auto...>
-    struct split_at;
-
-    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
-        requires(i < n)
-    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
-    : split_at<n, i+1, value_list<h..., v0>, value_list<t...>, v...> {};
-
-    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
-        requires(i >= n)
-    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
-    : split_at<n, i+1, value_list<h...>, value_list<t..., v0>, v...> {};
-
-    template<std::size_t n, std::size_t i, auto... h, auto... t>
-    struct split_at<n, i, value_list<h...>, value_list<t...>> {
-        using head = value_list<h...>;
-        using tail = value_list<t...>;
-    };
-
-    template<std::size_t, typename>
-    struct split_at_impl;
-    template<std::size_t n, auto... v>
-    struct split_at_impl<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
-
-}  // namespace detail
-#endif  // DOXYGEN
-
-template<std::size_t n, value_list_with_min_size<n> values>
-struct split_at : detail::split_at_impl<n, values> {};
-
 
 template<std::size_t n, value_list_with_min_size<n> values>
 struct drop_n : std::type_identity<typename split_at<n, values>::tail> {};

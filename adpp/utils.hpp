@@ -105,6 +105,48 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
 template<std::size_t... v>
 inline constexpr value_list<v...> value_list_v;
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    struct is_value_list : std::false_type {};
+
+    template<auto... v>
+    struct is_value_list<value_list<v...>> : std::true_type {};
+
+    template<std::size_t, std::size_t, typename head, typename tail, auto...>
+    struct split_at;
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
+        requires(i < n)
+    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
+    : split_at<n, i+1, value_list<h..., v0>, value_list<t...>, v...> {};
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t, auto v0, auto... v>
+        requires(i >= n)
+    struct split_at<n, i, value_list<h...>, value_list<t...>, v0, v...>
+    : split_at<n, i+1, value_list<h...>, value_list<t..., v0>, v...> {};
+
+    template<std::size_t n, std::size_t i, auto... h, auto... t>
+    struct split_at<n, i, value_list<h...>, value_list<t...>> {
+        using head = value_list<h...>;
+        using tail = value_list<t...>;
+    };
+
+    template<std::size_t, typename>
+    struct split_at_impl;
+    template<std::size_t n, auto... v>
+    struct split_at_impl<n, value_list<v...>> : detail::split_at<n, 0, value_list<>, value_list<>, v...> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+//! Metafunction to split a value_list at the given index into head & tail lists
+template<std::size_t n, typename values>
+    requires(detail::is_value_list<values>::value and values::size >= n)
+struct split_at : detail::split_at_impl<n, values> {};
+
 //! \} group Utilities
 
 }  // namespace adpp
