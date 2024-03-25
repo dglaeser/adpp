@@ -21,12 +21,12 @@ int main() {
     }
 
     {
-        using adpp::ic;
         using adpp::value_list;
-        static_assert(value_list<0, 1, 2, 3>::at(ic<0>) == 0);
-        static_assert(value_list<0, 1, 2, 3>::at(ic<1>) == 1);
-        static_assert(value_list<0, 1, 2, 3>::at(ic<2>) == 2);
-        static_assert(value_list<0, 1, 2, 42>::at(ic<3>) == 42);
+        using adpp::indices::i;
+        static_assert(value_list<0, 1, 2, 3>::at(i<0>) == 0);
+        static_assert(value_list<0, 1, 2, 3>::at(i<1>) == 1);
+        static_assert(value_list<0, 1, 2, 3>::at(i<2>) == 2);
+        static_assert(value_list<0, 1, 2, 42>::at(i<3>) == 42);
     }
 
     {
@@ -176,16 +176,16 @@ int main() {
     }
 
     {
-        using adpp::ic;
         using adpp::md_index;
         using adpp::value_list;
-        static_assert(md_index<0, 0, 0>.with_index_at(ic<0>, ic<42>) == md_index<42, 0, 0>);
+        using adpp::indices::i;
+        static_assert(md_index<0, 0, 0>.with_index_at(i<0>, i<42>) == md_index<42, 0, 0>);
     }
 
     {
-        using adpp::ic;
         using adpp::md_index;
-        static_assert(md_index<0, 0, 0>.with_appended(ic<42>) == md_index<0, 0, 0, 42>);
+        using adpp::indices::i;
+        static_assert(md_index<0, 0, 0>.with_appended(i<42>) == md_index<0, 0, 0, 42>);
         static_assert(md_index<0, 0, 0>.with_appended(md_index<42, 43>) == md_index<0, 0, 0, 42, 43>);
     }
 

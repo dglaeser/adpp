@@ -10,10 +10,6 @@
 
 namespace adpp {
 
-template<std::size_t idx>
-inline constexpr index_constant<idx> ic;
-
-
 #ifndef DOXYGEN
 namespace detail {
 
@@ -137,7 +133,7 @@ using drop_n_t = typename drop_n<n, values>::type;
 
 
 template<auto... v> requires(sizeof...(v) > 0)
-inline constexpr auto last_value_v = split_at<sizeof...(v)-1, value_list<v...>>::tail::at(ic<0>);
+inline constexpr auto last_value_v = split_at<sizeof...(v)-1, value_list<v...>>::tail::at(indices::i<0>);
 template<auto v0, auto... v>
 inline constexpr auto first_value_v = v0;
 
