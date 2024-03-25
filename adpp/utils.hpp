@@ -82,6 +82,11 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
         return base::at(idx);
     }
 
+    template<typename op, typename T>
+    static constexpr auto reduce_with(op&& action, T&& value) {
+        return _reduce_with(std::forward<op>(action), std::forward<T>(value), v...);
+    }
+
     template<auto... _v>
     constexpr auto operator+(const value_list<_v...>&) const {
         return value_list<v..., _v...>{};
@@ -100,9 +105,25 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
         s << "]";
         return s;
     }
+
+ private:
+    template<typename op, typename T>
+    static constexpr auto _reduce_with(op&&, T&& initial) noexcept {
+        return std::forward<T>(initial);
+    }
+
+    template<typename op, typename T, typename V0, typename... V>
+    static constexpr auto _reduce_with(op&& action, T&& initial, V0&& v0, V&&... values) noexcept {
+        auto next = action(std::forward<T>(initial), std::forward<V0>(v0));
+        if constexpr (sizeof...(V) == 0) {
+            return next;
+        } else {
+            return _reduce_with(std::forward<op>(action), std::move(next), std::forward<V>(values)...);
+        }
+    }
 };
 
-template<std::size_t... v>
+template<auto... v>
 inline constexpr value_list<v...> value_list_v;
 
 

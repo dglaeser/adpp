@@ -13,17 +13,6 @@ namespace adpp {
 #ifndef DOXYGEN
 namespace detail {
 
-    template<typename op, auto...>
-    struct accumulate;
-    template<typename op, auto current>
-    struct accumulate<op, current> {
-        static constexpr auto value = current;
-    };
-    template<typename op, auto current, auto next, auto... values>
-    struct accumulate<op, current, next, values...> {
-        static constexpr auto value = accumulate<op, op{}(current, next), values...>::value;
-    };
-
     template<auto... v>
     struct last_value : std::integral_constant<std::size_t, value_list<v...>::at(indices::i<sizeof...(v)-1>)> {};
     template<>
@@ -32,14 +21,10 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<auto initial, typename op, auto... values>
-inline constexpr auto accumulate_v = detail::accumulate<op, initial, values...>::value;
-
-
 template<std::size_t... n>
 struct md_shape {
     static constexpr std::size_t size = sizeof...(n);
-    static constexpr std::size_t number_of_elements = size > 0 ? accumulate_v<1, std::multiplies<void>, n...> : 0;
+    static constexpr std::size_t number_of_elements = size > 0 ? value_list<n...>::reduce_with(std::multiplies<void>{}, 1) : 0;
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
 
     // TODO: remove?
@@ -73,7 +58,7 @@ struct md_shape {
             return current + i0;
         else
             return _to_flat_index<_n...>(
-                current + i0*accumulate_v<1, std::multiplies<void>, _n...>,
+                current + i0*value_list<_n...>::reduce_with(std::multiplies<void>{}, 1),
                 std::forward<I>(indices)...
             );
     }
