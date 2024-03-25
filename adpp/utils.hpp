@@ -9,6 +9,7 @@
 #pragma once
 
 #include <type_traits>
+#include <ostream>
 
 namespace adpp {
 
@@ -49,6 +50,60 @@ template<std::size_t idx>
 inline constexpr index_constant<idx> i;
 
 }  // namespace indices
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<std::size_t i, auto v>
+    struct value_i {
+        static constexpr auto at(index_constant<i>) {
+            return v;
+        }
+    };
+
+    template<typename I, auto...> struct values;
+    template<std::size_t... i, auto... v> requires(sizeof...(i) == sizeof...(v))
+    struct values<std::index_sequence<i...>, v...> : value_i<i, v>... {
+        using value_i<i, v>::at...;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+//! class to represent a list of values.
+template<auto... v>
+struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...> {
+    static constexpr std::size_t size = sizeof...(v);
+
+    template<std::size_t i> requires(i < sizeof...(v))
+    static constexpr auto at(index_constant<i> idx) {
+        using base = detail::values<std::make_index_sequence<sizeof...(v)>, v...>;
+        return base::at(idx);
+    }
+
+    template<auto... _v>
+    constexpr auto operator+(const value_list<_v...>&) const {
+        return value_list<v..., _v...>{};
+    }
+
+    template<auto... _v>
+    constexpr bool operator==(const value_list<_v...>&) const {
+        if constexpr (sizeof...(_v) == size)
+            return std::conjunction_v<is_equal<v, _v>...>;
+        return false;
+    }
+
+    friend std::ostream& operator<<(std::ostream& s, const value_list&) {
+        s << "[";
+        (s << ... << ((v == at(indices::i<0>) ? "" : ", ") + std::to_string(v)));
+        s << "]";
+        return s;
+    }
+};
+
+template<std::size_t... v>
+inline constexpr value_list<v...> value_list_v;
 
 //! \} group Utilities
 

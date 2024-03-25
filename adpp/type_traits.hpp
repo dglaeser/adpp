@@ -10,68 +10,6 @@
 
 namespace adpp {
 
-#ifndef DOXYGEN
-namespace detail {
-
-    template<std::size_t i, auto v>
-    struct value_i {
-        static constexpr auto at(index_constant<i>) {
-            return v;
-        }
-    };
-
-    template<typename I, auto...>
-    struct values;
-    template<std::size_t... i, auto... v> requires(sizeof...(i) == sizeof...(v))
-    struct values<std::index_sequence<i...>, v...> : value_i<i, v>... {
-        using value_i<i, v>::at...;
-    };
-
-}  // namespace detail
-#endif  // DOXYGEN
-
-template<auto... v>
-struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...> {
-    static constexpr std::size_t size = sizeof...(v);
-
-    template<std::size_t i> requires(i < sizeof...(v))
-    static constexpr auto at(index_constant<i> idx) {
-        using base = detail::values<std::make_index_sequence<sizeof...(v)>, v...>;
-        return base::at(idx);
-    }
-
-    template<auto... _v>
-    constexpr auto operator+(const value_list<_v...>&) const {
-        return value_list<v..., _v...>{};
-    }
-
-    template<auto... _v>
-    constexpr bool operator==(const value_list<_v...>&) const {
-        if constexpr (sizeof...(_v) != size)
-            return false;
-        else
-            return std::conjunction_v<is_equal<v, _v>...>;
-    }
-
-    friend std::ostream& operator<<(std::ostream& s, const value_list& vl) {
-        s << "[";
-        if constexpr (sizeof...(v) > 0)
-            vl._push_to<v...>(s);
-        s << "]";
-        return s;
-    }
-
- private:
-    template<auto v0, auto... _v>
-    void _push_to(std::ostream& s) const {
-        s << v0;
-        if constexpr (sizeof...(_v) > 0) {
-            s << ", ";
-            _push_to<_v...>(s);
-        }
-    }
-};
-
 template<typename T>
 struct is_value_list : std::false_type {};
 template<auto... v>
