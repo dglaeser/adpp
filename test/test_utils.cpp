@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -85,6 +86,14 @@ int main() {
         std::ostringstream s;
         s << adpp::value_list_v<0, 42, 43, 44>;
         expect(eq(s.str(), std::string{"[0, 42, 43, 44]"}));
+    };
+
+    "value_list_reduce"_test = [] () {
+        static_assert(adpp::value_list_v<0, 1, 2, 3>.reduce_with(std::plus<void>{}, 0) == 6);
+        static_assert(adpp::value_list_v<0, 1, 2, 3>.reduce_with(std::plus<void>{}, 1) == 7);
+        static_assert(adpp::value_list_v<1, 2, 3, 4>.reduce_with(std::multiplies<void>{}, 1) == 24);
+        static_assert(adpp::value_list_v<1, 2, 3.0, 4>.reduce_with(std::multiplies<void>{}, 1) == 24.0);
+        static_assert(adpp::value_list_v<1, 2, 3, 4>.reduce_with(std::multiplies<void>{}, 0) == 0);
     };
 
     "split_value_list"_test = [] {

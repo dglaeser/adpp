@@ -48,13 +48,6 @@ int main() {
     }
 
     {
-        static_assert(adpp::accumulate_v<0, std::plus<void>, 1, 2, 3> == 6);
-        static_assert(adpp::accumulate_v<1, std::plus<void>, 1, 2, 3> == 7);
-        static_assert(adpp::accumulate_v<1, std::multiplies<void>, 1, 2, 3> == 6);
-        static_assert(adpp::accumulate_v<0, std::multiplies<void>, 1, 2.0, 3> == 0);
-    }
-
-    {
         static_assert(adpp::md_shape<>::size == 0);
         static_assert(adpp::md_shape<1>::size == 1);
         static_assert(adpp::md_shape<1, 2>::size == 2);
