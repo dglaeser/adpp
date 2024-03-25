@@ -44,12 +44,8 @@ struct index_constant : std::integral_constant<std::size_t, i> {
     static constexpr auto incremented() { return index_constant<i+1>{}; }
 };
 
-namespace indices {
-
 template<std::size_t idx>
-inline constexpr index_constant<idx> i;
-
-}  // namespace indices
+inline constexpr index_constant<idx> index;
 
 
 #ifndef DOXYGEN
@@ -101,7 +97,7 @@ struct value_list : detail::values<std::make_index_sequence<sizeof...(v)>, v...>
 
     friend std::ostream& operator<<(std::ostream& s, const value_list&) {
         s << "[";
-        (s << ... << ((v == at(indices::i<0>) ? "" : ", ") + std::to_string(v)));
+        (s << ... << ((v == at(index<0>) ? "" : ", ") + std::to_string(v)));
         s << "]";
         return s;
     }
@@ -200,11 +196,11 @@ struct md_index_constant {
     }
 
     static constexpr std::size_t first() noexcept requires(sizeof...(i) > 0) {
-        return as_value_list::at(indices::i<0>);
+        return as_value_list::at(index<0>);
     }
 
     static constexpr std::size_t last() noexcept requires(sizeof...(i) > 0) {
-        return as_value_list::at(indices::i<sizeof...(i) - 1>);
+        return as_value_list::at(index<sizeof...(i) - 1>);
     }
 
     template<std::size_t idx>
@@ -238,7 +234,6 @@ md_index_constant(index_constant<i>) -> md_index_constant<i>;
 template<std::size_t... i>
 md_index_constant(value_list<i...>) -> md_index_constant<i...>;
 
-// TODO: put in indices namespace as well?
 template<std::size_t... i>
 inline constexpr md_index_constant<i...> md_index;
 
@@ -251,11 +246,11 @@ struct md_shape {
     static constexpr std::size_t count = value_list<n...>::reduce_with(std::multiplies<void>{}, dimension > 0 ? 1 : 0);
 
     static constexpr std::size_t first() noexcept requires(dimension > 0) {
-        return value_list<n...>::at(indices::i<0>);
+        return value_list<n...>::at(index<0>);
     }
 
     static constexpr std::size_t last() noexcept requires(dimension > 0) {
-        return value_list<n...>::at(indices::i<sizeof...(n)-1>);
+        return value_list<n...>::at(index<sizeof...(n)-1>);
     }
 
     constexpr md_shape() = default;
@@ -277,7 +272,7 @@ struct md_shape {
     template<std::size_t... i>
         requires(sizeof...(i) == dimension)
     constexpr auto flat_index_of(md_index_constant<i...>) const noexcept {
-        return indices::i<_to_flat_index<n...>(0, i...)>;
+        return index<_to_flat_index<n...>(0, i...)>;
     }
 
     template<std::size_t... _n>

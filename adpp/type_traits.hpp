@@ -25,7 +25,7 @@ struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
 
     static constexpr bool is_end() {
         if constexpr (sizeof...(n) != 0)
-            return value_list<i...>::at(indices::i<0>) >= value_list<n...>::at(indices::i<0>);
+            return value_list<i...>::at(index_constant<0>{}) >= value_list<n...>::at(index_constant<0>{});
         return true;
     }
 
