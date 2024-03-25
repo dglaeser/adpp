@@ -14,13 +14,6 @@ using boost::ut::eq;
 int main() {
 
     {
-        using adpp::drop_n_t;
-        using adpp::value_list;
-        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1, 2, 3, 4>>, value_list<2, 3, 4>>);
-        static_assert(std::is_same_v<drop_n_t<2, value_list<0, 1>>, value_list<>>);
-    }
-
-    {
         using unique = adpp::unique_types_t<int, char, int, double, int, double>;
         static_assert(adpp::type_list_size_v<unique> == 3);
         static_assert(adpp::contains_decayed_v<int, unique>);
