@@ -21,42 +21,6 @@ int main() {
     }
 
     {
-        using adpp::value_list;
-        using adpp::indices::i;
-        static_assert(value_list<0, 1, 2, 3>::at(i<0>) == 0);
-        static_assert(value_list<0, 1, 2, 3>::at(i<1>) == 1);
-        static_assert(value_list<0, 1, 2, 3>::at(i<2>) == 2);
-        static_assert(value_list<0, 1, 2, 42>::at(i<3>) == 42);
-    }
-
-    {
-        using adpp::value_list;
-        static_assert(value_list<>{} == value_list<>{});
-        static_assert(value_list<1>{} == value_list<1>{});
-        static_assert(value_list<1>{} != value_list<2>{});
-        static_assert(value_list<1>{} != value_list<>{});
-        static_assert(value_list<1, 2>{} == value_list<1, 2>{});
-        static_assert(value_list<1, 2>{} != value_list<1, 3>{});
-        static_assert(value_list<1, 2>{} != value_list<1>{});
-        static_assert(value_list<1, 2>{} != value_list<>{});
-    }
-
-    {
-        using adpp::value_list;
-        static_assert(value_list<>{} + value_list<>{} == value_list<>{});
-        static_assert(value_list<>{} + value_list<1>{} == value_list<1>{});
-        static_assert(value_list<1>{} + value_list<1>{} == value_list<1, 1>{});
-        static_assert(value_list<1>{} + value_list<>{} == value_list<1>{});
-        static_assert(value_list<1, 2>{} + value_list<3, 4>{} == value_list<1, 2, 3, 4>{});
-    }
-
-    "value_list_stream_operator"_test = [] () {
-        std::stringstream s;
-        s << adpp::value_list<42, 43, 44>{};
-        expect(eq(s.str(), std::string{"[42, 43, 44]"}));
-    };
-
-    {
         using adpp::split_at;
         using adpp::value_list;
 

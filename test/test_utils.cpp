@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <sstream>
+#include <string>
 
 #include <boost/ut.hpp>
 
@@ -44,6 +46,45 @@ int main() {
 
         static_assert(i<1>.incremented() == i<2>);
         static_assert(i<2>.incremented() == i<3>);
+    };
+
+    "value_list_access"_test = [] () {
+        using adpp::indices::i;
+        using vl = adpp::value_list<0, 1, 2, 3>;
+        static_assert(vl::size == 4);
+        static_assert(vl::at(i<0>) == 0);
+        static_assert(vl::at(i<1>) == 1);
+        static_assert(vl::at(i<2>) == 2);
+        static_assert(vl::at(i<3>) == 3);
+    };
+
+    "value_list_merge"_test = [] () {
+        using adpp::indices::i;
+        using vl = adpp::value_list<0, 1>;
+        constexpr auto merged = vl{} + adpp::value_list_v<4, 5>;
+        static_assert(merged.size == 4);
+        static_assert(merged.at(i<0>) == 0);
+        static_assert(merged.at(i<1>) == 1);
+        static_assert(merged.at(i<2>) == 4);
+        static_assert(merged.at(i<3>) == 5);
+    };
+
+    "value_list_comparators"_test = [] () {
+        using adpp::value_list_v;
+        static_assert(value_list_v<> == value_list_v<>);
+        static_assert(value_list_v<1> == value_list_v<1>);
+        static_assert(value_list_v<1> != value_list_v<2>);
+        static_assert(value_list_v<1> != value_list_v<>);
+        static_assert(value_list_v<1, 2> == value_list_v<1, 2>);
+        static_assert(value_list_v<1, 2> != value_list_v<1, 3>);
+        static_assert(value_list_v<1, 2> != value_list_v<1>);
+        static_assert(value_list_v<1, 2> != value_list_v<>);
+    };
+
+    "value_list_streaming"_test = [] () {
+        std::ostringstream s;
+        s << adpp::value_list_v<0, 42, 43, 44>;
+        expect(eq(s.str(), std::string{"[0, 42, 43, 44]"}));
     };
 
     return EXIT_SUCCESS;
