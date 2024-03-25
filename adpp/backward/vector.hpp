@@ -188,13 +188,13 @@ struct tensor_expression : bindable, indexed<Es...> {
         requires(!tensor_expression::is_vector() and shape.last_axis_size == other_shape.at(indices::i<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         static constexpr auto my_dim = shape.size;
-        using head = typename split_at<my_dim - 1, typename decltype(shape)::as_list>::head;
-        using tail = typename split_at<1, typename decltype(other_shape)::as_list>::tail;
+        using head = typename split_at<my_dim - 1, typename decltype(shape)::as_value_list>::head;
+        using tail = typename split_at<1, typename decltype(other_shape)::as_value_list>::tail;
 
         static constexpr auto new_shape = adpp::md_shape{head{} + tail{}};
         auto result_tuple = _reduce([&] <auto... i> (md_index_constant<i...>, auto&& terms) {
-            constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::head{};
-            constexpr auto i_tail = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_list>::tail{};
+            constexpr auto i_head = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_value_list>::head{};
+            constexpr auto i_tail = typename split_at<my_dim - 1, typename md_index_constant<i...>::as_value_list>::tail{};
             return std::tuple_cat(
                 std::move(terms),
                 std::tuple{

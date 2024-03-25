@@ -24,18 +24,17 @@ namespace detail {
 template<std::size_t... n>
 struct md_shape {
     static constexpr std::size_t size = sizeof...(n);
-    static constexpr std::size_t number_of_elements = size > 0 ? value_list<n...>::reduce_with(std::multiplies<void>{}, 1) : 0;
+    static constexpr std::size_t number_of_elements = value_list<n...>::reduce_with(std::multiplies<void>{}, size > 0 ? 1 : 0);
     static constexpr std::size_t last_axis_size = detail::last_value<n...>::value;
 
-    // TODO: remove?
-    using as_list = adpp::value_list<n...>;
+    using as_value_list = adpp::value_list<n...>;
 
     constexpr md_shape() = default;
     constexpr md_shape(value_list<n...>) noexcept {}
 
     template<std::size_t idx>
     static constexpr auto at(index_constant<idx> i) {
-        return as_list::at(i);
+        return as_value_list::at(i);
     }
 
     template<std::integral... I>
@@ -98,8 +97,7 @@ template<std::size_t... i>
 struct md_index_constant {
     static constexpr std::size_t size = sizeof...(i);
 
-    // TODO: remove?
-    using as_list = value_list<i...>;
+    using as_value_list = value_list<i...>;
 
     template<std::size_t _i>
     constexpr md_index_constant(index_constant<_i>) requires(sizeof...(i) == 1) {}
@@ -109,11 +107,11 @@ struct md_index_constant {
 
     template<std::size_t idx>
     static constexpr auto at(index_constant<idx> _i) {
-        return as_list::at(_i);
+        return as_value_list::at(_i);
     }
 
     static constexpr std::size_t last() {
-        return as_list::at(index_constant<sizeof...(i) - 1>{});
+        return as_value_list::at(index_constant<sizeof...(i) - 1>{});
     }
 
     template<std::size_t idx>
