@@ -18,6 +18,10 @@ namespace adpp {
 //! Can be used to signal e.g. automatic type deduction.
 struct automatic {};
 
+//! A type trait that is always false, independent of the type T.
+template<typename T>
+struct always_false : std::false_type {};
+
 //! type trait that signals if a is smaller than b.
 template<auto a, auto b>
 struct is_less : std::bool_constant<(a < b)> {};
