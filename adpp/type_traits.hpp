@@ -10,15 +10,6 @@
 
 namespace adpp {
 
-
-template<typename... T>
-struct drop_first_type;
-template<typename T, typename... Ts>
-struct drop_first_type<type_list<T, Ts...>> : std::type_identity<type_list<Ts...>> {};
-template<typename... T>
-using drop_first_type_t = typename drop_first_type<T...>::type;
-
-
 template<typename T, typename... Ts>
 struct is_any_of : std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
 template<typename T, typename... Ts>

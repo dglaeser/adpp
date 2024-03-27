@@ -76,6 +76,11 @@ int main() {
         static_assert(std::is_same_v<adpp::first_type_t<adpp::type_list<double, char, int, bool>>, double>);
     };
 
+    "drop_first_type_trait"_test = [] () {
+        static_assert(std::is_same_v<adpp::drop_first_type_t<adpp::type_list<int>>, adpp::type_list<>>);
+        static_assert(std::is_same_v<adpp::drop_first_type_t<adpp::type_list<int, double>>, adpp::type_list<double>>);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
