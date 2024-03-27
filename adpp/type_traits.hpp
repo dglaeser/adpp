@@ -11,27 +11,6 @@
 namespace adpp {
 
 
-template<typename... T>
-struct are_unique;
-template<typename T1, typename T2, typename... Ts>
-struct are_unique<T1, T2, Ts...> {
-    static constexpr bool value =
-        are_unique<T1, T2>::value &&
-        are_unique<T1, Ts...>::value &&
-        are_unique<T2, Ts...>::value;
-};
-template<typename T1, typename T2>
-struct are_unique<T1, T2> : std::bool_constant<!std::is_same_v<T1, T2>> {};
-template<typename T>
-struct are_unique<T> : std::true_type {};
-template<>
-struct are_unique<> : std::true_type {};
-template<typename... T>
-struct are_unique<type_list<T...>> : are_unique<T...> {};
-template<typename... Ts>
-inline constexpr bool are_unique_v = are_unique<Ts...>::value;
-
-
 #ifndef DOXYGEN
 namespace detail {
 
