@@ -41,6 +41,12 @@ struct is_less_equal : std::bool_constant<(a <= b)> {};
 template<auto a, auto b>
 inline constexpr bool is_less_equal_v = is_less_equal<a, b>::value;
 
+//! A type to carry a list of types
+template<typename... Ts>
+struct type_list {
+    static constexpr std::size_t size = sizeof...(Ts);
+};
+
 //! Adapter around a type trait to take std::decay_t of the argument type
 template<template<typename> typename trait>
 struct decayed_arg_trait {
