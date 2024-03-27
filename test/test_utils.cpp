@@ -12,6 +12,9 @@
 template<std::size_t idx>
 inline constexpr auto i = adpp::index<idx>;
 
+struct incomplete;
+struct complete {};
+
 int main() {
     using boost::ut::operator""_test;
     using boost::ut::expect;
@@ -59,6 +62,11 @@ int main() {
     "size_of_type_trait"_test = [] () {
         static_assert(adpp::size_of_v<std::array<int, 4>> == 4);
         static_assert(adpp::size_of_v<int[4]> == 4);
+    };
+
+    "is_complete_trait"_test = [] () {
+        static_assert(adpp::is_complete_v<complete>);
+        static_assert(!adpp::is_complete_v<incomplete>);
     };
 
     "index_constant"_test = [] () {
