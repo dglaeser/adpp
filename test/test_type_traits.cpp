@@ -17,22 +17,6 @@ using boost::ut::eq;
 int main() {
 
     {
-        using unique = adpp::unique_types_t<int, char, int, double, int, double>;
-        static_assert(unique::size == 3);
-        static_assert(adpp::contains_decayed_v<int, unique>);
-        static_assert(adpp::contains_decayed_v<char, unique>);
-        static_assert(adpp::contains_decayed_v<double, unique>);
-    }
-    {
-        using unique = adpp::unique_types_t<
-            adpp::type_list<int, char, int, double, int, double>
-        >;
-        static_assert(unique::size == 3);
-        static_assert(adpp::contains_decayed_v<int, unique>);
-        static_assert(adpp::contains_decayed_v<char, unique>);
-        static_assert(adpp::contains_decayed_v<double, unique>);
-    }
-    {
         using merged = adpp::merged_types_t<adpp::type_list<int>, adpp::type_list<char, double>>;
         static_assert(merged::size == 3);
         static_assert(adpp::contains_decayed_v<int, merged>);
@@ -41,7 +25,7 @@ int main() {
     }
 
     {
-        using unique_merged = adpp::unique_types_t<
+        using unique_merged = adpp::unique_t<
             adpp::merged_types_t<adpp::type_list<int, char, double>, adpp::type_list<char, double>>
         >;
         static_assert(unique_merged::size == 3);

@@ -101,6 +101,55 @@ struct are_unique<type_list<T...>> : are_unique<T...> {};
 template<typename... Ts>
 inline constexpr bool are_unique_v = are_unique<Ts...>::value;
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T, typename... Ts>
+    struct unique_types {
+        using type = std::conditional_t<
+            is_any_of_v<T, Ts...>,
+            typename unique_types<Ts...>::type,
+            typename unique_types<type_list<T>, Ts...>::type
+        >;
+    };
+
+    template<typename T>
+    struct unique_types<T> : std::type_identity<type_list<T>> {};
+
+    template<typename... Ts, typename T, typename... Rest>
+    struct unique_types<type_list<Ts...>, T, Rest...> {
+        using type = std::conditional_t<
+            is_any_of_v<T, Ts...>,
+            typename unique_types<type_list<Ts...>, Rest...>::type,
+            typename unique_types<type_list<Ts..., T>, Rest...>::type
+        >;
+    };
+
+    template<typename... Ts>
+    struct unique_types<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
+
+    template<typename A, typename B>
+    struct merged_types;
+
+    template<typename... As, typename... Bs>
+    struct merged_types<type_list<As...>, type_list<Bs...>> {
+        using type = type_list<As..., Bs...>;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+//! A type trait to extract a list of unique types from the given types
+template<typename T, typename... Ts>
+struct unique : detail::unique_types<T, Ts...> {};
+template<typename... Ts> requires(sizeof...(Ts) > 0)
+struct unique<type_list<Ts...>> : detail::unique_types<Ts...> {};
+template<>
+struct unique<type_list<>> : std::type_identity<type_list<>> {};
+template<typename A, typename... Ts>
+using unique_t = typename unique<A, Ts...>::type;
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;

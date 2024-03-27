@@ -22,8 +22,8 @@ namespace detail {
     struct symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             symbolic<std::remove_cvref_t<E>>,
-            typename unique_types<type_list<Ts...>, std::remove_cvref_t<E>>::type,
-            typename unique_types<type_list<Ts...>>::type
+            unique_t<type_list<Ts...>, std::remove_cvref_t<E>>,
+            unique_t<type_list<Ts...>>
         >;
     };
 
@@ -34,12 +34,12 @@ namespace detail {
 
     template<typename E0, typename... Es, typename... Ts>
     struct symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
-        using type = typename unique_types<
+        using type = unique_t<
             typename merged_types<
                 typename symbols_impl<E0, type_list<Ts...>>::type,
                 typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
             >::type
-        >::type;
+        >;
     };
 
     // closures to stop recursion
