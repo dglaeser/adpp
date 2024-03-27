@@ -88,6 +88,14 @@ int main() {
         static_assert(adpp::is_any_of_v<bool, adpp::type_list<int, char, bool>> == true);
     };
 
+    "contains_decayed_type_trait"_test = [] () {
+        static_assert(adpp::contains_decayed_v<int&, int, char> == true);
+        static_assert(adpp::contains_decayed_v<int&, const int&, char> == true);
+        static_assert(adpp::contains_decayed_v<int&, const double&, char> == false);
+        static_assert(adpp::contains_decayed_v<int&, adpp::type_list<const int&, char>> == true);
+        static_assert(adpp::contains_decayed_v<int&, adpp::type_list<const double&, char>> == false);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 

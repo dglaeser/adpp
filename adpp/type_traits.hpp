@@ -11,14 +11,6 @@
 namespace adpp {
 
 
-template<typename T, typename... Ts>
-struct contains_decayed : is_any_of<std::decay_t<T>, std::decay_t<Ts>...> {};
-template<typename T, typename... Ts>
-struct contains_decayed<T, type_list<Ts...>> : contains_decayed<T, Ts...> {};
-template<typename T, typename... Ts>
-inline constexpr bool contains_decayed_v = contains_decayed<T, Ts...>::value;
-
-
 template<typename... T>
 struct are_unique;
 template<typename T1, typename T2, typename... Ts>
