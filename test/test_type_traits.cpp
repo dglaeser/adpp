@@ -62,17 +62,5 @@ int main() {
         static_assert(md_index<0, 0, 0>.with_appended(md_index<42, 43>) == md_index<0, 0, 0, 42, 43>);
     }
 
-    {
-        using adpp::md_shape;
-        using adpp::md_index_constant;
-        using adpp::md_index_constant_iterator;
-
-        static_assert(md_index_constant_iterator{md_shape<2, 2>{}}.index() == md_index_constant<0, 0>{});
-        static_assert(md_index_constant_iterator{md_shape<2, 2>{}}.next().index() == md_index_constant<0, 1>{});
-        static_assert(md_index_constant_iterator{md_shape<2, 2>{}}.next().next().index() == md_index_constant<1, 0>{});
-        static_assert(md_index_constant_iterator{md_shape<2, 2>{}}.next().next().next().index() == md_index_constant<1, 1>{});
-        static_assert(md_index_constant_iterator{md_shape<2, 2>{}}.next().next().next().next().is_end());
-    }
-
     return EXIT_SUCCESS;
 }

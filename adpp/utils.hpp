@@ -35,6 +35,12 @@ struct is_equal : std::bool_constant<(a == b)> {};
 template<auto a, auto b>
 inline constexpr bool is_equal_v = is_equal<a, b>::value;
 
+//! type trait that signals if a is less or equal to b.
+template<auto a, auto b>
+struct is_less_equal : std::bool_constant<(a <= b)> {};
+template<auto a, auto b>
+inline constexpr bool is_less_equal_v = is_less_equal<a, b>::value;
+
 //! class to represent an index at compile-time.
 template<std::size_t i>
 struct index_constant : std::integral_constant<std::size_t, i> {
@@ -294,6 +300,63 @@ struct md_shape {
 
 template<std::size_t... n>
 inline constexpr md_shape<n...> shape;
+
+//! Allows iteration over the indices in an md_shape at compile time, starting from a given index
+template<typename shape, typename md_index_current>
+struct md_index_constant_iterator;
+
+template<std::size_t... n, std::size_t... i>
+    requires(sizeof...(n) == sizeof...(i) and std::conjunction_v<is_less_equal<i, n>...>)
+struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
+    constexpr md_index_constant_iterator(md_shape<n...>) {};
+    constexpr md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>) {};
+
+    static constexpr auto current() noexcept {
+        return md_index_constant<i...>{};
+    }
+
+    static constexpr bool is_end() noexcept {
+        if constexpr (sizeof...(n) != 0)
+            return value_list<i...>::at(index_constant<0>{}) >= value_list<n...>::at(index_constant<0>{});
+        return true;
+    }
+
+    static constexpr auto next() noexcept {
+        static_assert(!is_end());
+        return adpp::md_index_constant_iterator{
+            md_shape<n...>{},
+            _increment<sizeof...(n)-1, true>(md_index_constant<>{})
+        };
+    }
+
+ private:
+    template<std::size_t dimension_to_increment, bool increment, std::size_t... collected>
+    static constexpr auto _increment(md_index_constant<collected...>&& tmp) noexcept {
+        const index_constant<dimension_to_increment> inc_pos;
+        const auto _recursion = [] <bool keep_incrementing> (std::bool_constant<keep_incrementing>, auto&& r) {
+            if constexpr (dimension_to_increment == 0)
+                return std::move(r);
+            else
+                return _increment<dimension_to_increment-1, keep_incrementing>(std::move(r));
+        };
+        if constexpr (increment) {
+            auto incremented = current()[inc_pos].incremented();
+            if constexpr (incremented.value >= md_shape<n...>::extent_in(inc_pos) && dimension_to_increment > 0)
+                return _recursion(std::bool_constant<true>(), tmp.with_prepended(index<0>));
+            else
+                return _recursion(std::bool_constant<false>{}, tmp.with_prepended(incremented));
+        } else {
+            return _recursion(std::bool_constant<false>{}, tmp.with_prepended(current()[inc_pos]));
+        }
+    }
+};
+
+template<std::size_t... n, std::size_t... i>
+md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>)
+    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>>;
+template<std::size_t... n>
+md_index_constant_iterator(md_shape<n...>)
+    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
 //! \} group Utilities
 

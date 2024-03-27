@@ -237,7 +237,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename A, typename V, typename I>
     constexpr auto _reduce(const A& action, V&& value, I&& index_iterator) const {
         if constexpr (!I::is_end())
-            return _reduce(action, action(index_iterator.index(), std::move(value)), index_iterator.next());
+            return _reduce(action, action(index_iterator.current(), std::move(value)), index_iterator.next());
         else
             return std::move(value);
     }
@@ -245,7 +245,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename V, typename I>
     constexpr void _visit(const V& visitor, const I& index_iterator) const {
         if constexpr (!I::is_end()) {
-            visitor(index_iterator.index());
+            visitor(index_iterator.current());
             _visit(visitor, index_iterator.next());
         }
     }
