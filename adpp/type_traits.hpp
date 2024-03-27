@@ -10,22 +10,6 @@
 
 namespace adpp {
 
-#ifndef DOXYGEN
-namespace detail {
-
-    template<typename T, std::size_t s = sizeof(T)>
-    std::false_type is_incomplete(T*);
-    std::true_type is_incomplete(...);
-
-}  // end namespace detail
-#endif  // DOXYGEN
-
-template<typename T>
-struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
-template<typename T>
-inline constexpr bool is_complete_v = is_complete<T>::value;
-
-
 template<typename... T>
 struct first_type;
 template<typename T, typename... Ts>

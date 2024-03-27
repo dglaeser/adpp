@@ -75,6 +75,21 @@ struct decayed_arg_trait {
     struct type : trait<std::decay_t<T>> {};
 };
 
+
+#ifndef DOXYGEN
+namespace detail {
+    template<typename T, std::size_t s = sizeof(T)>
+    std::false_type is_incomplete(T*);
+    std::true_type is_incomplete(...);
+}  // namespace detail
+#endif  // DOXYGEN
+
+// type trait to check if a type is complete (e.g. not just forward declared)
+template<typename T>
+struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
+template<typename T>
+inline constexpr bool is_complete_v = is_complete<T>::value;
+
 //! class to represent an index at compile-time.
 template<std::size_t i>
 struct index_constant : std::integral_constant<std::size_t, i> {
