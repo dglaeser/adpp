@@ -10,13 +10,6 @@
 
 namespace adpp {
 
-
-template<template<typename> typename trait>
-struct decayed_trait {
-    template<typename T>
-    struct type : trait<std::decay_t<T>> {};
-};
-
 template<typename... Ts>
 struct type_list {};
 
