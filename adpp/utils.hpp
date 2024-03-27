@@ -41,6 +41,13 @@ struct is_less_equal : std::bool_constant<(a <= b)> {};
 template<auto a, auto b>
 inline constexpr bool is_less_equal_v = is_less_equal<a, b>::value;
 
+//! Adapter around a type trait to take std::decay_t of the argument type
+template<template<typename> typename trait>
+struct decayed_arg_trait {
+    template<typename T>
+    struct type : trait<std::decay_t<T>> {};
+};
+
 //! class to represent an index at compile-time.
 template<std::size_t i>
 struct index_constant : std::integral_constant<std::size_t, i> {
