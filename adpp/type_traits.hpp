@@ -10,17 +10,6 @@
 
 namespace adpp {
 
-template<typename... Ts>
-struct type_list {};
-
-template<typename T>
-struct type_list_size;
-template<typename... T>
-struct type_list_size<type_list<T...>> : std::integral_constant<std::size_t, sizeof...(T)> {};
-template<typename T>
-inline constexpr std::size_t type_list_size_v = type_list_size<T>::value;
-
-
 template<typename T>
 struct value_type;
 template<typename T, std::size_t N>

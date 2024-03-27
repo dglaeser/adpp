@@ -36,6 +36,13 @@ int main() {
         static_assert(adpp::is_equal_v<2.0, 1> == false);
     };
 
+    "type_list"_test = [] () {
+        static_assert(adpp::type_list<>::size == 0);
+        static_assert(adpp::type_list<int>::size == 1);
+        static_assert(adpp::type_list<int, double>::size == 2);
+        static_assert(adpp::type_list<int, double, char>::size == 3);
+    };
+
     "decayed_arg_trait"_test = [] () {
         using checked = const int&;
         static_assert(std::is_lvalue_reference_v<checked>);
