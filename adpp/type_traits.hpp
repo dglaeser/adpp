@@ -10,13 +10,6 @@
 
 namespace adpp {
 
-template<typename... T>
-struct first_type;
-template<typename T, typename... Ts>
-struct first_type<type_list<T, Ts...>> : std::type_identity<T> {};
-template<typename... T>
-using first_type_t = typename first_type<T...>::type;
-
 
 template<typename... T>
 struct drop_first_type;

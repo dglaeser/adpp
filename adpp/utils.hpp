@@ -48,6 +48,14 @@ struct type_list {
     static constexpr std::size_t size = sizeof...(Ts);
 };
 
+//! A type trait to extract the first type of a type_list
+template<typename... T>
+struct first_type;
+template<typename T, typename... Ts>
+struct first_type<type_list<T, Ts...>> : std::type_identity<T> {};
+template<typename... T>
+using first_type_t = typename first_type<T...>::type;
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;
