@@ -58,6 +58,16 @@ struct value_type<T[N]> : std::type_identity<T> {};
 template<typename T>
 using value_type_t = typename value_type<T>::type;
 
+//! Type trait to define the (static) size of a container
+template<typename T>
+struct size_of;
+template<typename T, std::size_t N>
+struct size_of<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
+template<typename T, std::size_t N>
+struct size_of<T[N]> : std::integral_constant<std::size_t, N> {};
+template<typename T>
+inline constexpr std::size_t size_of_v = size_of<T>::value;
+
 //! Adapter around a type trait to take std::decay_t of the argument type
 template<template<typename> typename trait>
 struct decayed_arg_trait {

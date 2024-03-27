@@ -10,14 +10,6 @@
 
 namespace adpp {
 
-template<typename T>
-struct static_size;
-template<typename T, std::size_t N>
-struct static_size<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
-template<typename T>
-inline constexpr std::size_t static_size_v = static_size<T>::value;
-
-
 #ifndef DOXYGEN
 namespace detail {
 

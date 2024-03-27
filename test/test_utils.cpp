@@ -56,6 +56,11 @@ int main() {
         static_assert(std::is_same_v<adpp::value_type_t<double[3]>, double>);
     };
 
+    "size_of_type_trait"_test = [] () {
+        static_assert(adpp::size_of_v<std::array<int, 4>> == 4);
+        static_assert(adpp::size_of_v<int[4]> == 4);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
