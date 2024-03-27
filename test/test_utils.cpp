@@ -96,6 +96,15 @@ int main() {
         static_assert(adpp::contains_decayed_v<int&, adpp::type_list<const double&, char>> == false);
     };
 
+    "are_unique_type_trait"_test = [] () {
+        static_assert(adpp::are_unique_v<int, char, bool> == true);
+        static_assert(adpp::are_unique_v<int, char, int&> == true);
+        static_assert(adpp::are_unique_v<int, char, int> == false);
+        static_assert(adpp::are_unique_v<adpp::type_list<int, char, int>> == false);
+        static_assert(adpp::are_unique_v<adpp::type_list<int, char, int&>> == true);
+        static_assert(adpp::are_unique_v<adpp::type_list<int, char, int&>> == true);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
