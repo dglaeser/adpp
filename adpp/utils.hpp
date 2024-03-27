@@ -56,6 +56,14 @@ struct first_type<type_list<T, Ts...>> : std::type_identity<T> {};
 template<typename... T>
 using first_type_t = typename first_type<T...>::type;
 
+//! A type trait to remove the first type from a type_list
+template<typename... T>
+struct drop_first_type;
+template<typename T, typename... Ts>
+struct drop_first_type<type_list<T, Ts...>> : std::type_identity<type_list<Ts...>> {};
+template<typename... T>
+using drop_first_type_t = typename drop_first_type<T...>::type;
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;
