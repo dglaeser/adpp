@@ -164,6 +164,36 @@ struct merged : detail::merged_types<A, B> {};
 template<typename A, typename... Ts>
 using merged_t = typename merged<A, Ts...>::type;
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<template<typename> typename filter, typename...>
+    struct filtered_types_impl;
+    template<template<typename> typename filter, typename T, typename... rest, typename... current>
+    struct filtered_types_impl<filter, type_list<T, rest...>, type_list<current...>> {
+        using type = std::conditional_t<
+            filter<T>::value,
+            typename filtered_types_impl<filter, type_list<rest...>, merged_t<type_list<T>, type_list<current...>>>::type,
+            typename filtered_types_impl<filter, type_list<rest...>, type_list<current...>>::type
+        >;
+    };
+    template<template<typename> typename filter, typename... current>
+    struct filtered_types_impl<filter, type_list<>, type_list<current...>> {
+        using type = type_list<current...>;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+//! A type trait to filter a list of types accordint to a predicate
+template<template<typename> typename predicate, typename... Ts>
+struct filtered : detail::filtered_types_impl<predicate, type_list<Ts...>, type_list<>> {};
+template<template<typename> typename predicate, typename... Ts>
+struct filtered<predicate, type_list<Ts...>> : detail::filtered_types_impl<predicate, type_list<Ts...>, type_list<>> {};
+template<template<typename> typename predicate, typename... Ts>
+using filtered_t = typename filtered<predicate, Ts...>::type;
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;

@@ -24,7 +24,7 @@ template<typename T, auto _> struct is_value<adpp::backward::val<T, _>> : std::t
 
 template<typename E>
 struct value_stored_type {
-    using _values = adpp::filtered_types_t<is_value, adpp::backward::symbols_t<E>>;
+    using _values = adpp::filtered_t<is_value, adpp::backward::symbols_t<E>>;
     static_assert(_values::size == 1);
     using type = typename adpp::first_type_t<_values>::stored_type;
 };
