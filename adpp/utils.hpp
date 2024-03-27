@@ -72,6 +72,14 @@ struct is_any_of<T, type_list<Ts...>> : is_any_of<T, Ts...> {};
 template<typename T, typename... Ts>
 inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
 
+//! A type trait to check if any of the decay_t of the given types is equal to the decay_t of T
+template<typename T, typename... Ts>
+struct contains_decayed : is_any_of<std::decay_t<T>, std::decay_t<Ts>...> {};
+template<typename T, typename... Ts>
+struct contains_decayed<T, type_list<Ts...>> : contains_decayed<T, Ts...> {};
+template<typename T, typename... Ts>
+inline constexpr bool contains_decayed_v = contains_decayed<T, Ts...>::value;
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;
