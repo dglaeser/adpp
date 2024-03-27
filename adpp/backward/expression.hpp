@@ -63,7 +63,7 @@ inline constexpr auto symbols_of(const E&) {
 
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct unbound_symbols : filtered_types<decayed_arg_trait<is_unbound_symbol>::type, symbols_t<E>> {};
+struct unbound_symbols : filtered<decayed_arg_trait<is_unbound_symbol>::type, symbols_t<E>> {};
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using unbound_symbols_t = typename unbound_symbols<E>::type;
@@ -75,7 +75,7 @@ inline constexpr auto unbound_symbols_of(const E&) {
 
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct vars : filtered_types<decayed_arg_trait<detail::is_var>::type, symbols_t<E>> {};
+struct vars : filtered<decayed_arg_trait<detail::is_var>::type, symbols_t<E>> {};
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using vars_t = typename vars<E>::type;

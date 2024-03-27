@@ -139,6 +139,18 @@ int main() {
         static_assert(adpp::contains_decayed_v<double, merged_list_with_type>);
     };
 
+    "filtered_type_trait"_test = [] () {
+        using lvalues = adpp::filtered_t<std::is_lvalue_reference, int, char, bool, const std::string&>;
+        using pointers = adpp::filtered_t<std::is_pointer, int*, char*, bool, const std::string&>;
+
+        static_assert(lvalues::size == 1);
+        static_assert(adpp::is_any_of_v<const std::string&, lvalues>);
+
+        static_assert(pointers::size == 2);
+        static_assert(adpp::is_any_of_v<int*, pointers>);
+        static_assert(adpp::is_any_of_v<char*, pointers>);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
