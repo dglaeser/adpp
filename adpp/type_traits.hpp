@@ -10,12 +10,6 @@
 
 namespace adpp {
 
-template<typename A, typename... Ts>
-struct merged_types : detail::merged_types<A, Ts...> {};
-template<typename A, typename... Ts>
-using merged_types_t = typename merged_types<A, Ts...>::type;
-
-
 #ifndef DOXYGEN
 namespace detail {
 
@@ -25,7 +19,7 @@ namespace detail {
     struct filtered_types_impl<filter, type_list<T, rest...>, type_list<current...>> {
         using type = std::conditional_t<
             filter<T>::value,
-            typename filtered_types_impl<filter, type_list<rest...>, merged_types_t<type_list<T>, type_list<current...>>>::type,
+            typename filtered_types_impl<filter, type_list<rest...>, merged_t<type_list<T>, type_list<current...>>>::type,
             typename filtered_types_impl<filter, type_list<rest...>, type_list<current...>>::type
         >;
     };

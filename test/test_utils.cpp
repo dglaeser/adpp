@@ -119,6 +119,26 @@ int main() {
         static_assert(adpp::contains_decayed_v<double, unique_from_list>);
     };
 
+    "merged_type_trait"_test = [] () {
+        using merged_lists = adpp::merged_t<adpp::type_list<int, char>, adpp::type_list<double>>;
+        static_assert(merged_lists::size == 3);
+        static_assert(adpp::contains_decayed_v<int, merged_lists>);
+        static_assert(adpp::contains_decayed_v<char, merged_lists>);
+        static_assert(adpp::contains_decayed_v<double, merged_lists>);
+
+        using merged_type_with_list = adpp::merged_t<int, adpp::type_list<char, double>>;
+        static_assert(merged_type_with_list::size == 3);
+        static_assert(adpp::contains_decayed_v<int, merged_type_with_list>);
+        static_assert(adpp::contains_decayed_v<char, merged_type_with_list>);
+        static_assert(adpp::contains_decayed_v<double, merged_type_with_list>);
+
+        using merged_list_with_type = adpp::merged_t<adpp::type_list<int, char>, double>;
+        static_assert(merged_list_with_type::size == 3);
+        static_assert(adpp::contains_decayed_v<int, merged_list_with_type>);
+        static_assert(adpp::contains_decayed_v<char, merged_list_with_type>);
+        static_assert(adpp::contains_decayed_v<double, merged_list_with_type>);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
