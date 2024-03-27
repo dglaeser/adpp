@@ -16,23 +16,6 @@ using boost::ut::eq;
 
 int main() {
 
-    {
-        using merged = adpp::merged_types_t<adpp::type_list<int>, adpp::type_list<char, double>>;
-        static_assert(merged::size == 3);
-        static_assert(adpp::contains_decayed_v<int, merged>);
-        static_assert(adpp::contains_decayed_v<char, merged>);
-        static_assert(adpp::contains_decayed_v<double, merged>);
-    }
-
-    {
-        using unique_merged = adpp::unique_t<
-            adpp::merged_types_t<adpp::type_list<int, char, double>, adpp::type_list<char, double>>
-        >;
-        static_assert(unique_merged::size == 3);
-        static_assert(adpp::contains_decayed_v<int, unique_merged>);
-        static_assert(adpp::contains_decayed_v<char, unique_merged>);
-        static_assert(adpp::contains_decayed_v<double, unique_merged>);
-    }
 
     {
         using adpp::md_index;

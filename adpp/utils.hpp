@@ -129,13 +129,21 @@ namespace detail {
     template<typename... Ts>
     struct unique_types<type_list<Ts...>> : std::type_identity<type_list<Ts...>> {};
 
-    template<typename A, typename B>
+    template<typename A, typename... B>
     struct merged_types;
 
     template<typename... As, typename... Bs>
     struct merged_types<type_list<As...>, type_list<Bs...>> {
         using type = type_list<As..., Bs...>;
     };
+
+    template<typename A, typename... Bs>
+    struct merged_types<A, type_list<Bs...>>
+    : merged_types<type_list<A>, type_list<Bs...>> {};
+
+    template<typename... As, typename B>
+    struct merged_types<type_list<As...>, B>
+    : merged_types<type_list<As...>, type_list<B>> {};
 
 }  // namespace detail
 #endif  // DOXYGEN
@@ -149,6 +157,12 @@ template<>
 struct unique<type_list<>> : std::type_identity<type_list<>> {};
 template<typename A, typename... Ts>
 using unique_t = typename unique<A, Ts...>::type;
+
+//! A type trait to merge a type into a type_list, or merge two type_list
+template<typename A, typename B>
+struct merged : detail::merged_types<A, B> {};
+template<typename A, typename... Ts>
+using merged_t = typename merged<A, Ts...>::type;
 
 //! Type trait to extract a containers value_type
 template<typename T>

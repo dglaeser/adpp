@@ -34,12 +34,10 @@ namespace detail {
 
     template<typename E0, typename... Es, typename... Ts>
     struct symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
-        using type = unique_t<
-            typename merged_types<
-                typename symbols_impl<E0, type_list<Ts...>>::type,
-                typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
-            >::type
-        >;
+        using type = unique_t<merged_t<
+            typename symbols_impl<E0, type_list<Ts...>>::type,
+            typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
+        >>;
     };
 
     // closures to stop recursion
