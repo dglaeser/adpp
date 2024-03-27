@@ -10,13 +10,6 @@
 
 namespace adpp {
 
-template<typename T, typename... Ts>
-struct is_any_of : std::bool_constant<std::disjunction_v<std::is_same<T, Ts>...>> {};
-template<typename T, typename... Ts>
-struct is_any_of<T, type_list<Ts...>> : is_any_of<T, Ts...> {};
-template<typename T, typename... Ts>
-inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
-
 
 template<typename T, typename... Ts>
 struct contains_decayed : is_any_of<std::decay_t<T>, std::decay_t<Ts>...> {};

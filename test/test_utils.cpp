@@ -81,6 +81,13 @@ int main() {
         static_assert(std::is_same_v<adpp::drop_first_type_t<adpp::type_list<int, double>>, adpp::type_list<double>>);
     };
 
+    "is_any_of_type_trait"_test = [] () {
+        static_assert(adpp::is_any_of_v<bool, int, char> == false);
+        static_assert(adpp::is_any_of_v<bool, int, char, bool> == true);
+        static_assert(adpp::is_any_of_v<bool, adpp::type_list<int, char>> == false);
+        static_assert(adpp::is_any_of_v<bool, adpp::type_list<int, char, bool>> == true);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
