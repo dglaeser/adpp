@@ -10,6 +10,7 @@
 
 #include <type_traits>
 #include <ostream>
+#include <array>
 
 namespace adpp {
 
@@ -46,6 +47,16 @@ template<typename... Ts>
 struct type_list {
     static constexpr std::size_t size = sizeof...(Ts);
 };
+
+//! Type trait to extract a containers value_type
+template<typename T>
+struct value_type;
+template<typename T, std::size_t N>
+struct value_type<std::array<T, N>> : std::type_identity<typename std::array<T, N>::value_type> {};
+template<typename T, std::size_t N>
+struct value_type<T[N]> : std::type_identity<T> {};
+template<typename T>
+using value_type_t = typename value_type<T>::type;
 
 //! Adapter around a type trait to take std::decay_t of the argument type
 template<template<typename> typename trait>

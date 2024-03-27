@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <array>
 
 #include <boost/ut.hpp>
 
@@ -47,6 +48,12 @@ int main() {
         using checked = const int&;
         static_assert(std::is_lvalue_reference_v<checked>);
         static_assert(!adpp::decayed_arg_trait<std::is_lvalue_reference>::template type<checked>::value);
+    };
+
+    "value_type_trait"_test = [] () {
+        static_assert(std::is_same_v<adpp::value_type_t<std::array<double, 3>>, double>);
+        static_assert(std::is_same_v<adpp::value_type_t<std::array<double*, 3>>, double*>);
+        static_assert(std::is_same_v<adpp::value_type_t<double[3]>, double>);
     };
 
     "index_constant"_test = [] () {
