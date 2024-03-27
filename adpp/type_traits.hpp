@@ -10,64 +10,6 @@
 
 namespace adpp {
 
-template<typename...>
-struct md_index_constant_iterator;
-
-template<std::size_t... n, std::size_t... i>
-    requires(sizeof...(n) == sizeof...(i))
-struct md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>> {
-    constexpr md_index_constant_iterator(md_shape<n...>) {};
-    constexpr md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>) {};
-
-    static constexpr auto index() {
-        return md_index_constant<i...>{};
-    }
-
-    static constexpr bool is_end() {
-        if constexpr (sizeof...(n) != 0)
-            return value_list<i...>::at(index_constant<0>{}) >= value_list<n...>::at(index_constant<0>{});
-        return true;
-    }
-
-    static constexpr auto next() {
-        static_assert(!is_end());
-        return adpp::md_index_constant_iterator{
-            md_shape<n...>{},
-            _increment<sizeof...(n)-1, true>(md_index_constant<>{})
-        };
-    }
-
- private:
-    template<std::size_t dimension_to_increment, bool increment, std::size_t... collected>
-    static constexpr auto _increment(md_index_constant<collected...>&& tmp) {
-        const auto _recursion = [] <bool keep_incrementing> (std::bool_constant<keep_incrementing>, auto&& r) {
-            if constexpr (dimension_to_increment == 0)
-                return std::move(r);
-            else
-                return _increment<dimension_to_increment-1, keep_incrementing>(std::move(r));
-        };
-        if constexpr (increment) {
-            auto incremented = index()[index_constant<dimension_to_increment>()].incremented();
-            if constexpr (incremented.value >= md_shape<n...>::extent_in(index_constant<dimension_to_increment>{})
-                            && dimension_to_increment > 0)
-                return _recursion(std::bool_constant<true>(), tmp.with_prepended(index_constant<0>{}));
-            else
-                return _recursion(std::bool_constant<false>{}, tmp.with_prepended(incremented));
-        } else {
-            return _recursion(std::bool_constant<false>{}, tmp.with_prepended(
-                index()[index_constant<dimension_to_increment>()])
-            );
-        }
-    }
-};
-
-template<std::size_t... n, std::size_t... i>
-md_index_constant_iterator(md_shape<n...>, md_index_constant<i...>)
-    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<i...>>;
-template<std::size_t... n>
-md_index_constant_iterator(md_shape<n...>)
-    -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
-
 
 template<template<typename> typename trait>
 struct decayed_trait {

@@ -195,5 +195,13 @@ int main() {
         static_assert(adpp::md_index<1, 2, 3>.last() == 3);
     };
 
+    "md_index_constant_iterator"_test = [] () {
+        static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.current() == adpp::md_index<0, 0>);
+        static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().current() == adpp::md_index<0, 1>);
+        static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().next().current() == adpp::md_index<1, 0>);
+        static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().next().next().current() == adpp::md_index<1, 1>);
+        static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().next().next().next().is_end());
+    };
+
     return EXIT_SUCCESS;
 }
