@@ -309,6 +309,10 @@ int main() {
         static_assert(adpp::md_index<1, 2, 3>[i<2>] == 3);
         static_assert(adpp::md_index<1, 2, 3>.first() == 1);
         static_assert(adpp::md_index<1, 2, 3>.last() == 3);
+
+        static_assert(adpp::md_index<0, 0, 0>.with_index_at(i<0>, i<42>) == adpp::md_index<42, 0, 0>);
+        static_assert(adpp::md_index<0, 0, 0>.with_appended(i<42>) == adpp::md_index<0, 0, 0, 42>);
+        static_assert(adpp::md_index<0, 0, 0>.with_appended(adpp::md_index<42, 43>) == adpp::md_index<0, 0, 0, 42, 43>);
     };
 
     "md_index_constant_iterator"_test = [] () {

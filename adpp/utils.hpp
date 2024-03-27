@@ -3,7 +3,7 @@
 /*!
  * \file
  * \ingroup Utilities
- * \brief Utility classes and concepts.
+ * \brief Utility classes.
  */
 
 #pragma once

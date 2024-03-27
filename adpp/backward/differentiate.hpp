@@ -4,7 +4,6 @@
 
 #include <adpp/common.hpp>
 #include <adpp/utils.hpp>
-#include <adpp/type_traits.hpp>
 #include <adpp/backward/bindings.hpp>
 
 namespace adpp::backward {
