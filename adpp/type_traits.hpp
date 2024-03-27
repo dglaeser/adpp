@@ -11,16 +11,6 @@
 namespace adpp {
 
 template<typename T>
-struct value_type;
-template<typename T, std::size_t N>
-struct value_type<std::array<T, N>> : std::type_identity<T> {};
-template<typename T, std::size_t N>
-struct value_type<T[N]> : std::type_identity<T> {};
-template<typename T>
-using value_type_t = typename value_type<T>::type;
-
-
-template<typename T>
 struct static_size;
 template<typename T, std::size_t N>
 struct static_size<std::array<T, N>> : std::integral_constant<std::size_t, N> {};

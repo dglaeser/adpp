@@ -48,7 +48,7 @@ struct tensor_value_binder : value_binder<S, V>{
     template<std::size_t i, bool copy>
     constexpr decltype(auto) _get() const noexcept {
         if constexpr (copy)
-            return typename std::remove_cvref_t<V>::value_type{this->unwrap()[i]};
+            return value_type_t<std::remove_cvref_t<V>>{this->unwrap()[i]};
         else
             return this->unwrap()[i];
     }
