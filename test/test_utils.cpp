@@ -105,6 +105,20 @@ int main() {
         static_assert(adpp::are_unique_v<adpp::type_list<int, char, int&>> == true);
     };
 
+    "unique_type_trait"_test = [] () {
+        using unique = adpp::unique_t<int, char, int, double, int, double>;
+        static_assert(unique::size == 3);
+        static_assert(adpp::contains_decayed_v<int, unique>);
+        static_assert(adpp::contains_decayed_v<char, unique>);
+        static_assert(adpp::contains_decayed_v<double, unique>);
+
+        using unique_from_list = adpp::unique_t<adpp::type_list<int, char, int, double, int, double>>;
+        static_assert(unique_from_list::size == 3);
+        static_assert(adpp::contains_decayed_v<int, unique_from_list>);
+        static_assert(adpp::contains_decayed_v<char, unique_from_list>);
+        static_assert(adpp::contains_decayed_v<double, unique_from_list>);
+    };
+
     "index_constant"_test = [] () {
         using adpp::index_constant;
 
