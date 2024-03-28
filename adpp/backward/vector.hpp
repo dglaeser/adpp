@@ -120,7 +120,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename... B>
     constexpr auto jacobian(const bindings<B...>& bindings) const {
         using vars = vars_t<first_type_t<sub_expressions>>;
-        auto results_tuple = _apply_to_all([&] <typename V> (auto i, V&& v) {
+        auto results_tuple = _apply_to_all([&] <typename V> (auto, V&& v) {
             return derivatives_of(std::forward<V>(v), vars{}, bindings);
         });
         return std::apply([] <typename... R> (R&&... results) {
