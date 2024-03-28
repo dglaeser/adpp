@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <type_traits>
 #include <array>
+#include <tuple>
 
+#include <adpp/utils.hpp>
 #include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
 
@@ -62,5 +64,59 @@ struct derivatives : indexed<const Ts&...> {
  private:
     std::array<value_type, size> _values;
 };
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    struct vars_of;
+    template<typename T, typename... Ts>
+    struct vars_of<derivatives<T, Ts...>> : std::type_identity<type_list<Ts...>> {};
+
+    template<typename T, typename... Ts>
+    struct same_vars;
+    template<typename A, typename B, typename... Cs>
+    struct same_vars<A, B, Cs...> {
+        static constexpr bool value = same_vars<A, B>::value && same_vars<B, Cs...>::value;
+    };
+    template<typename A, typename B>
+    struct same_vars<A, B> {
+        using vars_a = typename vars_of<A>::type;
+        using vars_b = typename vars_of<B>::type;
+        using intersection = unique_t<merged_t<vars_a, vars_b>>;
+        static constexpr bool value = vars_a::size == vars_b::size && intersection::size == vars_a::size;
+    };
+    template<typename T>
+    struct same_vars<T> : std::bool_constant<true> {};
+
+    template<typename T>
+    concept gradient = is_complete_v<vars_of<T>>;
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+template<detail::gradient... gradients>
+    requires(detail::same_vars<gradients...>::value)
+struct jacobian {
+ public:
+
+    // TODO: check if all value_types are the same?
+
+    constexpr jacobian(gradients&&... grads) noexcept
+    : _gradients{std::move(grads)...}
+    {}
+
+    template<std::size_t i, typename variable>
+    constexpr auto operator[](index_constant<i>, const variable& v) const noexcept {
+        return std::get<i>(_gradients)[v];
+    }
+
+ private:
+    std::tuple<gradients...> _gradients;
+};
+
+template<typename... gradients>
+jacobian(gradients&&...) -> jacobian<std::remove_cvref_t<gradients>...>;
 
 }  // namespace adpp::backward
