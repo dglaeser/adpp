@@ -6,8 +6,9 @@
 #include <boost/ut.hpp>
 
 #include <adpp/backward/vector.hpp>
-#include <adpp/backward/evaluate.hpp>
 #include <adpp/backward/operators.hpp>
+#include <adpp/backward/evaluate.hpp>
+#include <adpp/backward/differentiate.hpp>
 
 using boost::ut::operator""_test;
 using boost::ut::expect;
@@ -277,6 +278,24 @@ int main() {
         static_assert(result[0, 1] == 1*2 + 2*4);
         static_assert(result[1, 0] == 3*1 + 4*3);
         static_assert(result[1, 1] == 3*2 + 4*4);
+    };
+
+    "vector_expression_jacobian"_test = [] () {
+        using namespace adpp::indices;
+
+        var x;
+        var y;
+        constexpr vector_expression expr{x + y, x*y, x + cval<2>*y};
+        constexpr auto jac = expr.jacobian(at(x = 1, y = 2));
+
+        static_assert(jac[_0, x] == 1);
+        static_assert(jac[_0, y] == 1);
+
+        static_assert(jac[_1, x] == 2);
+        static_assert(jac[_1, y] == 1);
+
+        static_assert(jac[_2, x] == 1);
+        static_assert(jac[_2, y] == 2);
     };
 
     return EXIT_SUCCESS;
