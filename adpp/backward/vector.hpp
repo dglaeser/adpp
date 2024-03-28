@@ -12,6 +12,7 @@
 #include <adpp/backward/expression.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/symbols.hpp>
+#include <adpp/backward/derivatives.hpp>
 
 namespace adpp::backward {
 
@@ -114,6 +115,17 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename Self, typename T>
     constexpr auto operator=(this Self&& self, T (&&values)[size]) noexcept {
         return self.bind(to_array<T, size>::from(std::move(values)));
+    }
+
+    template<typename... B>
+    constexpr auto jacobian(const bindings<B...>& bindings) const {
+        using vars = vars_t<first_type_t<sub_expressions>>;
+        auto results_tuple = _apply_to_all([&] <typename V> (auto i, V&& v) {
+            return derivatives_of(std::forward<V>(v), vars{}, bindings);
+        });
+        return std::apply([] <typename... R> (R&&... results) {
+            return backward::jacobian{std::forward<R>(results)...};
+        }, std::move(results_tuple));
     }
 
     template<typename... B>
