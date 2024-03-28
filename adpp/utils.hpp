@@ -248,6 +248,13 @@ struct index_constant : std::integral_constant<std::size_t, i> {
 template<std::size_t idx>
 inline constexpr index_constant<idx> index;
 
+namespace indices {
+
+inline constexpr index_constant<0> _0{};
+inline constexpr index_constant<1> _1{};
+inline constexpr index_constant<2> _2{};
+
+}  // namespace indices
 
 #ifndef DOXYGEN
 namespace detail {
