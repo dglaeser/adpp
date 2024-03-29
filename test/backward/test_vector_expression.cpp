@@ -331,5 +331,38 @@ int main() {
         expect(le(res[1], 1e-6));
     };
 
+    "md_newton_at_compile_time"_test = [] () {
+        using namespace adpp::indices;
+        using adpp::md_index;
+        static constexpr vec<2> v;
+        static constexpr auto a = v[_0];
+        static constexpr auto b = v[_1];
+        static constexpr vector_expression pde{cval<0.5>*a*a + b, cval<5>*a*b + cval<2>};
+        static constexpr auto J = pde.jacobian_expression(wrt(a, b));
+
+        static constexpr auto iterate = [&] (auto& x, const auto& res) {
+            const auto jac = J.evaluate(at(v = x));
+            const auto det = 1.0/(jac[md_index<_0, _0>]*jac[md_index<_1, _1>] - jac[md_index<_0, _1>]*jac[md_index<_1, _0>]);
+            x[0] += -( jac[md_index<_1, _1>]*res[0] - jac[md_index<_0, _1>]*res[1])*det;
+            x[1] += -(-jac[md_index<_1, _0>]*res[0] + jac[md_index<_0, _0>]*res[1])*det;
+        };
+
+        static constexpr auto solve = [&] () {
+            int i = 0;
+            std::array x{5.0, 1.0};
+            auto res = pde.evaluate(at(v = x));
+            while ((res[0]*res[0] > 1e-12 || res[1]*res[1] > 1e-12) && i < 20) {
+                iterate(x, res);
+                res = pde.evaluate(at(v = x));
+                i++;
+            }
+            return res;
+        };
+
+        constexpr auto res = solve();
+        static_assert(res[0] < 1e-6);
+        static_assert(res[1] < 1e-6);
+    };
+
     return EXIT_SUCCESS;
 }

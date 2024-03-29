@@ -118,7 +118,8 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     template<typename... B>
-    constexpr auto jacobian(const bindings<B...>& bindings) const {
+        requires(shape.dimension == 1 or (shape.dimension == 2 && shape.last() == 1))
+    constexpr auto jacobian(const bindings<B...>& bindings) const noexcept {
         using vars = vars_t<first_type_t<sub_expressions>>;
         auto results_tuple = _apply_to_all([&] <typename V> (auto, V&& v) {
             return derivatives_of(std::forward<V>(v), vars{}, bindings);
@@ -126,6 +127,20 @@ struct tensor_expression : bindable, indexed<Es...> {
         return std::apply([] <typename... R> (R&&... results) {
             return backward::jacobian{std::forward<R>(results)...};
         }, std::move(results_tuple));
+    }
+
+    template<typename... V>
+    constexpr auto jacobian_expression(const type_list<V...>&) const noexcept
+        requires(shape.dimension == 1 or (shape.dimension == 2 && shape.last() == 1)){
+        auto derivs_tuple = _apply_to_all([&] <typename E> (auto, E&& expr) {
+            return std::tuple{differentiate(expr, type_list<V>{})...};
+        });
+        return std::apply([] <typename... R> (R&&... results) {
+            return backward::tensor_expression{
+                adpp::shape<shape.first(), sizeof...(V)>,
+                std::forward<R>(results)...
+            };
+        }, std::move(derivs_tuple));
     }
 
     template<typename... B>
