@@ -14,5 +14,5 @@ endfunction ()
 
 add_subdirectory(backward)
 
+adpp_add_test(test_utils test_utils.cpp)
 adpp_add_test(test_common test_common.cpp)
-adpp_add_test(test_type_traits test_type_traits.cpp)

@@ -4,7 +4,7 @@
 #include <utility>
 #include <type_traits>
 
-#include <adpp/type_traits.hpp>
+#include <adpp/utils.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/derivatives.hpp>
@@ -22,8 +22,8 @@ namespace detail {
     struct symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             symbolic<std::remove_cvref_t<E>>,
-            typename unique_types<type_list<Ts...>, std::remove_cvref_t<E>>::type,
-            typename unique_types<type_list<Ts...>>::type
+            unique_t<type_list<Ts...>, std::remove_cvref_t<E>>,
+            unique_t<type_list<Ts...>>
         >;
     };
 
@@ -34,12 +34,10 @@ namespace detail {
 
     template<typename E0, typename... Es, typename... Ts>
     struct symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
-        using type = typename unique_types<
-            typename merged_types<
-                typename symbols_impl<E0, type_list<Ts...>>::type,
-                typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
-            >::type
-        >::type;
+        using type = unique_t<merged_t<
+            typename symbols_impl<E0, type_list<Ts...>>::type,
+            typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
+        >>;
     };
 
     // closures to stop recursion
@@ -65,7 +63,7 @@ inline constexpr auto symbols_of(const E&) {
 
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct unbound_symbols : filtered_types<decayed_trait<is_unbound_symbol>::type, symbols_t<E>> {};
+struct unbound_symbols : filtered<decayed_arg_trait<is_unbound_symbol>::type, symbols_t<E>> {};
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using unbound_symbols_t = typename unbound_symbols<E>::type;
@@ -77,7 +75,7 @@ inline constexpr auto unbound_symbols_of(const E&) {
 
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct vars : filtered_types<decayed_trait<detail::is_var>::type, symbols_t<E>> {};
+struct vars : filtered<decayed_arg_trait<detail::is_var>::type, symbols_t<E>> {};
 
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using vars_t = typename vars<E>::type;

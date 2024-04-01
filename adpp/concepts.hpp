@@ -5,7 +5,7 @@
 #include <utility>
 #include <concepts>
 
-#include <adpp/type_traits.hpp>
+#include <adpp/utils.hpp>
 
 namespace adpp {
 
@@ -19,10 +19,10 @@ concept indexable = is_complete_v<value_type<T>> and requires(const T& t) {
 };
 
 template<typename T>
-concept static_vec = is_complete_v<static_size<std::remove_cvref_t<T>>> and indexable<T>;
+concept static_vec = is_complete_v<size_of<std::remove_cvref_t<T>>> and indexable<T>;
 
 template<typename T, std::size_t N>
-concept static_vec_n = static_vec<T> and static_size_v<std::remove_cvref_t<T>> == N;
+concept static_vec_n = static_vec<T> and size_of_v<std::remove_cvref_t<T>> == N;
 
 template<typename A, typename B>
 concept same_remove_cvref_t_as = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
