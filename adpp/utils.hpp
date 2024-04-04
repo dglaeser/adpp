@@ -567,6 +567,7 @@ template<std::size_t... n>
 md_index_constant_iterator(md_shape<n...>)
     -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
+//! Class that defines an order (e.g. of differentiation)
 template<unsigned int i>
 struct order : public std::integral_constant<unsigned int, i> {};
 
@@ -574,6 +575,7 @@ inline constexpr order<1> first_order;
 inline constexpr order<2> second_order;
 inline constexpr order<3> third_order;
 
+//! Helper class for storing values of type `T` either by reference or by value.
 template<typename T>
 class storage {
     using stored = std::conditional_t<std::is_lvalue_reference_v<T>, T, std::remove_cvref_t<T>>;
@@ -584,11 +586,13 @@ public:
     : _value{std::forward<_T>(value)}
     {}
 
+    //! Extract the underlying object
     template<typename S> requires(!std::is_lvalue_reference_v<S>)
     constexpr T&& get(this S&& self) noexcept {
         return std::move(self._value);
     }
 
+    //! Get a reference to the underlying object
     template<typename S>
     constexpr auto& get(this S& self) noexcept {
         if constexpr (std::is_const_v<S>)
@@ -633,6 +637,7 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+//! Tuple-like type that assigns an index to each type in the pack
 template<typename... Ts> requires(are_unique_v<Ts...>)
 struct indexed : detail::indexed<std::make_index_sequence<sizeof...(Ts)>, Ts...> {};
 
@@ -671,6 +676,7 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+//! Tuple-like class that assigns an index to each stored type.
 template<typename... Ts>
     requires(are_unique_v<Ts...>)
 struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<sizeof...(Ts)>, Ts...> {
@@ -686,7 +692,7 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
 template<typename... Ts>
 variadic_accessor(Ts&&...) -> variadic_accessor<Ts...>;
 
-
+//! Factory for std::array from different inputs
 template<typename T, std::size_t N>
 struct to_array {
     static constexpr auto from(T (&&values)[N]) noexcept {
