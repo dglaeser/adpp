@@ -681,11 +681,6 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
     constexpr variadic_accessor(Ts... ts) noexcept
     : base(std::forward<Ts>(ts)...)
     {}
-
-    template<typename T> requires(contains_decayed_v<T, Ts...>)
-    constexpr auto index(const T& t) const noexcept {
-        return this->at(this->index_of(t));
-    }
 };
 
 template<typename... Ts>
