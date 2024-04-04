@@ -103,7 +103,7 @@ class bound_expression {
     , _bindings{std::forward<B>(b)}
     {}
 
-    constexpr decltype(auto) evaluate() const requires(expression_for<E, B>) {
+    constexpr decltype(auto) evaluate() const requires(evaluatable_with<E, B>) {
         return _expression.get().evaluate(_bindings.get());
     }
 

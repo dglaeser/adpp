@@ -29,7 +29,7 @@ struct function {
     }
 
     template<typename... B>
-        requires(expression_for<E, bindings<B...>>)
+        requires(evaluatable_with<E, bindings<B...>>)
     constexpr decltype(auto) evaluate(const bindings<B...>& values) const {
         return _e.evaluate(values);
     }
@@ -63,7 +63,7 @@ template<typename E>
 struct operands<function<E>> : operands<E> {};
 
 template<typename E, typename... B>
-    requires(expression_for<E, bindings<B...>>)
+    requires(evaluatable_with<E, bindings<B...>>)
 inline constexpr auto evaluate(E&& e, const bindings<B...>& b) {
     return e.evaluate(b);
 }

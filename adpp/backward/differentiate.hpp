@@ -13,7 +13,7 @@ inline constexpr auto wrt(V&&...) {
 }
 
 template<typename R = automatic, typename E, typename... B, typename... V>
-    requires(expression_for<E, bindings<B...>>)
+    requires(evaluatable_with<E, bindings<B...>>)
 inline constexpr auto derivatives_of(E&& expression, const type_list<V...>& vars, const bindings<B...>& b) {
     using result_t = std::conditional_t<
         std::is_same_v<R, automatic>, typename bindings<B...>::common_value_type, R
