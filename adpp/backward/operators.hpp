@@ -1,3 +1,10 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures to represent operations on symbols/expressions.
+ */
 #pragma once
 
 #include <cmath>
@@ -11,6 +18,9 @@
 #include <adpp/backward/expression.hpp>
 
 namespace adpp::backward {
+
+//! \addtogroup Backward
+//! \{
 
 namespace op {
 
@@ -82,7 +92,6 @@ inline constexpr auto sqrt(A&& a) {
     return expression{op::sqrt{}, as_term(std::forward<A>(a))};
 }
 
-// traits implementations
 template<typename R, typename A, typename B>
 struct back_propagator<R, op::add, A, B> {
     template<typename... _B, typename... V>
@@ -377,6 +386,8 @@ struct formatter<op::sqrt, A> {
         out << ")";
     }
 };
+
+//! \} group Backward
 
 }  // namespace adpp::backward
 
