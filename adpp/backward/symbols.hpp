@@ -6,7 +6,6 @@
 
 #include <adpp/utils.hpp>
 #include <adpp/dtype.hpp>
-#include <adpp/common.hpp>
 #include <adpp/concepts.hpp>
 
 #include <adpp/backward/concepts.hpp>

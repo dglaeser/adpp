@@ -2,7 +2,6 @@
 
 #include <type_traits>
 
-#include <adpp/common.hpp>
 #include <adpp/utils.hpp>
 #include <adpp/backward/bindings.hpp>
 

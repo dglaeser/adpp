@@ -25,6 +25,6 @@ template<typename T, std::size_t N>
 concept static_vec_n = static_vec<T> and size_of_v<std::remove_cvref_t<T>> == N;
 
 template<typename A, typename B>
-concept same_remove_cvref_t_as = std::same_as<std::remove_cvref_t<A>, std::remove_cvref_t<B>>;
+concept same_remove_cvref_t_as = is_same_cvref_v<A, B>;
 
 }  // namespace adpp
