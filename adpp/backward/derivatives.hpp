@@ -70,8 +70,10 @@ struct derivatives : indexed<const Ts&...> {
     }
 
     //! Return the derivatives as array
-    constexpr const auto& as_array() const noexcept { return _values; }
-    constexpr auto& as_array() noexcept { return _values; }
+    template<typename Self>
+    constexpr decltype(auto) as_array(this Self&& self) noexcept {
+        return self._values;
+    }
 
  private:
     std::array<value_type, size> _values;
