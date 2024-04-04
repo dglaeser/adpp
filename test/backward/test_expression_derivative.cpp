@@ -280,5 +280,14 @@ int main() {
         expect(eq(derivative.evaluate(), 8.0));
     };
 
+    "function_differentiate"_test = [] () {
+        var a;
+        let b;
+        var c;
+        function f = (a + b)*a;
+        function df_da = f.differentiate(wrt(a));
+        expect(eq(df_da(a = 2.0, b = 4.0, c = 10.0), 2.0*2.0 + 4.0));
+    };
+
     return EXIT_SUCCESS;
 }
