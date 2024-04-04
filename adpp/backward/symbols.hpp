@@ -1,3 +1,10 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures to represent symbols from which expressions can be constructed.
+ */
 #pragma once
 
 #include <ostream>
@@ -14,6 +21,10 @@
 
 namespace adpp::backward {
 
+//! \addtogroup Backward
+//! \{
+
+//! symbol that represents a constant value
 template<auto v>
 struct constant : bindable {
     static constexpr auto value = v;
@@ -24,16 +35,19 @@ struct constant : bindable {
     template<auto k> constexpr auto operator*(const constant<k>&) const noexcept { return constant<v*k>{}; }
     template<auto k> constexpr auto operator/(const constant<k>&) const noexcept { return constant<v/k>{}; }
 
+    //! Return the constant value (signature compatible with the expression interface)
     template<typename... B>
     constexpr auto evaluate(const bindings<B...>&) const noexcept {
         return value;
     }
 
+    //! Back-propagate derivatives w.r.t. the given variables (signature compatible with the expression interface)
     template<scalar R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
         return std::make_pair(value, derivatives<R, V...>{});
     }
 
+    //! Differentiate this expression (symbol) w.r.t. the given symbol
     template<typename Self, typename V>
     constexpr auto differentiate(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
@@ -42,6 +56,7 @@ struct constant : bindable {
             return constant<0>{};
     }
 
+    //! Export this symbol into the given stream
     template<typename... B>
     constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
         out << value;
@@ -81,7 +96,7 @@ namespace detail {
 template<typename T>
 inline constexpr bool is_zero_constant_v = detail::is_zero_constant<std::remove_cvref_t<T>>::value;
 
-
+//! Base class for negatable symbols
 struct negatable {
     template<typename Self>
     constexpr auto operator-(this Self&& self) {
@@ -89,7 +104,7 @@ struct negatable {
     }
 };
 
-
+//! symbol that represents a (runtime) constant
 template<typename T, auto _ = [] () {}>
 struct val : bindable, negatable {
  private:
@@ -125,16 +140,19 @@ struct val : bindable, negatable {
         return val<T, __>{v};
     }
 
+    //! Return the bound value (signature compatible with the expression interface)
     template<typename... B>
     constexpr decltype(auto) evaluate(const bindings<B...>&) const noexcept {
         return get();
     }
 
+    //! Back-propagate derivatives w.r.t. the given variables (signature compatible with the expression interface)
     template<scalar R, typename... B, typename... V>
     constexpr auto back_propagate(const bindings<B...>&, const type_list<V...>&) const noexcept {
         return std::make_pair(get(), derivatives<R, V...>{});
     }
 
+    //! Differentiate this expression (symbol) w.r.t. the given symbol
     template<typename Self, typename V>
     constexpr auto differentiate(this Self&&, const type_list<V>&) noexcept {
         if constexpr (std::is_same_v<std::remove_cvref_t<Self>, std::remove_cvref_t<V>>)
@@ -143,11 +161,13 @@ struct val : bindable, negatable {
             return constant<0>{};
     }
 
+    //! Export the value to the given output stream
     template<typename... B>
     constexpr void export_to(std::ostream& out, const bindings<B...>&) const {
         out << get();
     }
 
+    //! Return the value of this symbol
     const T& get() const {
         if constexpr (is_reference)
             return *val<T, _>::_value;
@@ -165,7 +185,7 @@ val(T&&) -> val<T, _>;
 template<typename T, auto _>
 struct is_symbol<val<T, _>> : std::true_type {};
 
-
+//! Data structure to store a value bound to a symbol
 template<typename S, typename V>
 struct value_binder {
     using symbol_type = std::remove_cvref_t<S>;
@@ -176,6 +196,7 @@ struct value_binder {
     : _value{std::forward<_V>(v)}
     {}
 
+    //! Return the bound value
     template<typename Self>
     constexpr decltype(auto) unwrap(this Self&& self) {
         if constexpr (!std::is_lvalue_reference_v<Self>)
@@ -192,28 +213,33 @@ template<typename S, typename V>
 value_binder(S&&, V&&) -> value_binder<std::remove_cvref_t<S>, V>;
 
 
+//! Data structure to represent a symbol
 template<typename T>
 struct symbol : bindable, negatable {
     constexpr symbol() = default;
     constexpr symbol(symbol&&) = default;
     constexpr symbol(const symbol&) = delete;
 
+    //! bind the given value to this symbol
     template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return value_binder(std::forward<Self>(self), std::forward<V>(value));
     }
 
+    //! bind the given value to this symbol
     template<typename Self, typename V> requires(accepts<T, V>)
     constexpr auto operator=(this Self&& self, V&& value) noexcept {
         return self.bind(std::forward<V>(value));
     }
 
+    //! evaluate this expression (symbol) at the given values (signature compatible with the expression interface)
     template<typename Self, typename... B>
         requires(bindings<B...>::template contains_bindings_for<Self>)
     constexpr decltype(auto) evaluate(this Self&& self, const bindings<B...>& b) noexcept {
         return b[self];
     }
 
+    //! Back-propagate derivatives w.r.t. the given variables (signature compatible with the expression interface)
     template<scalar R, typename Self, typename B, typename... V>
     constexpr auto back_propagate(this Self&& self, const B& bindings, const type_list<V...>&) {
         derivatives<R, V...> derivs{};
@@ -222,6 +248,7 @@ struct symbol : bindable, negatable {
         return std::make_pair(self.evaluate(bindings), std::move(derivs));
     }
 
+    //! Differentiate this expression (symbol) w.r.t. the given symbol
     template<typename Self, typename V>
     constexpr auto differentiate(this Self&&, const type_list<V>&) {
         if constexpr (same_remove_cvref_t_as<Self, V>)
@@ -230,6 +257,7 @@ struct symbol : bindable, negatable {
             return cval<0>;
     }
 
+    //! Export this symbol to the given stream
     template<typename Self, typename... V>
         requires(bindings<V...>::template contains_bindings_for<Self>)
     constexpr void export_to(this Self&& self, std::ostream& out, const bindings<V...>& name_bindings) {
@@ -237,6 +265,7 @@ struct symbol : bindable, negatable {
     }
 };
 
+//! Symbol implementation to represent independent variables of expressions
 template<typename T = dtype::any, auto = [] () {}>
 struct var : symbol<T> {
     using symbol<T>::operator=;
@@ -246,6 +275,7 @@ struct var : symbol<T> {
     constexpr var& operator=(const var<_T, __>&) = delete;
 };
 
+//! Symbol implementation to represent parameters of expressions
 template<typename T = dtype::any, auto = [] () {}>
 struct let : symbol<T> {
     using symbol<T>::operator=;
@@ -260,6 +290,7 @@ template<typename T, auto _> struct is_symbol<let<T, _>> : public std::true_type
 template<typename T, auto _> struct is_unbound_symbol<var<T, _>> : public std::true_type {};
 template<typename T, auto _> struct is_unbound_symbol<let<T, _>> : public std::true_type {};
 
+//! Convert the given value into a term
 template<into_term T, auto _ = [] () {}>
 inline constexpr decltype(auto) as_term(T&& t) noexcept {
     if constexpr (term<std::remove_cvref_t<T>>)
@@ -267,5 +298,7 @@ inline constexpr decltype(auto) as_term(T&& t) noexcept {
     else
         return val<T, _>{std::forward<T>(t)};
 }
+
+//! \} group Backward
 
 }  // namespace adpp::backward
