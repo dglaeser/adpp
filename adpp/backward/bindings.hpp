@@ -23,7 +23,7 @@ namespace detail {
 
 template<typename... B>
     requires(are_unique_v<B...> and detail::are_binders<B...>)
-struct bindings : variadic_accessor<B...> {
+struct bindings : private variadic_accessor<B...> {
  private:
     using base = variadic_accessor<B...>;
 
@@ -62,17 +62,14 @@ struct bindings : variadic_accessor<B...> {
     : base(std::forward<B>(binders)...)
     {}
 
-    using base::get;
-    template<typename Self, typename T>
-        requires(contains_bindings_for<T>)
-    constexpr decltype(auto) get(this Self&& self) noexcept {
-        return self.get(self.template index_of<binder_type<T>>()).unwrap();
+    template<typename T> requires(contains_bindings_for<T>)
+    constexpr decltype(auto) get() const noexcept {
+        return this->at(this->template index_of<binder_type<T>>()).unwrap();
     }
 
-    template<typename Self, typename T>
-        requires(contains_bindings_for<T>)
-    constexpr decltype(auto) operator[](this Self&& self, const T&) noexcept {
-        return self.template get<Self, T>();
+    template<typename T> requires(contains_bindings_for<T>)
+    constexpr decltype(auto) operator[](const T&) const noexcept {
+        return this->template get<T>();
     }
 };
 

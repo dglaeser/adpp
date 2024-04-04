@@ -650,7 +650,7 @@ namespace detail {
         constexpr index index_of() const noexcept { return {}; }
         constexpr index index_of(const T&) const noexcept { return {}; }
 
-        constexpr const std::remove_cvref_t<T>& get(const index&) const noexcept {
+        constexpr const std::remove_cvref_t<T>& at(const index&) const noexcept {
             return _storage.get();
         }
 
@@ -665,7 +665,7 @@ namespace detail {
     struct variadic_accessor<std::index_sequence<I...>, Ts...> : variadic_element<I, Ts>... {
         constexpr variadic_accessor(Ts... ts) noexcept : variadic_element<I, Ts>(std::forward<Ts>(ts))... {}
         using variadic_element<I, Ts>::index_of...;
-        using variadic_element<I, Ts>::get...;
+        using variadic_element<I, Ts>::at...;
     };
 
 }  // namespace detail
@@ -684,7 +684,7 @@ struct variadic_accessor : detail::variadic_accessor<std::make_index_sequence<si
 
     template<typename T> requires(contains_decayed_v<T, Ts...>)
     constexpr auto index(const T& t) const noexcept {
-        return this->get(this->index_of(t));
+        return this->at(this->index_of(t));
     }
 };
 
