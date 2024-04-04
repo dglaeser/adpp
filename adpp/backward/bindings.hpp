@@ -98,7 +98,10 @@ struct bindings<> {
 template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
-//! Type trait to evaluate if a type is a binding
+/*!
+ * \ingroup Backward
+ * \brief Type trait to evaluate if a type is a binding
+ */
 template<typename T>
 struct is_binding : std::false_type {};
 template<typename... B>
@@ -106,7 +109,10 @@ struct is_binding<bindings<B...>> : std::true_type {};
 template<typename T>
 inline constexpr bool is_binding_v = is_binding<T>::value;
 
-//! An expression with its symbols bound to values
+/*!
+ * \ingroup Backward
+ * \brief An expression with its symbols bound to values
+ */
 template<term E, typename B>
 class bound_expression {
  public:
@@ -259,8 +265,10 @@ inline constexpr auto where(B&&... b) {
     return adpp::backward::bind(std::forward<B>(b)...);
 }
 
-
-//! Base class for bindable expressions
+/*!
+ * \ingroup Backward
+ * \brief Base class for bindable expressions
+ */
 struct bindable {
     //! Return this expression bound to the given values
     template<typename Self, typename... Bs>

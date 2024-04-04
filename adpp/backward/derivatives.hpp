@@ -17,7 +17,10 @@
 
 namespace adpp::backward {
 
-//! Data structure to store the derivatives w.r.t. the given symbols.
+/*!
+ * \ingroup Backward
+ * \brief Data structure to store the derivatives w.r.t. the given symbols.
+ */
 template<scalar R, typename... Ts>
     requires(are_unique_v<Ts...>)
 struct derivatives : indexed<const Ts&...> {
@@ -110,7 +113,10 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-//! Data structure to store the jacobian of a vectorial expression
+/*!
+ * \ingroup Backward
+ * \brief Data structure to store the jacobian of a vectorial expression
+ */
 template<detail::gradient... gradients>
     requires(detail::same_vars<gradients...>::value)
 struct jacobian {
