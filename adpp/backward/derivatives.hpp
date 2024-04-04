@@ -1,3 +1,10 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures related to storing derivatives of expressions w.r.t. the given symbols.
+ */
 #pragma once
 
 #include <algorithm>
@@ -10,6 +17,7 @@
 
 namespace adpp::backward {
 
+//! Data structure to store the derivatives w.r.t. the given symbols.
 template<scalar R, typename... Ts>
     requires(are_unique_v<Ts...>)
 struct derivatives : indexed<const Ts&...> {
@@ -24,22 +32,26 @@ struct derivatives : indexed<const Ts&...> {
         std::ranges::fill(_values, R{0});
     }
 
+    //! Return the derivative w.r.t. the given symbol
     template<typename Self, typename T> requires(contains_decayed_v<T, Ts...>)
     constexpr std::convertible_to<value_type> decltype(auto) operator[](this Self&& self, const T& t) noexcept {
         return self._values[self.index_of(t)];
     }
 
+    //! Return the derivative w.r.t. the given symbol type
     template<typename T> requires(contains_decayed_v<T, Ts...>)
     constexpr std::convertible_to<value_type> decltype(auto) get() const noexcept {
         return _values[base::template index_of<T>()];
     }
 
+    //! Scale all derivatives by the given factor
     template<typename Self, scalar T>
     constexpr decltype(auto) scaled_with(this Self&& self, T factor) noexcept {
         std::ranges::for_each(self._values, [factor=static_cast<R>(factor)] (auto& v) { v *= factor; });
         return std::forward<Self>(self);
     }
 
+    //! Add the derivatives to those of `other` and return the result
     template<typename Self, scalar T> requires(!std::is_lvalue_reference_v<Self>)
     constexpr decltype(auto) operator+(this Self&& self, derivatives<T, Ts...>&& other) noexcept {
         using result_t = std::common_type_t<R, T>;
@@ -57,6 +69,7 @@ struct derivatives : indexed<const Ts&...> {
         }
     }
 
+    //! Return the derivatives as array
     constexpr const auto& as_array() const noexcept { return _values; }
     constexpr auto& as_array() noexcept { return _values; }
 
@@ -95,6 +108,7 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+//! Data structure to store the jacobian of a vectorial expression
 template<detail::gradient... gradients>
     requires(detail::same_vars<gradients...>::value)
 struct jacobian {
@@ -106,8 +120,9 @@ struct jacobian {
     : _gradients{std::move(grads)...}
     {}
 
-    template<std::size_t i, typename variable>
-    constexpr auto operator[](index_constant<i>, const variable& v) const noexcept {
+    //! Return the derivative of the i-th equation w.r.t. the given symbol
+    template<std::size_t i, typename symbol>
+    constexpr auto operator[](index_constant<i>, const symbol& v) const noexcept {
         return std::get<i>(_gradients)[v];
     }
 
