@@ -1,3 +1,10 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures related to binding values to symbols/expressions.
+ */
 #pragma once
 
 #include <utility>
@@ -21,6 +28,10 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+/*!
+ * \ingroup Backward
+ * \brief Data structure to store tuples of values bound to symbols.
+ */
 template<typename... B>
     requires(are_unique_v<B...> and detail::are_binders<B...>)
 struct bindings : private variadic_accessor<B...> {
@@ -62,17 +73,20 @@ struct bindings : private variadic_accessor<B...> {
     : base(std::forward<B>(binders)...)
     {}
 
+    //! Return the value bound to the symbol of type T
     template<typename T> requires(contains_bindings_for<T>)
     constexpr decltype(auto) get() const noexcept {
         return this->at(this->template index_of<binder_type<T>>()).unwrap();
     }
 
+    //! Return the value bound to the given symbol
     template<typename T> requires(contains_bindings_for<T>)
     constexpr decltype(auto) operator[](const T&) const noexcept {
         return this->template get<T>();
     }
 };
 
+//! Specialization for a zero number of symbols (for compatibility purposes)
 template<>
 struct bindings<> {
     template<typename... T>
@@ -84,7 +98,7 @@ struct bindings<> {
 template<typename... B>
 bindings(B&&...) -> bindings<B...>;
 
-
+//! Type trait to evaluate if a type is a binding
 template<typename T>
 struct is_binding : std::false_type {};
 template<typename... B>
@@ -92,6 +106,7 @@ struct is_binding<bindings<B...>> : std::true_type {};
 template<typename T>
 inline constexpr bool is_binding_v = is_binding<T>::value;
 
+//! An expression with its symbols bound to values
 template<term E, typename B>
 class bound_expression {
  public:
@@ -100,10 +115,12 @@ class bound_expression {
     , _bindings{std::forward<B>(b)}
     {}
 
+    //! Evaluate the expression with the stored values
     constexpr decltype(auto) evaluate() const requires(evaluatable_with<E, B>) {
         return _expression.get().evaluate(_bindings.get());
     }
 
+    //! Back-propagate using the stored values
     template<scalar R, typename Self, typename... V>
     constexpr auto back_propagate(this Self&& self, const type_list<V...>& vars) {
         auto [value, derivs] = self._expression.get().template back_propagate<R>(self._bindings.get(), vars);
@@ -112,6 +129,7 @@ class bound_expression {
         return std::make_pair(std::move(value), std::move(derivs));
     }
 
+    //! Differentiate the expression and return a bound expression
     template<typename Self, typename V>
     constexpr auto differentiate(this Self&& self, const type_list<V>& var) {
         if constexpr (std::is_lvalue_reference_v<Self>)
@@ -123,10 +141,12 @@ class bound_expression {
             );
     }
 
+    //! Export the expression in to the given ostream
     constexpr void export_to(std::ostream& out) const {
         _expression.get().export_to(out, _bindings.get());
     }
 
+    //! Export the expression into the given ostream
     friend constexpr std::ostream& operator<<(std::ostream& out, const bound_expression& e) {
         e.export_to(out);
         return out;
@@ -153,6 +173,9 @@ namespace detail {
     concept binder_collection = requires {
         T::number_of_sub_binders;
     };
+
+    template<typename T>
+    struct is_binder_collection : std::bool_constant<binder_collection<T>> {};
 
     template<typename... Ts, typename T>
     constexpr auto concat_with(std::tuple<Ts...>&& tuple, T&& t) {
@@ -205,33 +228,41 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-
+//! Create bindings from the given bound symbols
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto bind(B&&... b) {
-    return detail::unpack_binders([] <typename T> (T&& binder_tuple) {
-        return std::apply([] <typename... SB> (SB&&... sub_binders) {
-            return bindings{std::forward<SB>(sub_binders)...};
-        }, std::forward<T>(binder_tuple));
-    }, std::tuple{}, std::forward<B>(b)...);
+    if constexpr (std::disjunction_v<detail::is_binder_collection<B>...>)
+        return detail::unpack_binders([] <typename T> (T&& binder_tuple) {
+            return std::apply([] <typename... SB> (SB&&... sub_binders) {
+                return bindings{std::forward<SB>(sub_binders)...};
+            }, std::forward<T>(binder_tuple));
+        }, std::tuple{}, std::forward<B>(b)...);
+    else
+        return bindings{std::forward<B>(b)...};
 }
 
+//! Create bindings from the given bound symbols
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto at(B&&... b) {
     return adpp::backward::bind(std::forward<B>(b)...);
 }
 
+//! Create bindings from the given bound symbols
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto with(B&&... b) {
     return adpp::backward::bind(std::forward<B>(b)...);
 }
 
+//! Create bindings from the given bound symbols
 template<typename... B> requires(detail::are_binders<B...>)
 inline constexpr auto where(B&&... b) {
     return adpp::backward::bind(std::forward<B>(b)...);
 }
 
 
+//! Base class for bindable expressions
 struct bindable {
+    //! Return this expression bound to the given values
     template<typename Self, typename... Bs>
     constexpr auto with(this Self&& self, Bs&&... binders) noexcept {
         return bound_expression{std::forward<Self>(self), adpp::backward::bind(std::forward<Bs>(binders)...)};
