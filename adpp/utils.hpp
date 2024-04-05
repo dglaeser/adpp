@@ -510,6 +510,9 @@ struct md_shape {
 template<std::size_t... n>
 inline constexpr md_shape<n...> shape;
 
+template<std::size_t n>
+inline constexpr md_shape<n> length;
+
 //! Allows iteration over the indices in an md_shape at compile time, starting from a given index
 template<typename shape, typename md_index_current>
 struct md_index_constant_iterator;

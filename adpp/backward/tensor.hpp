@@ -361,10 +361,30 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
-// TODO: streamline vec with tensor? (i.e. make class and construct with ctad)
 //! A vector expression composed of `var` instances
 template<std::size_t N, auto _ = [] () {}>
-using vec = typename detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
+struct vector
+: detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type {
+    using base = detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
+    using base::operator=;
+
+    constexpr vector() noexcept = default;
+    constexpr vector(md_shape<N>) noexcept {}
+};
+
+template<std::size_t n, auto _ = [] () {}>
+vector(md_shape<n>) -> vector<n, _>;
+
+//! Convenience alias for a vector with length N
+template<std::size_t N, auto _ = [] () {}>
+using vec = vector<N, _>;
+
+template<std::size_t N, auto _>
+struct is_expression<vector<N, _>> : is_expression<typename vector<N, _>::base> {};
+template<std::size_t N, auto _>
+struct is_scalar_expression<vector<N, _>> : is_scalar_expression<typename vector<N, _>::base> {};
+template<std::size_t N, auto _>
+struct operands<vector<N, _>> : operands<typename vector<N, _>::base> {};
 
 //! A tensor expression composed of `var` instances
 template<auto shape, auto _ = [] () {}>

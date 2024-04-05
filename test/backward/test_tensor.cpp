@@ -16,9 +16,11 @@ using boost::ut::eq;
 using boost::ut::le;
 
 using adpp::shape;
+using adpp::length;
 using adpp::backward::var;
-using adpp::backward::vec;
 using adpp::backward::cval;
+using adpp::backward::vec;
+using adpp::backward::vector;
 using adpp::backward::tensor;
 using adpp::backward::vector_expression;
 using adpp::backward::tensor_expression;
@@ -60,7 +62,7 @@ int main() {
     };
 
     "vec"_test = [] () {
-        vec<3> v;
+        vector v(length<3>);
         static constexpr auto result = evaluate(v, at(v = std::array{0, 1, 2}));
         static_assert(std::is_same_v<
             std::remove_cvref_t<decltype(result)>,
@@ -75,7 +77,7 @@ int main() {
     };
 
     "vec_binding_by_reference"_test = [] () {
-        vec<3> v;
+        vector v(length<3>);
         std::array<double, 3> values{42, 43, 44};
         auto expr = v.scaled_with(cval<2>);
         expect(std::ranges::equal(
@@ -93,7 +95,7 @@ int main() {
     "vec_expression"_test = [] () {
         using adpp::index;
 
-        vec<3> v;
+        vector v(length<3>);
         constexpr vector_expression e = {
             v[index<0>]*v[index<1>],
             v[index<1>]*v[index<2>],
@@ -106,7 +108,7 @@ int main() {
     };
 
     "vec_expression_scaling"_test = [] () {
-        vec<3> v;
+        vector v(length<3>);
         {
             constexpr auto e = v.scaled_with(adpp::backward::cval<3>);
             static_assert(std::ranges::equal(
@@ -139,17 +141,33 @@ int main() {
 
     "vec_expression_dot"_test = [] () {
         {
+            vector v(length<3>);
+            vector v2(length<3>);
+            constexpr auto e = v.dot(v2);
+            static_assert(evaluate(e, at(v = {1, 2, 3}, v2 = {1, 2, 3})) == 14);
+        }
+        {  // same with using vec
             vec<3> v;
             vec<3> v2;
             constexpr auto e = v.dot(v2);
             static_assert(evaluate(e, at(v = {1, 2, 3}, v2 = {1, 2, 3})) == 14);
         }
         {
+            vector v(length<3>);
+            constexpr auto e = v*v;
+            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+        {  // same with using vec
             vec<3> v;
             constexpr auto e = v*v;
             static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
         }
         {
+            vector v(length<3>);
+            auto e = v.dot(v);
+            expect(evaluate(e, at(v = {1, 2, 3})) == 14);
+        }
+        {  // same with using vec
             vec<3> v;
             auto e = v.dot(v);
             expect(evaluate(e, at(v = {1, 2, 3})) == 14);
@@ -158,7 +176,7 @@ int main() {
 
     "vec_expression_l2_norm"_test = [] () {
         {
-            vec<3> v;
+            vector v(length<3>);
             auto e = v.l2_norm();
             expect(eq(evaluate(e, at(v = {1, 2, 3})), std::sqrt(14)));
         }
@@ -166,19 +184,19 @@ int main() {
 
     "vec_expression_l2_norm_2"_test = [] () {
         {
-            vec<3> v;
+            vector v(length<3>);
             constexpr auto e = v.l2_norm_squared();
             static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
         }
         {
-            vec<3> v;
+            vector v(length<3>);
             auto e = v.l2_norm_squared();
             expect(evaluate(e, at(v = {1, 2, 3})) == 14);
         }
     };
 
     "vec_io"_test = [] () {
-        vec<3> v;
+        vector v(length<3>);
         std::ostringstream s;
         s << v.with(v = {"vx", "vy", "vz"});
         expect(eq(s.str(), std::string{"[vx, vy, vz]"}));
