@@ -165,18 +165,11 @@ struct back_propagator<R, op::sqrt, A> {
 #ifndef DOXYGEN
 namespace detail {
 
-    template<typename T> requires(!is_cval<std::remove_cvref_t<T>>::value)
-    constexpr bool is_zero() { return false; }
-    template<typename T> requires(is_cval<std::remove_cvref_t<T>>::value)
-    constexpr bool is_zero() { return T::value == 0; }
-    template<typename T>
-    constexpr bool is_zero(const T&) { return is_zero<T>(); }
-
     template<typename T0, typename T1, typename F0, typename F1, typename F>
     constexpr auto simplified(T0&& t0, T1&& t1, const F0& f0, const F1& f1, const F& f) {
-        if constexpr (is_zero<std::remove_cvref_t<T0>>())
+        if constexpr (is_zero_constant_v<std::remove_cvref_t<T0>>)
             return f1(std::forward<T1>(t1));
-        else if constexpr (is_zero<std::remove_cvref_t<T1>>())
+        else if constexpr (is_zero_constant_v<std::remove_cvref_t<T1>>)
             return f0(std::forward<T0>(t0));
         else
             return f(std::forward<T0>(t0), std::forward<T1>(t1));
