@@ -77,6 +77,7 @@ class md_array {
 
     //! Return the value at the given md index
     template<typename Self, std::size_t... i>
+        requires(sizeof...(i) == shape.dimension)
     constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>&) {
         static_assert(shape.flat_index_of(i...) < shape.count);
         return self._values[shape.flat_index_of(i...)];
@@ -91,7 +92,7 @@ class md_array {
 
     //! Return the value at the given index (only available for vectors)
     template<typename Self, std::integral I>
-        requires(shape.dimension == 1 or (shape.dimension == 2 && shape.last() == 1))
+        requires(shape.is_vector())
     constexpr decltype(auto) operator[](this Self&& self, const I& index) {
         return self._values[index];
     }
@@ -109,7 +110,6 @@ template<auto md_shape, term... Es>
 struct tensor_expression : bindable, indexed<Es...> {
     static constexpr std::size_t size = md_shape.count;
     static constexpr auto shape = md_shape;
-    static constexpr bool is_vector = shape.dimension == 1 || (shape.dimension == 2 and shape.last() == 1);
     using sub_expressions = type_list<Es...>;
 
     constexpr tensor_expression() = default;
@@ -139,7 +139,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     // TODO: Rename? Or put somewhere else? Free function?
     //! Return the jacobian matrix of this expression for the given values (only available for vectors)
     template<typename... B>
-    constexpr auto jacobian(const bindings<B...>& bindings) const noexcept requires(is_vector) {
+    constexpr auto jacobian(const bindings<B...>& bindings) const noexcept requires(shape.is_vector()) {
         using vars = vars_t<first_type_t<sub_expressions>>;
         auto results_tuple = _apply_to_all([&] <typename V> (auto, V&& v) {
             return derivatives_of(std::forward<V>(v), vars{}, bindings);
@@ -150,16 +150,16 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     // TODO: Rename? Or put somewhere else? Free function?
-    //! Return the jacobian matrix w.r.t the given variables as a new expression (only available for vectors)
+    //! Return the jacobian matrix expression w.r.t the given variables (only available for vectors)
     template<typename... V>
-    constexpr auto jacobian_expression(const type_list<V...>&) const noexcept requires(is_vector) {
+    constexpr auto jacobian_expression(const type_list<V...>&) const noexcept requires(shape.is_vector()) {
         auto derivs_tuple = _apply_to_all([&] <typename E> (auto, E&& expr) {
             return std::tuple{differentiate(expr, type_list<V>{})...};
         });
         return std::apply([] <typename... R> (R&&... results) {
             return backward::tensor_expression{
                 adpp::shape<shape.first(), sizeof...(V)>,
-                std::forward<R>(results)...
+                std::move(results)...
             };
         }, std::move(derivs_tuple));
     }
@@ -180,9 +180,9 @@ struct tensor_expression : bindable, indexed<Es...> {
         out << "[";
         bool first = true;
         _visit([&] <auto... i> (md_index_constant<i...> idx) {
-            if constexpr (is_vector && idx.at(index<0>) > 0) out << ", ";
-            if constexpr (!is_vector && idx.last() > 0) out << ", ";
-            else if (!is_vector && idx.last() == 0 && !first) out << " // ";
+            if constexpr (shape.is_vector() && idx.first() > 0) out << ", ";
+            if constexpr (!shape.is_vector() && idx.last() > 0) out << ", ";
+            else if (!shape.is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);
             first = false;
         }, md_index_constant_iterator{shape});
@@ -198,7 +198,7 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     //! Return the expression at the given index (only available for vectors)
     template<std::size_t i>
-    constexpr auto operator[](const index_constant<i>& idx) const requires(is_vector) {
+    constexpr auto operator[](const index_constant<i>& idx) const requires(shape.is_vector()) {
         return this->make(idx);
     }
 
@@ -227,9 +227,9 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(results_tuple));
     }
 
-    //! Perform a dot product (on vectors) or matrix multiplication (on tensors)
+    //! Perform a dot product with another vector
     template<auto other_shape, typename... T>
-        requires(is_vector and shape.extent_in(index<0>) == other_shape.extent_in(index<0>))
+        requires(shape.is_vector() and other_shape.is_vector() and shape.first() == other_shape.first())
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         return _reduce([&] (auto i, auto&& e) {
             if constexpr (is_zero_constant_v<decltype(e)>)
@@ -239,9 +239,9 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, cval<0>, md_index_constant_iterator{shape});
     }
 
-    //! Perform a dot product (on vectors) or matrix multiplication (on tensors)
+    //! Perform a matrix multiplication with another tensor
     template<auto other_shape, typename... T>
-        requires(!is_vector and shape.last() == other_shape.extent_in(index<0>))
+        requires(!shape.is_vector() and shape.last() == other_shape.extent_in(index<0>))
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
         static constexpr auto my_dim = shape.dimension;
         using head = typename split_at<my_dim - 1, typename decltype(shape)::as_value_list>::head;
@@ -271,12 +271,12 @@ struct tensor_expression : bindable, indexed<Es...> {
     }
 
     //! Return the expression representing the squared l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm_squared() const requires(is_vector) {
+    constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
         return dot(*this);
     }
 
     //! Return the expression representing the l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm() const requires(is_vector) {
+    constexpr auto l2_norm() const requires(shape.is_vector()) {
         return sqrt(l2_norm_squared());
     }
 

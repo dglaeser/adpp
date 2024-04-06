@@ -460,6 +460,10 @@ struct md_shape {
     static constexpr std::size_t dimension = sizeof...(n);
     static constexpr std::size_t count = value_list<n...>::reduce_with(std::multiplies<void>{}, dimension > 0 ? 1 : 0);
 
+    static constexpr bool is_vector() noexcept {
+        return dimension == 1 || (dimension == 2 && last() == 1);
+    }
+
     static constexpr std::size_t first() noexcept requires(dimension > 0) {
         return value_list<n...>::at(index<0>);
     }
