@@ -356,7 +356,7 @@ int main() {
         static constexpr auto a = v[_0];
         static constexpr auto b = v[_1];
         static constexpr vector_expression pde{cval<0.5>*a*a + b, cval<5>*a*b + cval<2>};
-        static constexpr auto J = pde.jacobian_expression(wrt(a, b));
+        static constexpr auto J = pde.jacobian_expression(wrt(v.vars()));
 
         static constexpr auto iterate = [&] (auto& x, const auto& res) {
             const auto jac = J.evaluate(at(v = x));

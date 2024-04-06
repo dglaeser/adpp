@@ -367,9 +367,11 @@ struct vector
 : detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type {
     using base = detail::vec_with<typename detail::vars_n<_, N, type_list<>>::type>::type;
     using base::operator=;
+    using variables = typename detail::vars_n<_, N, type_list<>>::type;
 
     constexpr vector() noexcept = default;
     constexpr vector(md_shape<N>) noexcept {}
+    constexpr variables vars() const noexcept { return {}; }
 };
 
 template<std::size_t n, auto _ = [] () {}>

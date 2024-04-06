@@ -18,9 +18,15 @@ namespace adpp::backward {
 //! \{
 
 //! Create a type_list containing the given terms
-template<typename... V>
-inline constexpr auto wrt(V&&...) {
-    return type_list<std::remove_cvref_t<V>...>{};
+template<term... V>
+inline constexpr auto wrt(const type_list<V...>& types) {
+    return types;
+}
+
+//! Create a type_list containing the given terms
+template<term... V>
+inline constexpr auto wrt(const V&...) {
+    return type_list<V...>{};
 }
 
 //! Evaluate the derivatives of the given expression w.r.t. to the given variables at the given values
