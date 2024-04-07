@@ -140,9 +140,15 @@ struct tensor_expression : bindable, indexed<Es...> {
     //! Return the jacobian matrix of this expression for the given values (only available for vectors)
     template<typename... B>
     constexpr auto jacobian(const bindings<B...>& bindings) const noexcept requires(shape.is_vector()) {
-        using vars = vars_t<first_type_t<sub_expressions>>;
+        return jacobian(vars_t<first_type_t<sub_expressions>>{}, bindings);
+    }
+
+    // TODO: Rename? Or put somewhere else? Free function?
+    //! Return the jacobian matrix of this expression w.r.t the given variables at the given values (only available for vectors)
+    template<typename... Vs, typename... B>
+    constexpr auto jacobian(const type_list<Vs...>& vars, const bindings<B...>& bindings) const noexcept requires(shape.is_vector()) {
         auto results_tuple = _apply_to_all([&] <typename V> (auto, V&& v) {
-            return derivatives_of(std::forward<V>(v), vars{}, bindings);
+            return derivatives_of(std::forward<V>(v), vars, bindings);
         });
         return std::apply([] <typename... R> (R&&... results) {
             return backward::jacobian{std::forward<R>(results)...};

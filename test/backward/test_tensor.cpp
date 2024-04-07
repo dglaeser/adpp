@@ -301,8 +301,8 @@ int main() {
         vector_expression pde{cval<0.5>*a*a + b, cval<5>*a*b + cval<2>}; // TODO: Restriction necessary that all equal?
 
         const auto iterate = [&] (auto& x, const auto& res) {
-            const auto jac = pde.jacobian(at(v = x));
-            const auto det = 1.0/(jac[_0, a]*jac[_1, b] - jac[_0, b]*jac[_1, a]);
+            auto jac = pde.jacobian(wrt(v.vars()), at(v = x));
+            const auto det = 1.0/(jac[_0, _0]*jac[_1, _1] - jac[_0, _1]*jac[_1, _0]);
             x[0] += -( jac[_1, b]*res[0] - jac[_0, b]*res[1])*det;
             x[1] += -(-jac[_1, a]*res[0] + jac[_0, a]*res[1])*det;
         };
