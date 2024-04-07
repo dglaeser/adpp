@@ -13,7 +13,6 @@
 using boost::ut::operator""_test;
 using boost::ut::expect;
 using boost::ut::eq;
-using boost::ut::le;
 
 using adpp::shape;
 using adpp::length;
@@ -323,34 +322,43 @@ int main() {
 
     "md_newton"_test = [] () {
         using namespace adpp::indices;
-        vec<2> v;
-        const auto& a = v[_0];
-        const auto& b = v[_1];
-        vector_expression pde{cval<0.5>*a*a + b, cval<5>*a*b + cval<2>}; // TODO: Restriction necessary that all equal?
-
-        const auto iterate = [&] (auto& x, const auto& res) {
-            auto jac = pde.jacobian(wrt(v.vars()), at(v = x));
-            const auto det = 1.0/(jac[_0, _0]*jac[_1, _1] - jac[_0, _1]*jac[_1, _0]);
-            x[0] += -( jac[_1, b]*res[0] - jac[_0, b]*res[1])*det;
-            x[1] += -(-jac[_1, a]*res[0] + jac[_0, a]*res[1])*det;
+        static constexpr vec<2> v;
+        constexpr vector_expression pde{
+            cval<0.5>*v[_0]*v[_0] + v[_1],
+            cval<5>*v[_0]*v[_1] + cval<2>
         };
 
-        const auto solve = [&] () {
+        const auto update = [pde] (const auto& res, auto& x) {
+            const auto inverted = [] (auto&& J) {
+                const auto det = 1.0/(J[_0, _0]*J[_1, _1] - J[_0, _1]*J[_1, _0]);
+                J.scale_with(-1.0*det);
+                std::swap(J[_0, _0], J[_1, _1]);
+                J[_0, _1] *= -1;
+                J[_1, _0] *= -1;
+                return J;
+            };
+
+            auto J = pde.jacobian(wrt(v.vars()), at(v = x));
+            inverted(J).add_apply_to(res, x);
+            return x;
+        };
+
+        const auto solve = [pde, update] () {
             int i = 0;
             std::array x{5.0, 1.0};
             auto res = pde.evaluate(at(v = x));
-            while ((res[0]*res[0] > 1e-12 || res[1]*res[1] > 1e-12) && i < 20) {
-                iterate(x, res);
+            while (res.l2_norm_squared() > 1e-12 && i < 20) {
+                update(res, x);
                 res = pde.evaluate(at(v = x));
                 i++;
             }
-            return std::make_pair(i, res);
+
+            return x;
         };
 
-        const auto [it, res] = solve();
-        std::cout << "residual (it = " << it << ") = " << res[0] << ", " << res[1] << std::endl;
-        expect(le(res[0], 1e-6));
-        expect(le(res[1], 1e-6));
+        constexpr auto x = solve();
+        static_assert(pde.evaluate(at(v = x))[0] < 1e-6);
+        static_assert(pde.evaluate(at(v = x))[1] < 1e-6);
     };
 
     "md_newton_at_compile_time"_test = [] () {
