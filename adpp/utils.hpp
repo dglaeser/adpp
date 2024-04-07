@@ -666,13 +666,13 @@ class md_array {
     //! Multiply this array with the given vector and store the result in the given output vector
     template<typename In, typename Out>
     constexpr void apply_to(const In& in, Out& out) const noexcept requires(shape.dimension == 2) {
-        _apply(in, out, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); });
+        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); });
     }
 
     //! Multiply this matrix with the given vector and add the result to the given output vector
     template<typename In, typename Out>
     constexpr void add_apply_to(const In& in, Out& out) const noexcept requires(shape.dimension == 2)  {
-        _apply(in, out, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); });
+        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); });
     }
 
     //! Multiply this matrix with the given vector and return the result
@@ -692,8 +692,8 @@ class md_array {
     template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
 
  private:
-    template<typename In, typename Out, typename U>
-    constexpr void _apply(const In& in, Out& out, const U& update) const noexcept {
+    template<typename In, typename U>
+    constexpr void _apply(const In& in, const U& update) const noexcept {
         constexpr md_shape<shape.first()> rows_shape;
         constexpr md_shape<shape.last()> cols_shape;
         for_each_index_in(rows_shape, [&] <std::size_t i> (const md_index_constant<i>&) {
