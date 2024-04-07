@@ -24,7 +24,7 @@ inline constexpr auto wrt(const type_list<V...>& types) {
 }
 
 //! Create a type_list containing the given terms
-template<term... V>
+template<term... V> requires(std::conjunction_v<is_scalar_expression<V>...>)
 inline constexpr auto wrt(const V&...) {
     return type_list<V...>{};
 }
