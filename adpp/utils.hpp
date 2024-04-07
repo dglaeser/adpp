@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <ostream>
+#include <numeric>
 #include <array>
 
 namespace adpp {
@@ -602,6 +603,54 @@ constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
     };
     _visit(md_index_constant_iterator{shape});
 }
+
+//! Stores values of type T accessible via indices in the given shape
+template<typename T, auto shape>
+class md_array {
+ public:
+    using value_type = T;
+    constexpr md_array() = default;
+
+    //! Return the size of this array (only available for vectors)
+    static constexpr std::size_t size() noexcept requires(shape.is_vector()) {
+        return shape.count;
+    }
+
+    //! Return the value at the given md index
+    template<typename Self, std::size_t... i>
+        requires(sizeof...(i) == shape.dimension)
+    constexpr decltype(auto) operator[](this Self&& self, const md_index_constant<i...>&) {
+        static_assert(shape.flat_index_of(i...) < shape.count);
+        return self._values[shape.flat_index_of(i...)];
+    }
+
+    //! Return the value at the given indices
+    template<typename Self, std::integral... I>
+        requires(sizeof...(I) == shape.dimension)
+    constexpr decltype(auto) operator[](this Self&& self, I&&... indices) {
+        return self._values[shape.flat_index_of(std::forward<I>(indices)...)];
+    }
+
+    //! Return the value at the given index (only available for vectors)
+    template<typename Self, std::integral I>
+        requires(shape.is_vector())
+    constexpr decltype(auto) operator[](this Self&& self, const I& index) {
+        return self._values[index];
+    }
+
+    constexpr auto l2_norm_squared() const {
+        return std::inner_product(begin(), end(), begin(), T{0});
+    }
+
+    template<typename Self> constexpr auto begin(this Self&& self) { return self._values.begin(); }
+    template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
+
+ private:
+    std::array<T, shape.count> _values;
+};
+
+template<typename T, auto shape> requires(shape.is_vector())
+struct size_of<md_array<T, shape>> : std::integral_constant<std::size_t, shape.count> {};
 
 //! Class that defines an order (e.g. of differentiation)
 template<unsigned int i>
