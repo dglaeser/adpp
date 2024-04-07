@@ -281,7 +281,9 @@ int main() {
         var x;
         var y;
         constexpr vector_expression expr{x + y, x*y, x + cval<2>*y};
-        constexpr auto jac = expr.jacobian(at(x = 1, y = 2));
+        constexpr auto jac = expr.jacobian(wrt(x, y), at(x = 1, y = 2));
+
+        static_assert(std::is_lvalue_reference_v<decltype(jac[_0, _0])>);
 
         static_assert(jac[_0, x] == 1);
         static_assert(jac[_0, y] == 1);

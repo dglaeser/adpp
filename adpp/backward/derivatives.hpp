@@ -129,15 +129,15 @@ struct jacobian {
     {}
 
     //! Return the derivative of the i-th equation w.r.t. the given symbol
-    template<std::size_t i, typename symbol>
-    constexpr auto operator[](index_constant<i>, const symbol& v) const noexcept {
-        return std::get<i>(_gradients)[v];
+    template<typename Self, std::size_t i, symbolic symbol>
+    constexpr decltype(auto) operator[](this Self&& self, index_constant<i>, const symbol& v) noexcept {
+        return std::get<i>(self._gradients)[v];
     }
 
     //! Return the derivative of the i-th equation w.r.t. the j-th symbol
-    template<std::size_t i, std::size_t j>
-    constexpr auto operator[](index_constant<i>, index_constant<j>) const noexcept {
-        decltype(auto) grad = std::get<i>(_gradients);
+    template<typename Self, std::size_t i, std::size_t j>
+    constexpr decltype(auto) operator[](this Self&& self, index_constant<i>, index_constant<j>) noexcept {
+        decltype(auto) grad = std::get<i>(self._gradients);
         return grad[grad.make(index_constant<j>{})];
     }
 
