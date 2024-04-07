@@ -12,6 +12,7 @@
 #include <ranges>
 #include <type_traits>
 #include <functional>
+#include <numeric>
 
 #include <adpp/utils.hpp>
 #include <adpp/backward/concepts.hpp>
@@ -73,7 +74,13 @@ tensor_value_binder(E&&, S&&) -> tensor_value_binder<std::remove_cvref_t<E>, S>;
 template<typename T, auto shape>
 class md_array {
  public:
+    using value_type = T;
     constexpr md_array() = default;
+
+    //! Return the size of this array (only available for vectors)
+    static constexpr std::size_t size() noexcept requires(shape.is_vector()) {
+        return shape.count;
+    }
 
     //! Return the value at the given md index
     template<typename Self, std::size_t... i>
@@ -95,6 +102,10 @@ class md_array {
         requires(shape.is_vector())
     constexpr decltype(auto) operator[](this Self&& self, const I& index) {
         return self._values[index];
+    }
+
+    constexpr auto l2_norm_squared() const {
+        return std::inner_product(begin(), end(), begin(), T{0});
     }
 
     template<typename Self> constexpr auto begin(this Self&& self) { return self._values.begin(); }
@@ -405,3 +416,10 @@ struct operands<tensor<shape, _>> : operands<typename tensor<shape, _>::base> {}
 //! \} group Backward
 
 }  // namespace adpp::backward
+
+namespace adpp {
+
+template<typename T, auto shape> requires(shape.is_vector())
+struct size_of<backward::md_array<T, shape>> : std::integral_constant<std::size_t, shape.count> {};
+
+}  // namespace adpp

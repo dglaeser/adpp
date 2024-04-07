@@ -201,11 +201,26 @@ struct filtered<predicate, type_list<Ts...>> : detail::filtered_types_impl<predi
 template<template<typename> typename predicate, typename... Ts>
 using filtered_t = typename filtered<predicate, Ts...>::type;
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    concept exposes_value_type = requires { typename T::value_type; };
+
+    template<typename T>
+    concept exposes_static_size = requires {
+        { T::size() } -> std::convertible_to<std::size_t>;
+    };
+
+}  // namespace detail
+#endif  // DOXYGEN
+
 //! Type trait to extract a containers value_type
 template<typename T>
 struct value_type;
-template<typename T, std::size_t N>
-struct value_type<std::array<T, N>> : std::type_identity<typename std::array<T, N>::value_type> {};
+template<detail::exposes_value_type T>
+struct value_type<T> : std::type_identity<typename T::value_type> {};
 template<typename T, std::size_t N>
 struct value_type<T[N]> : std::type_identity<T> {};
 template<typename T>
@@ -216,6 +231,8 @@ template<typename T>
 struct size_of;
 template<typename T, std::size_t N>
 struct size_of<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
+template<detail::exposes_static_size T>
+struct size_of<T> : std::integral_constant<std::size_t, T::size()> {};
 template<typename T, std::size_t N>
 struct size_of<T[N]> : std::integral_constant<std::size_t, N> {};
 template<typename T>
