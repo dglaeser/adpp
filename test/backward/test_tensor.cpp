@@ -215,12 +215,16 @@ int main() {
     "tensor_expression"_test = [] () {
         var x;
         var y;
-        constexpr tensor_expression e = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
+        constexpr tensor_expression e = {adpp::md_shape<2, 2, 1>{}, x, x*y, y*x, y};
         constexpr auto result = evaluate(e, at(x = 1, y = 2));
-        static_assert(result[0, 0] == 1);
-        static_assert(result[0, 1] == 2);
-        static_assert(result[1, 0] == 2);
-        static_assert(result[1, 1] == 2);
+        static_assert(std::is_same_v<
+            std::remove_cvref_t<decltype(result)>,
+            adpp::md_array<int, adpp::md_shape<2, 2, 1>{}>
+        >);
+        static_assert(result[0, 0, 0] == 1);
+        static_assert(result[0, 1, 0] == 2);
+        static_assert(result[1, 0, 0] == 2);
+        static_assert(result[1, 1, 0] == 2);
     };
 
     "tensor_expression_scaling"_test = [] () {
