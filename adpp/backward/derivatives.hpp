@@ -150,6 +150,19 @@ struct jacobian {
         std::apply([&] (auto&&... grads) { (grads.scaled_with(s), ...); }, _gradients);
     }
 
+    //! Return a matrix equal to this matrix scaled with the given scalar
+    template<typename Self, scalar S>
+    [[nodiscard]] constexpr decltype(auto) scaled_with(this Self&& self, S&& s) noexcept {
+        if constexpr (!std::is_lvalue_reference_v<Self>) {
+            self.scale_with(s);
+            return std::move(self);
+        } else {
+            auto copy = self;
+            copy.scale_with(s);
+            return copy;
+        }
+    }
+
     //! Multiply this matrix with the given vector and store the result in the given output vector
     template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out>
     constexpr void apply_to(const In& in, Out& out) const noexcept {

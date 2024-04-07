@@ -36,6 +36,17 @@ struct bound_value_type;
 template<typename E, typename T>
 struct bound_value_type<tensor_value_binder<E, T>> : std::type_identity<T> {};
 
+template<typename... T>
+constexpr auto invert_2x2(adpp::backward::jacobian<T...>& J) {
+    using namespace adpp::indices;
+    const auto det = 1.0/(J[_0, _0]*J[_1, _1] - J[_0, _1]*J[_1, _0]);
+    J.scale_with(det);
+    std::swap(J[_0, _0], J[_1, _1]);
+    J[_0, _1] *= -1;
+    J[_1, _0] *= -1;
+    return J;
+}
+
 int main() {
 
     "vector_expression"_test = [] () {
@@ -325,30 +336,16 @@ int main() {
         static constexpr vec<2> v;
         constexpr vector_expression pde{
             cval<0.5>*v[_0]*v[_0] + v[_1],
-            cval<5>*v[_0]*v[_1] + cval<2>
+            cval<5>*v[_0] - v[_1] + cval<2>
         };
 
-        const auto update = [pde] (const auto& res, auto& x) {
-            const auto inverted = [] (auto&& J) {
-                const auto det = 1.0/(J[_0, _0]*J[_1, _1] - J[_0, _1]*J[_1, _0]);
-                J.scale_with(-1.0*det);
-                std::swap(J[_0, _0], J[_1, _1]);
-                J[_0, _1] *= -1;
-                J[_1, _0] *= -1;
-                return J;
-            };
-
-            auto J = pde.jacobian(wrt(v.vars()), at(v = x));
-            inverted(J).add_apply_to(res, x);
-            return x;
-        };
-
-        const auto solve = [pde, update] () {
+        const auto solve = [pde] () {
             int i = 0;
             std::array x{5.0, 1.0};
             auto res = pde.evaluate(at(v = x));
             while (res.l2_norm_squared() > 1e-12 && i < 20) {
-                update(res, x);
+                auto J = pde.jacobian(wrt(v.vars()), at(v = x));
+                invert_2x2(J).scaled_with(-1.0).add_apply_to(res, x);
                 res = pde.evaluate(at(v = x));
                 i++;
             }
