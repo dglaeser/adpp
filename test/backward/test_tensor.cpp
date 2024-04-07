@@ -36,14 +36,14 @@ struct bound_value_type;
 template<typename E, typename T>
 struct bound_value_type<tensor_value_binder<E, T>> : std::type_identity<T> {};
 
-template<typename... T>
-constexpr auto invert_2x2(adpp::backward::jacobian<T...>& J) {
-    using namespace adpp::indices;
-    const auto det = 1.0/(J[_0, _0]*J[_1, _1] - J[_0, _1]*J[_1, _0]);
+template<typename jacobian>
+constexpr auto invert_2x2(jacobian&& J) {
+    using adpp::md_index;
+    const auto det = 1.0/(J[md_index<0, 0>]*J[md_index<1, 1>] - J[md_index<0, 1>]*J[md_index<1, 0>]);
     J.scale_with(det);
-    std::swap(J[_0, _0], J[_1, _1]);
-    J[_0, _1] *= -1;
-    J[_1, _0] *= -1;
+    std::swap(J[md_index<0, 0>], J[md_index<1, 1>]);
+    J[md_index<0, 1>] *= -1;
+    J[md_index<1, 0>] *= -1;
     return J;
 }
 
@@ -358,37 +358,32 @@ int main() {
         static_assert(pde.evaluate(at(v = x))[1] < 1e-6);
     };
 
-    "md_newton_at_compile_time"_test = [] () {
+    "md_newton_from_jacobian_expression"_test = [] () {
         using namespace adpp::indices;
         using adpp::md_index;
         static constexpr vec<2> v;
-        static constexpr auto a = v[_0];
-        static constexpr auto b = v[_1];
-        static constexpr vector_expression pde{cval<0.5>*a*a + b, cval<5>*a*b + cval<2>};
+        static constexpr vector_expression pde{
+            cval<0.5>*v[_0]*v[_0] + v[_1],
+            cval<5>*v[_0]*v[_1] + cval<2>
+        };
         static constexpr auto J = pde.jacobian_expression(wrt(v.vars()));
 
-        static constexpr auto iterate = [&] (auto& x, const auto& res) {
-            const auto jac = J.evaluate(at(v = x));
-            const auto det = 1.0/(jac[md_index<_0, _0>]*jac[md_index<_1, _1>] - jac[md_index<_0, _1>]*jac[md_index<_1, _0>]);
-            x[0] += -( jac[md_index<_1, _1>]*res[0] - jac[md_index<_0, _1>]*res[1])*det;
-            x[1] += -(-jac[md_index<_1, _0>]*res[0] + jac[md_index<_0, _0>]*res[1])*det;
-        };
-
-        static constexpr auto solve = [&] () {
+        const auto solve = [] () {
             int i = 0;
             std::array x{5.0, 1.0};
             auto res = pde.evaluate(at(v = x));
-            while ((res[0]*res[0] > 1e-12 || res[1]*res[1] > 1e-12) && i < 20) {
-                iterate(x, res);
+            while (res.l2_norm_squared() > 1e-12 && i < 20) {
+                invert_2x2(J.evaluate(at(v = x))).scaled_with(-1.0).add_apply_to(res, x);
                 res = pde.evaluate(at(v = x));
                 i++;
             }
-            return res;
+
+            return x;
         };
 
-        constexpr auto res = solve();
-        static_assert(res[0] < 1e-6);
-        static_assert(res[1] < 1e-6);
+        constexpr auto x = solve();
+        static_assert(pde.evaluate(at(v = x))[0] < 1e-6);
+        static_assert(pde.evaluate(at(v = x))[1] < 1e-6);
     };
 
     return EXIT_SUCCESS;
