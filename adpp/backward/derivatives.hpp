@@ -144,6 +144,12 @@ struct jacobian {
         return grad[grad.make(index_constant<j>{})];
     }
 
+    //! Return the derivative of the i-th equation w.r.t. the j-th symbol
+    template<typename Self, std::size_t i, std::size_t j>
+    constexpr decltype(auto) operator[](this Self&& self, md_index_constant<i, j>) noexcept {
+        return self[index_constant<i>{}, index_constant<j>{}];
+    }
+
     //! Scale this matrix with the given scalar
     template<scalar S>
     constexpr void scale_with(S&& s) noexcept {
@@ -184,15 +190,16 @@ struct jacobian {
     }
 
  private:
- template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out, typename U>
+    template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out, typename U>
     constexpr void _apply(const In& in, Out& out, const U& update) const noexcept {
-        constexpr md_shape<sizeof...(gradients)> my_shape;
-        for_each_index_in(my_shape, [&] <typename I> (const I& index) {
-            static constexpr auto flat = my_shape.flat_index_of(I{});
-            const auto& J_i = std::get<flat>(_gradients).as_array();
-            update(flat, std::inner_product(J_i.begin(), J_i.end(), in.begin(), value_type{0}));
+        constexpr md_shape<number_of_rows> rows_shape;
+        for_each_index_in(rows_shape, [&] <typename I> (const I& index) {
+            static constexpr auto row_index = rows_shape.flat_index_of(I{});
+            const auto& J_i = std::get<row_index>(_gradients).as_array();
+            update(row_index, std::inner_product(J_i.begin(), J_i.end(), in.begin(), value_type{0}));
         });
     }
+
     std::tuple<gradients...> _gradients;
 };
 
