@@ -10,7 +10,7 @@
 namespace adpp {
 
 template<typename T>
-concept scalar = std::floating_point<std::remove_cvref_t<T>> or std::integral<std::remove_cvref_t<T>>;
+concept scalar = is_scalar_v<std::remove_cvref_t<T>>;
 
 template<typename T>
 concept indexable = is_complete_v<value_type<T>> and requires(const T& t) {

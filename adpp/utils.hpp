@@ -44,6 +44,12 @@ struct is_less_equal : std::bool_constant<(a <= b)> {};
 template<auto a, auto b>
 inline constexpr bool is_less_equal_v = is_less_equal<a, b>::value;
 
+//! type trait that signals if a type is a scalar
+template<typename T>
+struct is_scalar : std::bool_constant<std::floating_point<T> || std::integral<T>> {};
+template<typename T>
+inline constexpr bool is_scalar_v = is_scalar<T>::value;
+
 //! type trait that signals if std::remove_cvref_t of A and B are the same
 template<typename A, typename B>
 struct is_same_cvref : std::is_same<std::remove_cvref_t<A>, std::remove_cvref_t<B>> {};
