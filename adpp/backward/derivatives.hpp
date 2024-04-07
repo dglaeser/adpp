@@ -134,6 +134,13 @@ struct jacobian {
         return std::get<i>(_gradients)[v];
     }
 
+    //! Return the derivative of the i-th equation w.r.t. the j-th symbol
+    template<std::size_t i, std::size_t j>
+    constexpr auto operator[](index_constant<i>, index_constant<j>) const noexcept {
+        decltype(auto) grad = std::get<i>(_gradients);
+        return grad[grad.make(index_constant<j>{})];
+    }
+
  private:
     std::tuple<gradients...> _gradients;
 };

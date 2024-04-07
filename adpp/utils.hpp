@@ -627,8 +627,8 @@ namespace detail {
         constexpr index index_of() const noexcept { return {}; }
         constexpr index index_of(const T&) const noexcept { return {}; }
 
-        constexpr auto make(index) const noexcept requires(std::default_initializable<T>) {
-            return T{};
+        constexpr auto make(index) const noexcept requires(std::default_initializable<std::remove_cvref_t<T>>) {
+            return std::remove_cvref_t<T>{};
         }
     };
 
