@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <type_traits>
+#include <numeric>
 #include <array>
 #include <tuple>
 
@@ -118,9 +119,11 @@ namespace detail {
  * \brief Data structure to store the jacobian of a vectorial expression
  */
 template<detail::gradient... gradients>
-    requires(detail::same_vars<gradients...>::value)
+    requires(sizeof...(gradients) > 0 and detail::same_vars<gradients...>::value)
 struct jacobian {
- public:
+    using value_type = typename first_type_t<type_list<gradients...>>::value_type;
+    static constexpr std::size_t number_of_rows = sizeof...(gradients);
+    static constexpr std::size_t number_of_columns = first_type_t<type_list<gradients...>>::size;
 
     // TODO: check if all value_types are the same?
 
@@ -141,7 +144,42 @@ struct jacobian {
         return grad[grad.make(index_constant<j>{})];
     }
 
+    //! Scale this matrix with the given scalar
+    template<scalar S>
+    constexpr void scale_with(S&& s) noexcept {
+        std::apply([&] (auto&&... grads) { (grads.scaled_with(s), ...); }, _gradients);
+    }
+
+    //! Multiply this matrix with the given vector and store the result in the given output vector
+    template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out>
+    constexpr void apply_to(const In& in, Out& out) const noexcept {
+        _apply(in, out, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); });
+    }
+
+    //! Multiply this matrix with the given vector and add the result to the given output vector
+    template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out>
+    constexpr void add_apply_to(const In& in, Out& out) const noexcept {
+        _apply(in, out, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); });
+    }
+
+    //! Multiply this matrix with the given vector and return the result
+    template<static_vec_n<number_of_columns> In>
+    constexpr auto apply_to(const In& in) const noexcept {
+        std::array<value_type, number_of_rows> out;
+        apply_to(in, out);
+        return out;
+    }
+
  private:
+ template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out, typename U>
+    constexpr void _apply(const In& in, Out& out, const U& update) const noexcept {
+        constexpr md_shape<sizeof...(gradients)> my_shape;
+        for_each_index_in(my_shape, [&] <typename I> (const I& index) {
+            static constexpr auto flat = my_shape.flat_index_of(I{});
+            const auto& J_i = std::get<flat>(_gradients).as_array();
+            update(flat, std::inner_product(J_i.begin(), J_i.end(), in.begin(), value_type{0}));
+        });
+    }
     std::tuple<gradients...> _gradients;
 };
 

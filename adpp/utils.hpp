@@ -574,6 +574,18 @@ template<std::size_t... n>
 md_index_constant_iterator(md_shape<n...>)
     -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
+//! Visit each entry in a tuple with increasing multi-dimensional indices within the given shape
+template<std::size_t... n, typename A>
+constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
+    const auto _visit = [&] <typename I> (this auto&& self, const I& index_iterator) {
+        if constexpr (!I::is_end()) {
+            action(index_iterator.current());
+            self(index_iterator.next());
+        }
+    };
+    _visit(md_index_constant_iterator{shape});
+}
+
 //! Class that defines an order (e.g. of differentiation)
 template<unsigned int i>
 struct order : public std::integral_constant<unsigned int, i> {};

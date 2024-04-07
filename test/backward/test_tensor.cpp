@@ -301,6 +301,11 @@ int main() {
 
         static_assert(jac[_2, _1] == 2);
         static_assert(jac[_2, _1] == 2);
+
+        constexpr auto v = jac.apply_to(std::array<double, 2>{1.0, 2.0});
+        static_assert(v[0] == 3.0);
+        static_assert(v[1] == 4.0);
+        static_assert(v[2] == 5.0);
     };
 
     "vector_expression_modifiable_entries"_test = [] () {
