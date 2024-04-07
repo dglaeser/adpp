@@ -22,6 +22,9 @@ namespace adpp {
 //! Can be used to signal e.g. automatic type deduction.
 struct automatic {};
 
+//! Null type
+struct none {};
+
 //! A type trait that is always false, independent of the type T.
 template<typename T>
 struct always_false : std::false_type {};
@@ -610,9 +613,77 @@ constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
     _visit(md_index_constant_iterator{shape});
 }
 
+
+// TODO: move to concepts
+template<typename T>
+concept indexable_2d = requires(const T& t) {
+    typename std::remove_cvref_t<T>::value_type;
+    { t[md_index<0, 0>] } -> std::convertible_to<const typename std::remove_cvref_t<T>::value_type&>;
+};
+
+
+//! Base class for matrices (exposing arithmetic operators)
+template<std::size_t rows, std::size_t cols>
+struct matrix_base {
+    static constexpr std::size_t number_of_rows = rows;
+    static constexpr std::size_t number_of_columns = cols;
+
+    //! Multiply this matrix with the given vector and store the result in the given output vector
+    template<indexable_2d Self, typename In, typename Out>
+    constexpr void apply_to(this Self&& self, const In& in, Out& out) noexcept {
+        self.template _apply<typename Out::value_type>(
+            in, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); }
+        );
+    }
+
+    //! Multiply this matrix with the given vector and add the result to the given output vector
+    template<indexable_2d Self, typename In, typename Out>
+    constexpr void add_apply_to(this Self&& self, const In& in, Out& out) noexcept {
+        self.template _apply<typename Out::value_type>(
+            in, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); }
+        );
+    }
+
+    //! Multiply this matrix with the given vector and return the result
+    template<indexable_2d Self, typename In>
+    constexpr auto apply_to(this Self&& self, const In& in) noexcept {
+        std::array<typename std::remove_cvref_t<Self>::value_type, rows> out;
+        self.apply_to(in, out);
+        return out;
+    }
+
+ protected:
+    template<typename value_type, typename Self, typename In, typename U>
+    constexpr void _apply(this Self&& self, const In& in, const U& update) noexcept {
+        constexpr md_shape<rows> rows_shape;
+        constexpr md_shape<cols> cols_shape;
+        for_each_index_in(rows_shape, [&] <std::size_t i> (const md_index_constant<i>&) {
+            value_type row_entry{0};
+            for_each_index_in(cols_shape, [&] <std::size_t j> (const md_index_constant<j>&) {
+                row_entry += self[md_index<i, j>]*in[j];
+            });
+            update(i, row_entry);
+        });
+    }
+};
+
+
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<auto shape>
+    struct md_array_base : std::type_identity<none> {};
+
+    template<auto shape> requires(shape.dimension == 2)
+    struct md_array_base<shape> : std::type_identity<matrix_base<shape.first(), shape.last()>> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
 //! Stores values of type T accessible via indices in the given shape
 template<typename T, auto shape>
-class md_array {
+class md_array : public detail::md_array_base<shape>::type {
  public:
     using value_type = T;
     constexpr md_array() = default;
@@ -663,26 +734,6 @@ class md_array {
         }
     }
 
-    //! Multiply this array with the given vector and store the result in the given output vector
-    template<typename In, typename Out>
-    constexpr void apply_to(const In& in, Out& out) const noexcept requires(shape.dimension == 2) {
-        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); });
-    }
-
-    //! Multiply this matrix with the given vector and add the result to the given output vector
-    template<typename In, typename Out>
-    constexpr void add_apply_to(const In& in, Out& out) const noexcept requires(shape.dimension == 2)  {
-        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); });
-    }
-
-    //! Multiply this matrix with the given vector and return the result
-    template<typename In>
-    constexpr auto apply_to(const In& in) const noexcept requires(shape.dimension == 2)  {
-        std::array<value_type, shape.first()> out;
-        apply_to(in, out);
-        return out;
-    }
-
     //! Return the squared l2 norm of this array (only available for vectors)
     constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
         return std::inner_product(begin(), end(), begin(), T{0});
@@ -692,19 +743,6 @@ class md_array {
     template<typename Self> constexpr auto end(this Self&& self) { return self._values.end(); }
 
  private:
-    template<typename In, typename U>
-    constexpr void _apply(const In& in, const U& update) const noexcept {
-        constexpr md_shape<shape.first()> rows_shape;
-        constexpr md_shape<shape.last()> cols_shape;
-        for_each_index_in(rows_shape, [&] <std::size_t i> (const md_index_constant<i>&) {
-            value_type row_entry{0};
-            for_each_index_in(cols_shape, [&] <std::size_t j> (const md_index_constant<j>&) {
-                row_entry += (*this)[md_index<i, j>]*in[j];
-            });
-            update(i, row_entry);
-        });
-    }
-
     std::array<T, shape.count> _values;
 };
 

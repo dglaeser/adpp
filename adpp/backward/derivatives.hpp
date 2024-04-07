@@ -120,10 +120,8 @@ namespace detail {
  */
 template<detail::gradient... gradients>
     requires(sizeof...(gradients) > 0 and detail::same_vars<gradients...>::value)
-struct jacobian {
+struct jacobian : public matrix_base<sizeof...(gradients), first_type_t<type_list<gradients...>>::size> {
     using value_type = typename first_type_t<type_list<gradients...>>::value_type;
-    static constexpr std::size_t number_of_rows = sizeof...(gradients);
-    static constexpr std::size_t number_of_columns = first_type_t<type_list<gradients...>>::size;
 
     // TODO: check if all value_types are the same?
 
@@ -169,37 +167,7 @@ struct jacobian {
         }
     }
 
-    //! Multiply this matrix with the given vector and store the result in the given output vector
-    template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out>
-    constexpr void apply_to(const In& in, Out& out) const noexcept {
-        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); });
-    }
-
-    //! Multiply this matrix with the given vector and add the result to the given output vector
-    template<static_vec_n<number_of_columns> In, static_vec_n<number_of_rows> Out>
-    constexpr void add_apply_to(const In& in, Out& out) const noexcept {
-        _apply(in, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); });
-    }
-
-    //! Multiply this matrix with the given vector and return the result
-    template<static_vec_n<number_of_columns> In>
-    constexpr auto apply_to(const In& in) const noexcept {
-        std::array<value_type, number_of_rows> out;
-        apply_to(in, out);
-        return out;
-    }
-
  private:
-    template<static_vec_n<number_of_columns> In, typename U>
-    constexpr void _apply(const In& in, const U& update) const noexcept {
-        constexpr md_shape<number_of_rows> rows_shape;
-        for_each_index_in(rows_shape, [&] <typename I> (const I&) {
-            static constexpr auto row_index = rows_shape.flat_index_of(I{});
-            const auto& J_i = std::get<row_index>(_gradients).as_array();
-            update(row_index, std::inner_product(J_i.begin(), J_i.end(), in.begin(), value_type{0}));
-        });
-    }
-
     std::tuple<gradients...> _gradients;
 };
 
