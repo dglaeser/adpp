@@ -285,13 +285,22 @@ int main() {
         static_assert(std::is_lvalue_reference_v<decltype(jac[_0, _0])>);
 
         static_assert(jac[_0, x] == 1);
+        static_assert(jac[_0, _0] == 1);
+
         static_assert(jac[_0, y] == 1);
+        static_assert(jac[_0, _1] == 1);
 
         static_assert(jac[_1, x] == 2);
+        static_assert(jac[_1, _0] == 2);
+
         static_assert(jac[_1, y] == 1);
+        static_assert(jac[_1, _1] == 1);
 
         static_assert(jac[_2, x] == 1);
-        static_assert(jac[_2, y] == 2);
+        static_assert(jac[_2, _0] == 1);
+
+        static_assert(jac[_2, _1] == 2);
+        static_assert(jac[_2, _1] == 2);
     };
 
     "vector_expression_modifiable_entries"_test = [] () {
