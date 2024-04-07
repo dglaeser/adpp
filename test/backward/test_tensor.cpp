@@ -282,7 +282,6 @@ int main() {
         var y;
         constexpr vector_expression expr{x + y, x*y, x + cval<2>*y};
         constexpr auto jac = expr.jacobian(wrt(x, y), at(x = 1, y = 2));
-
         static_assert(std::is_lvalue_reference_v<decltype(jac[_0, _0])>);
 
         static_assert(jac[_0, x] == 1);
@@ -293,6 +292,19 @@ int main() {
 
         static_assert(jac[_2, x] == 1);
         static_assert(jac[_2, y] == 2);
+    };
+
+    "vector_expression_modifiable_entries"_test = [] () {
+        using namespace adpp::indices;
+
+        var x;
+        var y;
+        vector_expression expr{x + y, x*y, x + cval<2>*y};
+        auto jac = expr.jacobian(wrt(x, y), at(x = 1, y = 2));
+
+        jac[_0, _0] = 0.0;
+        jac[_0, _0] = 42.0;
+        expect(eq(jac[_0, _0], 42.0));
     };
 
     "md_newton"_test = [] () {
