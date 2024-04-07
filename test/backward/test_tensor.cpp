@@ -117,21 +117,7 @@ int main() {
             ));
         }
         {
-            constexpr auto e = v*cval<3>;
-            static_assert(std::ranges::equal(
-                evaluate(e, at(v = {1, 2, 3})),
-                std::array{3, 6, 9}
-            ));
-        }
-        {
             auto e = v.scaled_with(3);
-            expect(std::ranges::equal(
-                evaluate(e, at(v = {1, 2, 3})),
-                std::array{3, 6, 9}
-            ));
-        }
-        {
-            auto e = v*3;
             expect(std::ranges::equal(
                 evaluate(e, at(v = {1, 2, 3})),
                 std::array{3, 6, 9}
@@ -151,16 +137,6 @@ int main() {
             vec<3> v2;
             constexpr auto e = v.dot(v2);
             static_assert(evaluate(e, at(v = {1, 2, 3}, v2 = {1, 2, 3})) == 14);
-        }
-        {
-            vector v(length<3>);
-            constexpr auto e = v*v;
-            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
-        }
-        {  // same with using vec
-            vec<3> v;
-            constexpr auto e = v*v;
-            static_assert(evaluate(e, at(v = {1, 2, 3})) == 14);
         }
         {
             vector v(length<3>);
@@ -218,7 +194,7 @@ int main() {
 
     "tensor_elements_scaling"_test = [] () {
         constexpr tensor t{shape<2, 2>};
-        constexpr auto expr = t*cval<3>;
+        constexpr auto expr = t.scaled_with(cval<3>);
         constexpr auto result = evaluate(expr, at(t = {1, 2, 3, 4}));
         static_assert(result[0, 0] == 3);
         static_assert(result[0, 1] == 6);
@@ -254,19 +230,19 @@ int main() {
         var y;
         constexpr tensor_expression t = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr vector_expression v = {x, y};
-        constexpr auto expr = t*v;
+        constexpr auto expr = t.mat(v);
         constexpr auto result = evaluate(expr, at(x = 1, y = 2));
         static_assert(expr.shape == adpp::md_shape<2, 1>{});
         static_assert(result[0] == 1*1 + 1*2*2);
         static_assert(result[1] == 1*2*1 + 2*2);
     };
 
-    "tensor_expression_tensor_dot"_test = [] () {
+    "tensor_expression_tensor_mat"_test = [] () {
         var x;
         var y;
         constexpr tensor_expression t0 = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr tensor_expression t1 = {adpp::md_shape<2, 2>{}, x, x+y, y*y, y};
-        constexpr auto expr = t0*t1;
+        constexpr auto expr = t0.mat(t1);
         constexpr auto result = evaluate(expr, at(x = 1, y = 2));
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
         static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
@@ -275,10 +251,10 @@ int main() {
         static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
     };
 
-    "md_tensor_expression_tensor_dot"_test = [] () {
+    "md_tensor_expression_tensor_mat"_test = [] () {
         tensor t0{shape<1, 2, 3>};
         tensor t1{shape<3, 2>};
-        constexpr auto expr = t0*t1;
+        constexpr auto expr = t0.mat(t1);
         static_assert(expr.shape == adpp::md_shape<1, 2, 2>{});
         constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4, 5, 6}, t1 = {1, 2, 3, 4, 5, 6}));
         static_assert(result[0, 0, 0] == 1*1 + 2*3 + 3*5);
@@ -287,10 +263,10 @@ int main() {
         static_assert(result[0, 1, 1] == 4*2 + 5*4 + 6*6);
     };
 
-    "md_tensor_expression_tensor_dot_same_size"_test = [] () {
+    "md_tensor_expression_tensor_mat_same_size"_test = [] () {
         tensor t0{shape<2, 2>};
         tensor t1{shape<2, 2>};
-        constexpr auto expr = t0*t1;
+        constexpr auto expr = t0.mat(t1);
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
         constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3, 4}, t1 = {1, 2, 3, 4}));
         static_assert(result[0, 0] == 1*1 + 2*3);

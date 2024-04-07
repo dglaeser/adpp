@@ -205,19 +205,6 @@ struct tensor_expression : bindable, indexed<Es...> {
     //! Scale the tensor expression with a scalar value/expression
     template<into_term V>
         requires(is_scalar_expression_v<std::remove_cvref_t<decltype(as_term(std::declval<const V&>()))>>)
-    constexpr auto operator*(V&& value) const {
-        return scaled_with(std::forward<V>(value));
-    }
-
-    //! Perform a dot product (on vectors) or matrix multiplication (on tensors)
-    template<auto other_shape, typename... T>
-    constexpr auto operator*(const tensor_expression<other_shape, T...>& other) const {
-        return dot(other);
-    }
-
-    //! Scale the tensor expression with a scalar value/expression
-    template<into_term V>
-        requires(is_scalar_expression_v<std::remove_cvref_t<decltype(as_term(std::declval<const V&>()))>>)
     constexpr auto scaled_with(V&& value) const noexcept {
         auto results_tuple = _apply_to_all([&] (auto, auto&& v) {
             return std::move(v)*as_term(value);
@@ -242,7 +229,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     //! Perform a matrix multiplication with another tensor
     template<auto other_shape, typename... T>
         requires(!shape.is_vector() and shape.last() == other_shape.extent_in(index<0>))
-    constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
+    constexpr auto mat(const tensor_expression<other_shape, T...>& other) const {
         static constexpr auto my_dim = shape.dimension;
         using head = typename split_at<my_dim - 1, typename decltype(shape)::as_value_list>::head;
         using tail = typename split_at<1, typename decltype(other_shape)::as_value_list>::tail;
