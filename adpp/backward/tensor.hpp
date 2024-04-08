@@ -105,7 +105,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     //! Return the jacobian matrix of this expression for the given values (only available for vectors)
     template<typename... B>
     constexpr auto jacobian(const bindings<B...>& bindings) const noexcept requires(shape.is_vector()) {
-        return jacobian(vars_t<first_type_t<sub_expressions>>{}, bindings);
+        return jacobian(vars_t<tensor_expression>{}, bindings);
     }
 
     // TODO: Rename? Or put somewhere else? Free function?

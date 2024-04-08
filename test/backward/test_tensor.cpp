@@ -322,7 +322,23 @@ int main() {
         static_assert(v[2] == 5.0);
     };
 
-    "vector_expression_modifiable_entries"_test = [] () {
+    "vector_expression_jacobian_implicit_vars"_test = [] () {
+        using namespace adpp::indices;
+
+        var x;
+        var y;
+        vector_expression expr{x*x, x*y, x + y};
+        auto jac = expr.jacobian(at(x = 1, y = 2));
+        expect(eq(jac[_0, x], 2.0));
+        expect(eq(jac[_1, x], 2.0));
+        expect(eq(jac[_2, x], 1.0));
+
+        expect(eq(jac[_0, y], 0.0));
+        expect(eq(jac[_1, y], 1.0));
+        expect(eq(jac[_2, y], 1.0));
+    };
+
+    "vector_expression_jacobian_modifiable_entries"_test = [] () {
         using namespace adpp::indices;
 
         var x;
