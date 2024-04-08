@@ -292,6 +292,46 @@ template<typename... T>
 struct operands<vector_expression<T...>> : std::type_identity<type_list<T...>> {};
 
 
+template<typename I, typename A, typename V>
+    requires(std::invocable<A, decltype(I::current().with_zeroes()), V>)
+inline constexpr auto reduce_over(I index_iterator, const A& action, V&& initial) {
+    if constexpr (!I::is_end())
+        return reduce_over(index_iterator.next(), action, action(index_iterator.current(), std::forward<V>(initial)));
+    else
+        return std::forward<V>(initial);
+}
+
+template<typename I, typename A>
+    requires(std::invocable<A, decltype(I::current())>)
+inline constexpr auto concat_tuple_for_each(I index_iterator, const A& action) {
+    return reduce_over(index_iterator, [&] (auto i, auto&& tup) {
+        return std::tuple_cat(std::move(tup), std::tuple{action(i)});
+    }, std::tuple{});
+}
+
+//! Evaluate the Jacobian of the given vector expression at the given values
+template<typename R = automatic, auto shape, typename... Es, typename... Vs, typename... B>
+    requires(shape.is_vector())
+inline constexpr auto jacobian_of(
+    const tensor_expression<shape, Es...>& tensor,
+    const type_list<Vs...>& vars,
+    const bindings<B...>& bindings
+) {
+    auto results_tuple = concat_tuple_for_each(
+        md_index_constant_iterator{tensor_expression<shape, Es...>::shape},
+        [&] (auto index) { return derivatives_of(tensor[index], vars, bindings); }
+    );
+    return std::apply([] (auto&&... results) {
+        return backward::jacobian{std::move(results)...};
+    }, std::move(results_tuple));
+}
+
+//! Evaluate the Jacobian of the given vector expression at the given values
+template<typename R = automatic, auto shape, typename... Es, typename... B> requires(shape.is_vector())
+inline constexpr auto jacobian_of(const tensor_expression<shape, Es...>& tensor, const bindings<B...>& bindings) {
+    return jacobian_of(tensor, vars_t<tensor_expression<shape, Es...>>{}, bindings);
+}
+
 #ifndef DOXYGEN
 namespace detail {
 

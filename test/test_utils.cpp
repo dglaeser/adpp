@@ -17,6 +17,8 @@ inline constexpr auto i = adpp::index<idx>;
 struct incomplete;
 struct complete {};
 
+// TODO: test for_each_in
+
 int main() {
     using boost::ut::operator""_test;
     using boost::ut::expect;

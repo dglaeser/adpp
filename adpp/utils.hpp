@@ -504,6 +504,7 @@ struct md_index_constant {
         return value_list<index_constant<i>{}...>::at(_i);
     }
 
+    static constexpr auto with_zeroes() { return md_index_constant<(i*0)...>{}; }
     template<std::size_t idx>
     static constexpr auto with_prepended(index_constant<idx>) { return md_index_constant<idx, i...>{}; }
     template<std::size_t idx>

@@ -323,7 +323,7 @@ int main() {
         var x;
         var y;
         constexpr vector_expression expr{x + y, x*y, x + cval<2>*y};
-        constexpr auto jac = expr.jacobian(wrt(x, y), at(x = 1, y = 2));
+        constexpr auto jac = jacobian_of(expr, wrt(x, y), at(x = 1, y = 2));
         static_assert(std::is_lvalue_reference_v<decltype(jac[_0, _0])>);
 
         static_assert(jac[_0, x] == 1);
@@ -356,7 +356,7 @@ int main() {
         var x;
         var y;
         vector_expression expr{x*x, x*y, x + y};
-        auto jac = expr.jacobian(at(x = 1, y = 2));
+        auto jac = jacobian_of(expr, at(x = 1, y = 2));
         expect(eq(jac[_0, x], 2.0));
         expect(eq(jac[_1, x], 2.0));
         expect(eq(jac[_2, x], 1.0));
@@ -372,7 +372,7 @@ int main() {
         var x;
         var y;
         vector_expression expr{x + y, x*y, x + cval<2>*y};
-        auto jac = expr.jacobian(wrt(x, y), at(x = 1, y = 2));
+        auto jac = jacobian_of(expr, wrt(x, y), at(x = 1, y = 2));
 
         jac[_0, _0] = 0.0;
         jac[_0, _0] = 42.0;
@@ -392,7 +392,7 @@ int main() {
             std::array x{5.0, 1.0};
             auto res = pde.evaluate(at(v = x));
             while (res.l2_norm_squared() > 1e-12 && i < 20) {
-                auto J = pde.jacobian(wrt(v.vars()), at(v = x));
+                auto J = jacobian_of(pde, wrt(v.vars()), at(v = x));
                 invert_2x2(J).scaled_with(-1.0).add_apply_to(res, x);
                 res = pde.evaluate(at(v = x));
                 i++;
