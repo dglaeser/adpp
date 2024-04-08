@@ -139,9 +139,9 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<typename... B>
     constexpr auto evaluate(const bindings<B...>& b) const noexcept {
         md_array<typename bindings<B...>::common_value_type, shape> result;
-        _visit([&] <auto... i> (md_index_constant<i...> md_index) {
+        for_each_index_in(shape, [&] <auto... i> (md_index_constant<i...> md_index) {
             result[md_index] = (*this)[md_index].evaluate(b);
-        }, md_index_constant_iterator{shape});
+        });
         return result;
     }
 
@@ -150,13 +150,13 @@ struct tensor_expression : bindable, indexed<Es...> {
     constexpr void export_to(std::ostream& out, const bindings<V...>& name_bindings) const {
         out << "[";
         bool first = true;
-        _visit([&] <auto... i> (md_index_constant<i...> idx) {
+        for_each_index_in(shape, [&] <auto... i> (md_index_constant<i...> idx) {
             if constexpr (shape.is_vector() && idx.first() > 0) out << ", ";
             if constexpr (!shape.is_vector() && idx.last() > 0) out << ", ";
             else if (!shape.is_vector() && idx.last() == 0 && !first) out << " // ";
             (*this)[idx].export_to(out, name_bindings);
             first = false;
-        }, md_index_constant_iterator{shape});
+        });
         out << "]";
     }
 
@@ -252,14 +252,6 @@ struct tensor_expression : bindable, indexed<Es...> {
             return _reduce(action, action(index_iterator.current(), std::move(value)), index_iterator.next());
         else
             return std::move(value);
-    }
-
-    template<typename V, typename I>
-    constexpr void _visit(const V& visitor, const I& index_iterator) const {
-        if constexpr (!I::is_end()) {
-            visitor(index_iterator.current());
-            _visit(visitor, index_iterator.next());
-        }
     }
 };
 
