@@ -200,7 +200,7 @@ struct tensor_expression : bindable, indexed<Es...> {
     //! Perform a matrix multiplication with another tensor
     template<auto other_shape, typename... T>
         requires(!shape.is_vector() and shape.last() == other_shape.extent_in(index<0>))
-    constexpr auto mat(const tensor_expression<other_shape, T...>& other) const {
+    constexpr auto apply_to(const tensor_expression<other_shape, T...>& other) const {
         static constexpr auto my_dim = shape.dimension;
         using head = typename split_at<my_dim - 1, typename decltype(shape)::as_value_list>::head;
         using tail = typename split_at<1, typename decltype(other_shape)::as_value_list>::tail;
@@ -266,7 +266,6 @@ struct tensor_expression : bindable, indexed<Es...> {
 template<std::size_t... n, term... Es>
     requires(md_shape<n...>::count == sizeof...(Es))
 tensor_expression(md_shape<n...>, Es&&...) -> tensor_expression<md_shape<n...>{}, std::remove_cvref_t<Es>...>;
-
 
 template<auto shape, typename... T>
 struct is_expression<tensor_expression<shape, T...>> : std::true_type {};
