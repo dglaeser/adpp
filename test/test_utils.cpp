@@ -96,6 +96,15 @@ int main() {
         static_assert(!adpp::is_indexable_v<std::list<int>>);
     };
 
+    "is_indexable_with_trait"_test = [] () {
+        static_assert(adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<1>>, std::size_t>);
+        static_assert(!adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<1>>, std::size_t, std::size_t>);
+
+        static_assert(!adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<2, 2>>, std::size_t>);
+        static_assert(adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<2, 2>>, std::size_t, std::size_t>);
+        static_assert(adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<2, 2, 2>>, std::size_t, std::size_t, std::size_t>);
+    };
+
     "contains_decayed_type_trait"_test = [] () {
         static_assert(adpp::contains_decayed_v<int&, int, char> == true);
         static_assert(adpp::contains_decayed_v<int&, const int&, char> == true);

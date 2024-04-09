@@ -215,9 +215,9 @@ using filtered_t = typename filtered<predicate, Ts...>::type;
 #ifndef DOXYGEN
 namespace detail {
 
-    template<typename T, typename I = std::size_t>
-    concept indexable = requires(const T& t, const I& index) {
-        { t[index] };
+    template<typename T, typename... I>
+    concept indexable = requires(const T& t, I&&... indices) {
+        { t[std::forward<I>(indices)...] };
     };
 
     template<typename T>
@@ -233,11 +233,15 @@ namespace detail {
 
 //! Type trait that exposes if a type is indexable
 template<typename T>
-struct is_indexable : std::false_type {};
-template<detail::indexable T>
-struct is_indexable<T> : std::true_type {};
+struct is_indexable : std::bool_constant<detail::indexable<T, std::size_t>> {};
 template<typename T>
 inline constexpr bool is_indexable_v = is_indexable<T>::value;
+
+//! Type trait that exposes if a type is indexable with n arguments
+template<typename T, typename... I>
+struct is_indexable_with : std::bool_constant<detail::indexable<T, I...>> {};
+template<typename T, typename... I>
+inline constexpr bool is_indexable_with_v = is_indexable_with<T, I...>::value;
 
 //! Type trait to extract a containers value_type
 template<typename T>
