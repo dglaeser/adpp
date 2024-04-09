@@ -220,6 +220,17 @@ namespace detail {
         { t[std::forward<I>(indices)...] };
     };
 
+    template<typename T, std::size_t... i>
+        requires(indexable<T, decltype(i)...>)
+    inline constexpr auto indexable_nd_check(T&& t, std::integer_sequence<std::size_t, i...>) {
+        return t[(i*0)...];
+    }
+
+    template<typename T, std::size_t n>
+    concept indexable_nd = requires(const T& t) {
+        { indexable_nd_check(t, std::make_index_sequence<n>{}) };
+    };
+
     template<typename T>
     concept exposes_value_type = requires { typename T::value_type; };
 
@@ -237,11 +248,17 @@ struct is_indexable : std::bool_constant<detail::indexable<T, std::size_t>> {};
 template<typename T>
 inline constexpr bool is_indexable_v = is_indexable<T>::value;
 
-//! Type trait that exposes if a type is indexable with n arguments
+//! Type trait that exposes if a type is indexable with the given arguuments
 template<typename T, typename... I>
 struct is_indexable_with : std::bool_constant<detail::indexable<T, I...>> {};
 template<typename T, typename... I>
 inline constexpr bool is_indexable_with_v = is_indexable_with<T, I...>::value;
+
+//! Type trait that exposes if a type is indexable with the given arguuments
+template<typename T, std::size_t n>
+struct is_indexable_nd : std::bool_constant<detail::indexable_nd<T, n>> {};
+template<typename T, std::size_t n>
+inline constexpr bool is_indexable_nd_v = is_indexable_nd<T, n>::value;
 
 //! Type trait to extract a containers value_type
 template<typename T>

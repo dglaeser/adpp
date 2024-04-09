@@ -96,6 +96,15 @@ int main() {
         static_assert(!adpp::is_indexable_v<std::list<int>>);
     };
 
+    "is_indexable_nd_trait"_test = [] () {
+        static_assert(adpp::is_indexable_nd_v<adpp::md_array<int, adpp::shape<1>>, 1>);
+        static_assert(!adpp::is_indexable_nd_v<adpp::md_array<int, adpp::shape<1>>, 2>);
+
+        static_assert(!adpp::is_indexable_nd_v<adpp::md_array<int, adpp::shape<2, 2>>, 1>);
+        static_assert(adpp::is_indexable_nd_v<adpp::md_array<int, adpp::shape<2, 2>>, 2>);
+        static_assert(adpp::is_indexable_nd_v<adpp::md_array<int, adpp::shape<2, 2, 2>>, 3>);
+    };
+
     "is_indexable_with_trait"_test = [] () {
         static_assert(adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<1>>, std::size_t>);
         static_assert(!adpp::is_indexable_with_v<adpp::md_array<int, adpp::shape<1>>, std::size_t, std::size_t>);
