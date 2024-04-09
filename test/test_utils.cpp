@@ -3,7 +3,9 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <vector>
 #include <array>
+#include <list>
 
 #include <boost/ut.hpp>
 
@@ -86,6 +88,12 @@ int main() {
         static_assert(adpp::is_any_of_v<bool, int, char, bool> == true);
         static_assert(adpp::is_any_of_v<bool, adpp::type_list<int, char>> == false);
         static_assert(adpp::is_any_of_v<bool, adpp::type_list<int, char, bool>> == true);
+    };
+
+    "is_indexable_trait"_test = [] () {
+        static_assert(adpp::is_indexable_v<std::vector<int>>);
+        static_assert(adpp::is_indexable_v<std::array<int, 2>>);
+        static_assert(!adpp::is_indexable_v<std::list<int>>);
     };
 
     "contains_decayed_type_trait"_test = [] () {
