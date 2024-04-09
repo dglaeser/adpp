@@ -66,6 +66,12 @@ int main() {
         static_assert(adpp::size_of_v<int[4]> == 4);
     };
 
+    "shape_of_type_trait"_test = [] () {
+        static_assert(adpp::shape_of_v<std::array<int, 4>> == adpp::shape<4>);
+        static_assert(adpp::shape_of_v<std::array<std::array<int, 2>, 4>> == adpp::shape<4, 2>);
+        static_assert(adpp::shape_of_v<std::array<std::array<std::array<int, 1>, 2>, 4>> == adpp::shape<4, 2, 1>);
+    };
+
     "is_complete_trait"_test = [] () {
         static_assert(adpp::is_complete_v<complete>);
         static_assert(!adpp::is_complete_v<incomplete>);

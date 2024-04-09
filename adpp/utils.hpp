@@ -580,6 +580,31 @@ inline constexpr md_shape<n...> shape;
 template<std::size_t n>
 inline constexpr md_shape<n> length;
 
+
+#ifndef DOXYGEN
+namespace detail {
+
+    template<typename T>
+    concept statically_sized_indexable = is_complete_v<size_of<T>> and is_indexable_v<T>;
+
+    template<typename shape, typename T>
+    struct shape_of : std::type_identity<shape> {};
+    template<std::size_t... n, statically_sized_indexable T>
+    struct shape_of<md_shape<n...>, T> : shape_of<md_shape<n..., size_of_v<T>>, value_type_t<T>> {};
+
+}  // namespace detail
+#endif  // DOXYGEN
+
+//! Type trait to obtain the shape of a multidimensional array
+template<typename T>
+struct shape_of;
+template<detail::statically_sized_indexable T>
+struct shape_of<T> : detail::shape_of<md_shape<>, T> {};
+template<typename T> requires(is_complete_v<shape_of<T>>)
+using shape_of_t = typename shape_of<T>::type;
+template<typename T>
+inline constexpr auto shape_of_v = shape_of_t<T>{};
+
 //! Allows iteration over the indices in an md_shape at compile time, starting from a given index
 template<typename shape, typename md_index_current>
 struct md_index_constant_iterator;
