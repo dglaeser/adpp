@@ -251,7 +251,7 @@ int main() {
         static_assert(result[1] == 1*2*1 + 2*2);
     };
 
-    "tensor_expression_tensor_mat"_test = [] () {
+    "tensor_expression_tensor_apply"_test = [] () {
         var x;
         var y;
         constexpr tensor_expression t0 = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
@@ -265,7 +265,7 @@ int main() {
         static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
     };
 
-    "md_tensor_expression_tensor_mat"_test = [] () {
+    "md_tensor_expression_tensor_apply"_test = [] () {
         tensor t0{shape<1, 2, 3>};
         tensor t1{shape<3, 2>};
         constexpr auto expr = t0.apply_to(t1);
@@ -277,7 +277,7 @@ int main() {
         static_assert(result[0, 1, 1] == 4*2 + 5*4 + 6*6);
     };
 
-    "md_tensor_expression_tensor_mat_same_size"_test = [] () {
+    "md_tensor_expression_tensor_apply_same_size"_test = [] () {
         tensor t0{shape<2, 2>};
         tensor t1{shape<2, 2>};
         constexpr auto expr = t0.apply_to(t1);
@@ -287,6 +287,15 @@ int main() {
         static_assert(result[0, 1] == 1*2 + 2*4);
         static_assert(result[1, 0] == 3*1 + 4*3);
         static_assert(result[1, 1] == 3*2 + 4*4);
+    };
+
+    "md_tensor_expression_apply_with_scalar_result"_test = [] () {
+        tensor t0{shape<1, 3>};
+        tensor t1{shape<3, 1>};
+        constexpr auto expr = t0.apply_to(t1);
+        constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3}, t1 = {2, 3, 4}));
+        static_assert(expr.shape == adpp::md_shape<1, 1>{});
+        static_assert(result[0] == 20);
     };
 
     "vector_expression_jacobian"_test = [] () {
