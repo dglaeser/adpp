@@ -120,7 +120,7 @@ namespace detail {
  */
 template<detail::gradient... gradients>
     requires(sizeof...(gradients) > 0 and detail::same_vars<gradients...>::value)
-struct jacobian : public matrix_base<sizeof...(gradients), first_type_t<type_list<gradients...>>::size> {
+struct jacobian : public tensor_base<shape<sizeof...(gradients), first_type_t<type_list<gradients...>>::size>> {
     using value_type = typename first_type_t<type_list<gradients...>>::value_type;
 
     // TODO: check if all value_types are the same?
@@ -146,25 +146,6 @@ struct jacobian : public matrix_base<sizeof...(gradients), first_type_t<type_lis
     template<typename Self, std::size_t i, std::size_t j>
     constexpr decltype(auto) operator[](this Self&& self, md_index_constant<i, j>) noexcept {
         return self[index_constant<i>{}, index_constant<j>{}];
-    }
-
-    //! Scale this matrix with the given scalar
-    template<scalar S>
-    constexpr void scale_with(S&& s) noexcept {
-        std::apply([&] (auto&&... grads) { (grads.scaled_with(s), ...); }, _gradients);
-    }
-
-    //! Return a matrix equal to this matrix scaled with the given scalar
-    template<typename Self, scalar S>
-    [[nodiscard]] constexpr decltype(auto) scaled_with(this Self&& self, S&& s) noexcept {
-        if constexpr (!std::is_lvalue_reference_v<Self>) {
-            self.scale_with(s);
-            return std::move(self);
-        } else {
-            auto copy = self;
-            copy.scale_with(s);
-            return copy;
-        }
     }
 
  private:

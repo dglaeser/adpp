@@ -757,71 +757,127 @@ concept indexable_2d = requires(const T& t) {
 };
 
 
-//! Base class for matrices (exposing arithmetic operators)
-template<std::size_t rows, std::size_t cols>
-struct matrix_base {
-    static constexpr std::size_t number_of_rows = rows;
-    static constexpr std::size_t number_of_columns = cols;
-
-    //! Multiply this matrix with the given vector and store the result in the given output vector
-    template<indexable_2d Self, typename In, typename Out>
-    constexpr void apply_to(this Self&& self, const In& in, Out& out) noexcept {
-        self.template _apply<typename Out::value_type>(
-            in, [&] <typename V> (std::size_t i, V&& value) { out[i] = std::forward<V>(value); }
-        );
-    }
-
-    //! Multiply this matrix with the given vector and add the result to the given output vector
-    template<indexable_2d Self, typename In, typename Out>
-    constexpr void add_apply_to(this Self&& self, const In& in, Out& out) noexcept {
-        self.template _apply<typename Out::value_type>(
-            in, [&] <typename V> (std::size_t i, V&& value) { out[i] += std::forward<V>(value); }
-        );
-    }
-
-    //! Multiply this matrix with the given vector and return the result
-    template<indexable_2d Self, typename In>
-    constexpr auto apply_to(this Self&& self, const In& in) noexcept {
-        std::array<typename std::remove_cvref_t<Self>::value_type, rows> out;
-        self.apply_to(in, out);
-        return out;
-    }
-
- protected:
-    template<typename value_type, typename Self, typename In, typename U>
-    constexpr void _apply(this Self&& self, const In& in, const U& update) noexcept {
-        constexpr md_shape<rows> rows_shape;
-        constexpr md_shape<cols> cols_shape;
-        for_each_index_in(rows_shape, [&] <std::size_t i> (const md_index_constant<i>&) {
-            value_type row_entry{0};
-            for_each_index_in(cols_shape, [&] <std::size_t j> (const md_index_constant<j>&) {
-                row_entry += self[md_index<i, j>]*in[j];
-            });
-            update(i, row_entry);
-        });
-    }
-};
-
-
-
 #ifndef DOXYGEN
 namespace detail {
 
-    template<auto shape>
-    struct md_array_base : std::type_identity<none> {};
+    template<std::size_t... n>
+    inline constexpr auto md_index_in(md_shape<n...>) {
+        return md_index_constant<(n*0)...>{};
+    }
 
-    template<auto shape> requires(shape.dimension == 2)
-    struct md_array_base<shape> : std::type_identity<matrix_base<shape.first(), shape.last()>> {};
+    template<auto shape>
+    using md_index_in_t = decltype(md_index_in(shape));
 
 }  // namespace detail
 #endif  // DOXYGEN
 
+//! Base class for tensors (exposing arithmetic operators)
+template<auto my_shape>
+struct tensor_base {
+    static constexpr auto shape = my_shape;
+
+    //! Multiply this tensor with the given tensor and store the result in the given output tensor
+    template<typename Self, detail::statically_sized_indexable In, detail::statically_sized_indexable Out>
+        // requires(is_indexable_with_v<Self, detail::md_index_in_t<shape>>)
+    constexpr void apply_to(this Self&& self, const In& in, Out& out) noexcept {
+        self.template _apply<shape_of_v<Out>>(in, value_type_t<Out>{0}, [&] (auto i, auto&& value) {
+            access_with(i, out) = std::move(value);
+        });
+    }
+
+    //! Multiply this tensor with the given tensor and store the result in the given output tensor
+    template<typename Self, detail::statically_sized_indexable In, detail::statically_sized_indexable Out>
+        // requires(is_indexable_with_v<Self, detail::md_index_in_t<shape>>)
+    constexpr void add_apply_to(this Self&& self, const In& in, Out& out) noexcept {
+        self.template _apply<shape_of_v<Out>>(in, value_type_t<Out>{0}, [&] (auto i, auto&& value) {
+            access_with(i, out) += std::move(value);
+        });
+    }
+
+    //! Multiply this tensor with the given tensor and store the result in the given output tensor
+    template<typename Self, detail::statically_sized_indexable In>
+        // requires(is_indexable_with_v<Self, detail::md_index_in_t<shape>>)
+    constexpr auto apply_to(this Self&& self, const In& in) noexcept {
+        static_assert(
+            shape.dimension == 2 && shape_of_v<In>.dimension == 1,
+            "Currently only implemented for matrix-vectors"
+        );
+        std::array<typename std::remove_cvref_t<Self>::value_type, shape.extent_in(indices::_0)> out;
+        self.apply_to(in, out);
+        return out;
+    }
+
+    //! Scale all values of this tensor with the given factor
+    template<typename Self, typename S>
+        requires(!std::is_const_v<Self> and is_scalar_v<std::remove_cvref_t<S>>)
+    constexpr void scale_with(this Self&& self, S&& s) {
+        for_each_index_in(shape, [&] (const auto& i) {
+            self[i] *= s;
+        });
+    }
+
+    //! Return an md_array that contains the values of this array, scaled with the given scalar
+    template<typename Self, typename S> requires(is_scalar_v<std::remove_cvref_t<S>>)
+    [[nodiscard]] constexpr auto scaled_with(this Self&& self, S&& s) {
+        if constexpr (!std::is_lvalue_reference_v<Self>) {
+            self.scale_with(s);
+            return self;
+        } else {
+            static_assert(std::is_copy_constructible_v<Self>);
+            auto copy = self;
+            copy.scale_with(s);
+            return copy;
+        }
+    }
+
+    //! Return the squared l2 norm of this array (only available for vectors)
+    template<typename Self>
+    constexpr auto l2_norm_squared(this Self&& self) requires(shape.is_vector()) {
+        using value_type = typename std::remove_cvref_t<Self>::value_type;
+        return reduce_for_each_index_in(shape, value_type{0}, [&] (const auto& i, auto&& v) {
+            const auto& v_i = self[i];
+            return std::move(v) + v_i*v_i;
+        });
+    }
+
+ protected:
+    template<auto out_shape, typename Self, typename In, typename Z, typename U>
+    constexpr void _apply(this Self&& self, const In& in, Z&& zero, const U& update) noexcept {
+        static constexpr auto in_shape = shape_of_v<In>;
+        static_assert(shape.last() == in_shape.first(), "Tensor dimensions do not match");
+        static_assert(out_shape == shape.crop_1() + in_shape.drop_1(), "Output tensor dimensions do not match");
+
+        for_each_index_in(out_shape, [&] <std::size_t... out> (const md_index_constant<out...>& out_index) {
+            using split = split_at<shape.dimension - 1, value_list<out...>>;
+            static constexpr auto my_head = md_index_constant{typename split::head{}};
+            static constexpr auto in_tail = md_index_constant{typename split::tail{}};
+            static constexpr auto in_index_for = [] <std::size_t i> (const md_index_constant<i>& reduction_index) {
+                if constexpr (in_tail.dimension == 0)
+                    return reduction_index;
+                else
+                    return in_tail.drop_1().with_prepended(reduction_index[indices::_0]);
+            };
+            update(out_index, reduce_for_each_index_in(
+                md_shape<shape.last()>{},
+                Z{zero},
+                [&] <std::size_t i, typename V> (const md_index_constant<i>& idx, V&& value) {
+                    return std::forward<V>(value) +
+                        self[my_head.with_appended(index<i>)]
+                        *access_with(in_index_for(idx), in);
+            }));
+        });
+    }
+};
+
 //! Stores values of type T accessible via indices in the given shape
 template<typename T, auto shape>
-class md_array : public detail::md_array_base<shape>::type {
+class md_array : public tensor_base<shape> {
  public:
     using value_type = T;
     constexpr md_array() = default;
+    constexpr md_array(std::array<T, shape.count>&& values) noexcept
+    : _values{std::move(values)}
+    {}
 
     //! Return the size of this array (only available for vectors)
     static constexpr std::size_t size() noexcept requires(shape.is_vector()) {
@@ -848,30 +904,6 @@ class md_array : public detail::md_array_base<shape>::type {
         requires(shape.is_vector())
     constexpr decltype(auto) operator[](this Self&& self, const I& index) {
         return self._values[index];
-    }
-
-    //! Scale all values of this array with the given factor
-    template<typename S> requires(is_scalar_v<std::remove_cvref_t<S>>)
-    constexpr void scale_with(S&& s) {
-        std::ranges::for_each(_values, [&] (auto& v) { v *= s; });
-    }
-
-    //! Return an md_array that contains the values of this array, scaled with the given scalar
-    template<typename Self, typename S> requires(is_scalar_v<std::remove_cvref_t<S>>)
-    constexpr decltype(auto) scaled_with(this Self&& self, S&& s) {
-        if constexpr (!std::is_lvalue_reference_v<Self>) {
-            self.scale_with(s);
-            return std::move(self);
-        } else {
-            auto copy = self;
-            copy.scale_with(s);
-            return copy;
-        }
-    }
-
-    //! Return the squared l2 norm of this array (only available for vectors)
-    constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
-        return std::inner_product(begin(), end(), begin(), T{0});
     }
 
     template<typename Self> constexpr auto begin(this Self&& self) { return self._values.begin(); }

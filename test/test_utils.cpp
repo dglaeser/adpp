@@ -405,6 +405,24 @@ int main() {
         static_assert(reduced == 1*1*2*3*4);
     };
 
+    "md_array_mat_vec_product"_test = [] () {
+        static auto _compute = [] () {
+            std::array<int, 2> result;
+            adpp::md_array<int, adpp::shape<2, 2>> t{
+                {1, 2, 3, 4}
+            };
+            t.apply_to(std::array<int, 2>{5, 6}, result);
+            return result;
+        };
+        static constexpr auto result = _compute();
+        static_assert(result[0] == 1*5 + 2*6);
+        static_assert(result[1] == 3*5 + 4*6);
+
+        const auto dyn_result = _compute();
+        expect(eq(dyn_result[0], 1*5 + 2*6));
+        expect(eq(dyn_result[1], 3*5 + 4*6));
+    };
+
     "storage_owned"_test = [] () {
         adpp::storage stored{42.0};
         expect(eq(stored.get(), 42.0));
