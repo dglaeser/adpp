@@ -293,9 +293,10 @@ int main() {
         tensor t0{shape<1, 3>};
         tensor t1{shape<3, 1>};
         constexpr auto expr = t0.apply_to(t1);
-        constexpr auto result = evaluate(expr, at(t0 = {1, 2, 3}, t1 = {2, 3, 4}));
+        constexpr auto scalar_expr = t0.apply_to(t1).as_scalar();
         static_assert(expr.shape == adpp::md_shape<1, 1>{});
-        static_assert(result[0] == 20);
+        static_assert(evaluate(expr, at(t0 = {1, 2, 3}, t1 = {2, 3, 4}))[0] == 20);
+        static_assert(evaluate(scalar_expr, at(t0 = {1, 2, 3}, t1 = {2, 3, 4})) == 20);
     };
 
     "vector_expression_jacobian"_test = [] () {

@@ -228,6 +228,11 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(result_tuple));
     }
 
+    //! Cast this into a scalar expression (only available if shape.count == 1)
+    constexpr auto as_scalar() const requires(shape.count == 1) {
+        return first_type_t<type_list<Es...>>{};
+    }
+
     //! Return the expression representing the squared l2-norm of this expression (only available for vectors)
     constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
         return dot(*this);
