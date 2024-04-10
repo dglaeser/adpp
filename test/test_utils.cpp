@@ -59,6 +59,12 @@ int main() {
         static_assert(std::is_same_v<adpp::value_type_t<std::array<double, 3>>, double>);
         static_assert(std::is_same_v<adpp::value_type_t<std::array<double*, 3>>, double*>);
         static_assert(std::is_same_v<adpp::value_type_t<double[3]>, double>);
+        static_assert(std::is_same_v<adpp::value_type_t<std::array<std::array<int, 2>, 1>>, std::array<int, 2>>);
+    };
+
+    "md_value_type_trait"_test = [] () {
+        static_assert(std::is_same_v<adpp::md_value_type_t<std::array<int, 2>>, int>);
+        static_assert(std::is_same_v<adpp::md_value_type_t<std::array<std::array<int, 2>, 1>>, int>);
     };
 
     "size_of_type_trait"_test = [] () {

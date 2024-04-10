@@ -19,6 +19,21 @@ namespace adpp {
 //! \addtogroup Utilities
 //! \{
 
+
+#ifndef DOXYGEN
+namespace detail {
+    template<typename T, std::size_t s = sizeof(T)>
+    std::false_type is_incomplete(T*);
+    std::true_type is_incomplete(...);
+}  // namespace detail
+#endif  // DOXYGEN
+
+// type trait to check if a type is complete (e.g. not just forward declared)
+template<typename T>
+struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
+template<typename T>
+inline constexpr bool is_complete_v = is_complete<T>::value;
+
 //! Can be used to signal e.g. automatic type deduction.
 struct automatic {};
 
@@ -272,6 +287,16 @@ struct value_type<T[N]> : std::type_identity<T> {};
 template<typename T>
 using value_type_t = typename value_type<T>::type;
 
+//! Type trait to deduce the value_type of a multi-dimensional array
+template<typename T>
+struct md_value_type;
+template<typename T> requires(is_complete_v<value_type<T>> and !is_complete_v<value_type<value_type_t<T>>>)
+struct md_value_type<T> : std::type_identity<value_type_t<T>> {};
+template<typename T> requires(is_complete_v<value_type<T>> and is_complete_v<value_type<value_type_t<T>>>)
+struct md_value_type<T> : md_value_type<value_type_t<T>> {};
+template<typename T>
+using md_value_type_t = typename md_value_type<T>::type;
+
 //! Type trait to define the (static) size of a container
 template<typename T>
 struct size_of;
@@ -290,21 +315,6 @@ struct decayed_arg_trait {
     template<typename T>
     struct type : trait<std::decay_t<T>> {};
 };
-
-
-#ifndef DOXYGEN
-namespace detail {
-    template<typename T, std::size_t s = sizeof(T)>
-    std::false_type is_incomplete(T*);
-    std::true_type is_incomplete(...);
-}  // namespace detail
-#endif  // DOXYGEN
-
-// type trait to check if a type is complete (e.g. not just forward declared)
-template<typename T>
-struct is_complete : std::bool_constant<!decltype(detail::is_incomplete(std::declval<T*>()))::value> {};
-template<typename T>
-inline constexpr bool is_complete_v = is_complete<T>::value;
 
 //! class to represent an index at compile-time.
 template<std::size_t i>
