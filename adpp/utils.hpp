@@ -536,7 +536,7 @@ struct md_shape {
     }
 
     constexpr md_shape() = default;
-    constexpr md_shape(value_list<n...>) noexcept {}
+    explicit constexpr md_shape(value_list<n...>) noexcept {}
 
     template<std::size_t idx>
     static constexpr auto extent_in(index_constant<idx> i) noexcept {
