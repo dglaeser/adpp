@@ -252,11 +252,29 @@ int main() {
     };
 
     "tensor_expression_tensor_apply"_test = [] () {
+        using namespace adpp::indices;
         var x;
         var y;
         constexpr tensor_expression t0 = {adpp::md_shape<2, 2>{}, x, x*y, y*x, y};
         constexpr tensor_expression t1 = {adpp::md_shape<2, 2>{}, x, x+y, y*y, y};
         constexpr auto expr = t0.apply_to(t1);
+        static_assert(std::is_same_v<
+            decltype(expr[adpp::md_index<_0, _0>]),
+            decltype(x*x + (x*y)*(y*y))
+        >);
+        static_assert(std::is_same_v<
+            decltype(expr[adpp::md_index<_0, _1>]),
+            decltype(x*(x+y) + (x*y)*y)
+        >);
+        static_assert(std::is_same_v<
+            decltype(expr[adpp::md_index<_1, _0>]),
+            decltype((y*x)*x + y*(y*y))
+        >);
+        static_assert(std::is_same_v<
+            decltype(expr[adpp::md_index<_1, _1>]),
+            decltype((y*x)*(x+y) + y*y)
+        >);
+
         constexpr auto result = evaluate(expr, at(x = 1, y = 2));
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
         static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
