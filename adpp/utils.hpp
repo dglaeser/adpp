@@ -545,6 +545,14 @@ struct md_shape {
         return value_list<n...>::at(index<sizeof...(n)-1>);
     }
 
+    static constexpr auto crop_1() noexcept requires(dimension > 0) {
+        return adpp::md_shape{crop_n_t<1, as_value_list>{}};
+    }
+
+    static constexpr auto drop_1() noexcept requires(dimension > 0)  {
+        return adpp::md_shape{drop_n_t<1, as_value_list>{}};
+    }
+
     constexpr md_shape() = default;
     explicit constexpr md_shape(value_list<n...>) noexcept {}
 

@@ -320,6 +320,9 @@ int main() {
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<0>) == 1);
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<1>) == 2);
         static_assert(adpp::md_shape<1, 2, 3>::extent_in(i<2>) == 3);
+
+        static_assert(adpp::shape<1, 2>.crop_1() == adpp::shape<1>);
+        static_assert(adpp::shape<1, 2>.drop_1() == adpp::shape<2>);
     };
 
     "shape_flat_index"_test = [] () {
