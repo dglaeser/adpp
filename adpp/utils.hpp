@@ -587,6 +587,11 @@ struct md_shape {
     constexpr bool operator==(const md_shape<_n...>&) const noexcept { return false; }
     constexpr bool operator==(const md_shape&) const noexcept { return true; }
 
+    template<std::size_t... _n>
+    constexpr auto operator+(const md_shape<_n...>&) const noexcept {
+        return adpp::md_shape<n..., _n...>{};
+    }
+
  private:
     template<std::size_t _n0, std::size_t... _n, std::integral I0, std::integral... I>
     static constexpr auto _to_flat_index(std::size_t current, const I0& i0, I&&... indices) noexcept {

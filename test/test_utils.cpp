@@ -323,6 +323,7 @@ int main() {
 
         static_assert(adpp::shape<1, 2>.crop_1() == adpp::shape<1>);
         static_assert(adpp::shape<1, 2>.drop_1() == adpp::shape<2>);
+        static_assert(adpp::shape<1, 2> + adpp::shape<3> == adpp::shape<1, 2, 3>);
     };
 
     "shape_flat_index"_test = [] () {
