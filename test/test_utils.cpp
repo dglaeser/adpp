@@ -350,6 +350,8 @@ int main() {
         static_assert(adpp::md_index<1, 2, 3>[i<2>] == 3);
         static_assert(adpp::md_index<1, 2, 3>.first() == 1);
         static_assert(adpp::md_index<1, 2, 3>.last() == 3);
+        static_assert(adpp::md_index<1, 2, 3>.crop_1() == adpp::md_index<1, 2>);
+        static_assert(adpp::md_index<1, 2, 3>.drop_1() == adpp::md_index<2, 3>);
 
         static_assert(adpp::md_index<0, 0, 0>.with_index_at(i<0>, i<42>) == adpp::md_index<42, 0, 0>);
         static_assert(adpp::md_index<0, 0, 0>.with_appended(i<42>) == adpp::md_index<0, 0, 0, 42>);

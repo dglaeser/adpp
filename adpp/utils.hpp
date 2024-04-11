@@ -483,12 +483,20 @@ struct md_index_constant {
         return as_value_list::at(_i);
     }
 
-    static constexpr std::size_t first() noexcept requires(sizeof...(i) > 0) {
+    static constexpr std::size_t first() noexcept requires(dimension > 0) {
         return as_value_list::at(index<0>);
     }
 
-    static constexpr std::size_t last() noexcept requires(sizeof...(i) > 0) {
+    static constexpr std::size_t last() noexcept requires(dimension > 0) {
         return as_value_list::at(index<sizeof...(i) - 1>);
+    }
+
+    static constexpr auto crop_1() noexcept requires(dimension > 0) {
+        return adpp::md_index_constant{crop_n_t<1, as_value_list>{}};
+    }
+
+    static constexpr auto drop_1() noexcept requires(dimension > 0) {
+        return adpp::md_index_constant{drop_n_t<1, as_value_list>{}};
     }
 
     template<std::size_t idx>
