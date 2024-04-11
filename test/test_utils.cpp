@@ -361,6 +361,20 @@ int main() {
         static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().next().next().next().is_end());
     };
 
+    "md_access"_test = [] () {
+        constexpr std::array<std::array<int, 2>, 2> tensor{{{0, 1}, {2, 3}}};
+        static_assert(adpp::access_with(adpp::md_index<0, 0>, tensor) == 0);
+        static_assert(adpp::access_with(adpp::md_index<0, 1>, tensor) == 1);
+        static_assert(adpp::access_with(adpp::md_index<1, 0>, tensor) == 2);
+        static_assert(adpp::access_with(adpp::md_index<1, 1>, tensor) == 3);
+
+        std::vector<std::vector<int>> dyn_tensor{{{0, 1}, {2, 3}}};
+        expect(eq(adpp::access_with(adpp::md_index<0, 0>, tensor), 0));
+        expect(eq(adpp::access_with(adpp::md_index<0, 1>, tensor), 1));
+        expect(eq(adpp::access_with(adpp::md_index<1, 0>, tensor), 2));
+        expect(eq(adpp::access_with(adpp::md_index<1, 1>, tensor), 3));
+    };
+
     "for_each_index"_test = [] () {
         adpp::for_each_index_in(adpp::shape<1, 1>, [] <std::size_t... i> (const adpp::md_index_constant<i...>) {
             static_assert(((i == 0) && ...));

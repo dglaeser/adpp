@@ -672,6 +672,36 @@ template<std::size_t... n>
 md_index_constant_iterator(md_shape<n...>)
     -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
+
+//! Metafunction to access multidimensional arrays with md_index_constant
+template<typename T>
+struct md_access;
+template<detail::statically_sized_indexable T>
+struct md_access<T> {
+    template<std::size_t... i, typename _T>
+        requires(shape_of_v<T>.dimension == sizeof...(i) and is_same_cvref_v<T, _T>)
+    static constexpr decltype(auto) at(const md_index_constant<i...>& idx, _T& t) {
+        return _at<0>(idx, std::forward<_T>(t));
+    }
+
+ private:
+    template<std::size_t dim, std::size_t... i, typename _T>
+    static constexpr decltype(auto) _at(const md_index_constant<i...>& idx, _T&& sub_values) {
+        if constexpr (dim >= sizeof...(i)) {
+            return std::forward<_T>(sub_values);
+        } else {
+            static_assert(is_indexable_v<std::remove_cvref_t<_T>>);
+            return _at<dim+1>(idx, std::forward<_T>(sub_values)[idx.at(index<dim>)]);
+        }
+    }
+};
+
+template<std::size_t...i, typename T> requires(is_complete_v<md_access<std::remove_cvref_t<T>>>)
+inline constexpr decltype(auto) access_with(const md_index_constant<i...>& idx, T&& t) {
+    return md_access<std::remove_cvref_t<T>>::at(idx, std::forward<T>(t));
+}
+
+
 //! Perform the given action invoked with each index within the given shape (TODO: constraints)
 template<std::size_t... n, typename A>
 constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
