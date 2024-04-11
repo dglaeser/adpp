@@ -361,6 +361,28 @@ int main() {
         static_assert(adpp::md_index_constant_iterator{adpp::shape<2, 2>}.next().next().next().next().is_end());
     };
 
+    "for_each_index"_test = [] () {
+        adpp::for_each_index_in(adpp::shape<1, 1>, [] <std::size_t... i> (const adpp::md_index_constant<i...>) {
+            static_assert(((i == 0) && ...));
+        });
+
+        std::size_t v = 0;
+        adpp::for_each_index_in(adpp::shape<3>, [&] <std::size_t i> (const adpp::md_index_constant<i>) {
+            v += i;
+        });
+        expect(eq(v, std::size_t{3}));
+    };
+
+    "reduce_for_each_index"_test = [] () {
+        constexpr auto reduced = adpp::reduce_for_each_index_in(
+            adpp::shape<4>,
+            double{1},
+            [&] <std::size_t i, typename V> (const adpp::md_index_constant<i>, V&& value) {
+                return std::forward<V>(value)*static_cast<double>(i+1);
+        });
+        static_assert(reduced == 1*1*2*3*4);
+    };
+
     "storage_owned"_test = [] () {
         adpp::storage stored{42.0};
         expect(eq(stored.get(), 42.0));

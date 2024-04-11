@@ -672,7 +672,7 @@ template<std::size_t... n>
 md_index_constant_iterator(md_shape<n...>)
     -> md_index_constant_iterator<md_shape<n...>, md_index_constant<(n*0)...>>;
 
-//! Visit each entry in a tuple with increasing multi-dimensional indices within the given shape
+//! Perform the given action invoked with each index within the given shape (TODO: constraints)
 template<std::size_t... n, typename A>
 constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
     const auto _visit = [&] <typename I> (this auto&& self, const I& index_iterator) {
@@ -682,6 +682,18 @@ constexpr void for_each_index_in(const md_shape<n...>& shape, const A& action) {
         }
     };
     _visit(md_index_constant_iterator{shape});
+}
+
+//! Reduce the given value by recursively calling the given action over all indices in the given shape (TODO: constraints)
+template<std::size_t... n, typename V, typename A>
+constexpr auto reduce_for_each_index_in(const md_shape<n...>& shape, V&& value, const A& action) {
+    const auto _visit = [&] <typename _V, typename I> (this auto&& self, _V&& v, const I& index_iterator) {
+        if constexpr (I::is_end())
+            return std::forward<V>(v);
+        else
+            return self(action(index_iterator.current(), std::forward<_V>(v)), index_iterator.next());
+    };
+    return _visit(std::forward<V>(value), md_index_constant_iterator{shape});
 }
 
 
