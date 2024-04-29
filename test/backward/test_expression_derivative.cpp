@@ -69,14 +69,20 @@ int main() {
     };
 
     "expression_with_cval_derivative"_test = [] () {
+        using namespace adpp::indices;
         var x;
         var y;
         var z;
         const auto expr = x - 2*y - x + exp(cval<3.0>/z);
         const auto derivs = derivatives_of(expr, wrt(x, y, z), at(x = 3, y = 2, z = 4.0));
         expect(eq(derivs[x], 0));
+        expect(eq(derivs[_0], 0));
+
         expect(eq(derivs[y], -2));
+        expect(eq(derivs[_1], -2));
+
         expect(eq(derivs[z], std::exp(3.0/4.0)*(-3.0/16.0)));
+        expect(eq(derivs[_2], std::exp(3.0/4.0)*(-3.0/16.0)));
     };
 
     "expression_with_cval_gradient"_test = [] () {

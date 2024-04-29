@@ -36,9 +36,15 @@ struct derivatives : indexed<const Ts&...> {
         std::ranges::fill(_values, R{0});
     }
 
+    //! Return the derivative w.r.t. the i-th symbol
+    template<typename Self, std::size_t i> requires(i < size)
+    constexpr decltype(auto) operator[](this Self&& self, const index_constant<i>&) noexcept {
+        return self._values[i];
+    }
+
     //! Return the derivative w.r.t. the given symbol
     template<typename Self, typename T> requires(contains_decayed_v<T, Ts...>)
-    constexpr std::convertible_to<value_type> decltype(auto) operator[](this Self&& self, const T& t) noexcept {
+    constexpr decltype(auto) operator[](this Self&& self, const T& t) noexcept {
         return self._values[self.index_of(t)];
     }
 
