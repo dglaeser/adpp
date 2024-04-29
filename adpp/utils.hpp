@@ -41,7 +41,7 @@ struct automatic {};
 struct none {};
 
 //! A type trait that is always false, independent of the type T.
-template<typename T>
+template<typename T = void>
 struct always_false : std::false_type {};
 
 //! type trait that signals if a is smaller than b.
