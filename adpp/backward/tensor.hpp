@@ -82,20 +82,20 @@ struct tensor_expression : bindable, indexed<Es...> {
     template<std::size_t... n>
     constexpr tensor_expression(adpp::md_shape<n...> d, const Es&...) requires(d == shape) {}
 
-    //! Bind the given vector to this expression (has to be as many elements as this expression)
+    //! Bind the given values to this expression (has to be as many elements as this expression)
     template<typename Self, typename V>
         requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return tensor_value_binder{std::forward<Self>(self), std::forward<V>(value)};
     }
 
-    //! Bind the given vector to this expression (has to be as many elements as this expression)
+    //! Bind the given values to this expression (has to be as many elements as this expression)
     template<typename Self, typename V>
     constexpr auto operator=(this Self&& self, V&& values) noexcept {
         return self.bind(std::forward<V>(values));
     }
 
-    //! Bind the given array to this expression (has to be as many elements as this expression)
+    //! Bind the given values to this expression (has to be as many elements as this expression)
     template<typename Self, typename T>
     constexpr auto operator=(this Self&& self, T (&&values)[size]) noexcept {
         return self.bind(to_array<T, size>::from(std::move(values)));
