@@ -379,6 +379,20 @@ int main() {
         expect(eq(jac[_0, _0], 42.0));
     };
 
+    "tensor_determinant_2x2"_test = [] () {
+        // see https://en.wikipedia.org/wiki/Determinant#Two_by_two_matrices
+        tensor t{shape<2, 2>};
+        static_assert(evaluate(t.det(), at(t = {3, 7, 1, -4})) == -19);
+        expect(eq(evaluate(t.det(), at(t = {3, 7, 1, -4})), -19));
+    };
+
+    "tensor_determinant_3x3"_test = [] () {
+        // see https://en.wikipedia.org/wiki/Determinant#Example
+        tensor t{shape<3, 3>};
+        static_assert(evaluate(t.det(), at(t = {-2, -1, 2, 2, 1, 4, -3, 3, -1})) == 54);
+        expect(eq(evaluate(t.det(), at(t = {-2, -1, 2, 2, 1, 4, -3, 3, -1})), 54));
+    };
+
     "md_newton"_test = [] () {
         using namespace adpp::indices;
         static constexpr vec<2> v;

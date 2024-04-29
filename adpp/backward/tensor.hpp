@@ -228,6 +228,27 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(result_tuple));
     }
 
+    //! Return the determinant of this tensor (only available for 2x2 or 3x3 tensors)
+    template<typename Self>
+    constexpr auto det(this Self&& self) requires(shape.dimension == 2) {
+        using namespace indices;
+        if constexpr (shape.extent_in(_0) == 2 && shape.extent_in(_1) == 2) {
+            return self[md_index<0, 0>]*self[md_index<1, 1>]
+                - self[md_index<1, 0>]*self[md_index<0, 1>];
+        } else if constexpr (shape.extent_in(_0) == 3 && shape.extent_in(_1) == 3) {
+            return self[md_index<0, 0>]*self[md_index<1, 1>]*self[md_index<2, 2>]
+                + self[md_index<0, 1>]*self[md_index<1, 2>]*self[md_index<2, 0>]
+                + self[md_index<0, 2>]*self[md_index<1, 0>]*self[md_index<2, 1>]
+                - (
+                    self[md_index<2, 0>]*self[md_index<1, 1>]*self[md_index<0, 2>]
+                    + self[md_index<2, 1>]*self[md_index<1, 2>]*self[md_index<0, 0>]
+                    + self[md_index<2, 2>]*self[md_index<1, 0>]*self[md_index<0, 1>]
+                );
+        } else {
+            static_assert(always_false<>::value, "Determinant only implemented for 2x2 and 3x3 tensors");
+        }
+    }
+
     //! Cast this into a scalar expression (only available if shape.count == 1)
     constexpr auto as_scalar() const requires(shape.count == 1) {
         return first_type_t<type_list<Es...>>{};
