@@ -87,9 +87,9 @@ int main() {
         var a;
         let b;
         auto exp_a = exp(a);
-        auto exp_b = exp(b);
+        auto exp_b = log(exp(b));
         expect(eq(evaluate(exp_a, at(a = 2.0)), std::exp(2.0)));
-        expect(eq(evaluate(exp_b, at(b = 4.0)), std::exp(4.0)));
+        expect(eq(evaluate(exp_b, at(b = 4.0)), std::log(std::exp(4.0))));
     };
 
     "function_evaluate"_test = [] () {

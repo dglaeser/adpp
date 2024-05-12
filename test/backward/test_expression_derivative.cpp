@@ -85,6 +85,31 @@ int main() {
         expect(eq(derivs[_2], std::exp(3.0/4.0)*(-3.0/16.0)));
     };
 
+
+    "expression_exp_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = exp(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 1.0, b = 2.0));
+        expect(eq(derivatives[a], std::exp(1.0)*std::log(2.0)));
+    };
+
+    "expression_log_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = log(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+        expect(eq(derivatives[a], 1.0/2.0*std::log(2.0)));
+    };
+
+    "expression_sqrt_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = sqrt(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+        expect(eq(derivatives[a], -1.0/std::sqrt(2.0)*std::log(2.0)));
+    };
+
     "expression_with_cval_gradient"_test = [] () {
         var x;
         var y;
@@ -293,6 +318,30 @@ int main() {
         function f = (a + b)*a;
         function df_da = f.differentiate(wrt(a));
         expect(eq(df_da(a = 2.0, b = 4.0, c = 10.0), 2.0*2.0 + 4.0));
+    };
+
+    "differentiate_exp"_test = [] () {
+        var a;
+        var b;
+        const auto expr = exp(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), std::exp(2.0)*std::log(3.0)));
+    };
+
+    "differentiate_sqrt"_test = [] () {
+        var a;
+        var b;
+        const auto expr = sqrt(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), -1.0/std::sqrt(2.0)*std::log(3.0)));
+    };
+
+    "differentiate_log"_test = [] () {
+        var a;
+        var b;
+        const auto expr = log(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), 1.0/2.0*std::log(3.0)));
     };
 
     return EXIT_SUCCESS;
