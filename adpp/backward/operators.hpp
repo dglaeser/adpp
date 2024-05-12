@@ -48,6 +48,14 @@ struct sqrt {
     }
 };
 
+struct pow {
+    template<typename T, typename E>
+    constexpr auto operator()(const T& t, const E& exponent) const {
+        using std::pow;
+        return pow(t, exponent);
+    }
+};
+
 struct add : std::plus<void> {};
 struct subtract : std::minus<void> {};
 struct multiply : std::multiplies<void> {};
@@ -102,6 +110,10 @@ inline constexpr auto sqrt(A&& a) {
 template<into_term A>
 inline constexpr auto log(A&& a) {
     return expression{op::log{}, as_term(std::forward<A>(a))};
+}
+template<into_term A, into_term E>
+inline constexpr auto pow(A&& a, E&& exponent) {
+    return expression{op::pow{}, as_term(std::forward<A>(a)), as_term(std::forward<E>(exponent))};
 }
 
 template<typename R, typename A, typename B>
@@ -182,6 +194,22 @@ struct back_propagator<R, op::sqrt, A> {
     }
 };
 
+template<typename R, typename A, typename E>
+struct back_propagator<R, op::pow, A, E> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto [value_exp, derivs_exp] = E{}.template back_propagate<R>(b, vars);
+        auto result = op::pow{}(value_inner, value_exp);
+        return std::make_pair(
+            result,
+            (
+                std::move(derivs_exp).scaled_with(op::log{}(value_inner)) +
+                std::move(derivs_inner).scaled_with(value_exp/value_inner)
+            ).scaled_with(result)
+        );
+    }
+};
 
 
 #ifndef DOXYGEN
@@ -335,6 +363,26 @@ struct differentiator<op::sqrt, A> {
     }
 };
 
+template<typename A, typename E>
+struct differentiator<op::pow, A, E> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_mul(
+            pow(A{}, E{}),
+            detail::simplify_plus(
+                detail::simplify_mul(
+                    E{}.differentiate(v),
+                    log(A{})
+                ),
+                detail::simplify_mul(
+                    A{}.differentiate(v),
+                    detail::simplify_division(E{}, A{})
+                )
+            )
+        );
+    }
+};
+
 
 #ifndef DOXYGEN
 namespace detail {
@@ -417,6 +465,16 @@ struct formatter<op::sqrt, A> {
         out << "√(";
         A{}.export_to(out, name_map);
         out << ")";
+    }
+};
+
+template<typename A, typename E>
+struct formatter<op::pow, A, E> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        A{}.export_to(out, name_map);
+        out << "^";
+        detail::in_braces(out, E{}, name_map);
     }
 };
 

@@ -110,6 +110,35 @@ int main() {
         expect(eq(derivatives[a], -1.0/std::sqrt(2.0)*std::log(2.0)));
     };
 
+    "expression_pow_derivative"_test = [] () {
+        var a;
+        var b;
+        {
+            auto expr = pow(a, log(b));
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+            expect(eq(derivatives[a], std::log(2.0)*std::pow(2.0, std::log(2.0) - 1.0)));
+        }
+        {
+            auto expr = pow(a, b);
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = -2.0/3.0));
+            expect(eq(derivatives[a], -2.0/3.0*std::pow(2.0, -2.0/3.0 - 1.0)));
+        }
+        {
+            const auto aval = 2.0;
+            const auto bval = -2.0/3.0;
+            auto expr = pow(a*a, b*a + a*a);
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = aval, b = bval));
+            expect(eq(
+                derivatives[a],
+                std::pow(aval*aval, aval*(bval + aval))*(
+                    (bval + 2.0*aval)*std::log(aval*aval)
+                    +
+                    2.0*(bval + aval)
+                )
+            ));
+        }
+    };
+
     "expression_with_cval_gradient"_test = [] () {
         var x;
         var y;
@@ -250,6 +279,31 @@ int main() {
             evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
             -(1.0/std::sqrt((1.0 + 2.0)*2.0))*3.0*2.0
         ));
+    };
+
+    "derivative_expression_pow"_test = [] () {
+        var a;
+        var b;
+        let mu;
+        {
+            auto expr = pow(a*b, mu);
+            auto derivative = differentiate(expr, wrt(a));
+            expect(eq(evaluate(derivative, at(a = 2.0, b = 4.0, mu = 3.0)), 3.0*std::pow(2.0*4.0, 2.0)*4.0));
+        }
+        {
+            const auto aval = 2.0;
+            const auto bval = -2.0/3.0;
+            auto expr = pow(a*a, b*a + a*a);
+            auto derivative = differentiate(expr, wrt(a));
+            expect(eq(
+                evaluate(derivative, at(a = aval, b = bval)),
+                std::pow(aval*aval, aval*(bval + aval))*(
+                    (bval + 2.0*aval)*std::log(aval*aval)
+                    +
+                    2.0*(bval + aval)
+                )
+            ));
+        }
     };
 
     "bound_expression_back_propagate"_test = [] () {
