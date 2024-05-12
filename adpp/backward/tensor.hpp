@@ -228,6 +228,21 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(result_tuple));
     }
 
+    //! Return the trace of this tensor (only available for quadratic 2d tensors)
+    template<typename Self>
+    constexpr auto trace(this Self&& self) requires(shape.dimension == 2 and shape.first() == shape.last()) {
+        return self._reduce(
+            [&] <std::size_t i> (md_index_constant<i>, auto&& result) {
+                return std::move(result) + self[md_index<i, i>];
+            },
+            self[md_index<0, 0>],
+            md_index_constant_iterator{
+                adpp::md_shape<shape.first()>{},
+                md_index_constant<1>{}
+            }
+        );
+    }
+
     //! Return the determinant of this tensor (only available for 2x2 or 3x3 tensors)
     template<typename Self>
     constexpr auto det(this Self&& self) requires(shape.dimension == 2) {

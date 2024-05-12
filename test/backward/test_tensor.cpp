@@ -397,6 +397,14 @@ int main() {
         static_assert(transposed[1, 1] == 3); expect(eq(transposed[1, 1], 3));
     };
 
+    "tensor_trace_2x2"_test = [] () {
+        static constexpr var x;
+        static constexpr var y;
+        static constexpr tensor_expression expr{shape<2, 2>, x, x - y, x + y, y};
+        static_assert(evaluate(expr.trace(), at(x = 2, y = 42)) == 44);
+        expect(eq(evaluate(expr.trace(), at(x = 2, y = 42)), 44));
+    };
+
     "tensor_determinant_2x2"_test = [] () {
         // see https://en.wikipedia.org/wiki/Determinant#Two_by_two_matrices
         tensor t{shape<2, 2>};
