@@ -24,6 +24,14 @@ namespace adpp::backward {
 
 namespace op {
 
+struct log {
+    template<typename T>
+    constexpr auto operator()(const T& t) const {
+        using std::log;
+        return log(t);
+    }
+};
+
 struct exp {
     template<typename T>
     constexpr auto operator()(const T& t) const {
@@ -91,6 +99,10 @@ template<into_term A>
 inline constexpr auto sqrt(A&& a) {
     return expression{op::sqrt{}, as_term(std::forward<A>(a))};
 }
+template<into_term A>
+inline constexpr auto log(A&& a) {
+    return expression{op::log{}, as_term(std::forward<A>(a))};
+}
 
 template<typename R, typename A, typename B>
 struct back_propagator<R, op::add, A, B> {
@@ -147,6 +159,16 @@ struct back_propagator<R, op::exp, A> {
         auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
         auto result = op::exp{}(value_inner);
         return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(result));
+    }
+};
+
+template<typename R, typename A>
+struct back_propagator<R, op::log, A> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto result = op::log{}(value_inner);
+        return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(R{1}/value_inner));
     }
 };
 
@@ -298,6 +320,14 @@ struct differentiator<op::exp, A> {
 };
 
 template<typename A>
+struct differentiator<op::log, A> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_division(A{}.differentiate(v), A{});
+    }
+};
+
+template<typename A>
 struct differentiator<op::sqrt, A> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
@@ -365,6 +395,16 @@ struct formatter<op::exp, A> {
     template<typename... N>
     constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
         out << "exp(";
+        A{}.export_to(out, name_map);
+        out << ")";
+    }
+};
+
+template<typename A>
+struct formatter<op::log, A> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        out << "log(";
         A{}.export_to(out, name_map);
         out << ")";
     }
