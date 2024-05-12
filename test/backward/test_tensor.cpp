@@ -379,6 +379,24 @@ int main() {
         expect(eq(jac[_0, _0], 42.0));
     };
 
+    "tensor_transposed_2x2"_test = [] () {
+        static constexpr var x;
+        static constexpr var y;
+        static constexpr tensor_expression expr{shape<2, 2>, x, x - y, x + y, y};
+        static constexpr auto result = evaluate(expr, at(x = 2, y = 3));
+
+        static_assert(result[0, 0] == 2); expect(eq(result[0, 0], 2));
+        static_assert(result[0, 1] == 2 - 3); expect(eq(result[0, 1], 2 - 3));
+        static_assert(result[1, 0] == 3 + 2); expect(eq(result[1, 0], 3 + 2));
+        static_assert(result[1, 1] == 3); expect(eq(result[1, 1], 3));
+
+        static constexpr auto transposed = evaluate(expr.transposed(), at(x = 2, y = 3));
+        static_assert(transposed[0, 0] == 2); expect(eq(transposed[0, 0], 2));
+        static_assert(transposed[0, 1] == 3 + 2); expect(eq(transposed[0, 1], 3 + 2));
+        static_assert(transposed[1, 0] == 2 - 3); expect(eq(transposed[1, 0], 2 - 3));
+        static_assert(transposed[1, 1] == 3); expect(eq(transposed[1, 1], 3));
+    };
+
     "tensor_determinant_2x2"_test = [] () {
         // see https://en.wikipedia.org/wiki/Determinant#Two_by_two_matrices
         tensor t{shape<2, 2>};

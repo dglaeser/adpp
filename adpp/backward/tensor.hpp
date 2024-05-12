@@ -249,6 +249,17 @@ struct tensor_expression : bindable, indexed<Es...> {
         }
     }
 
+    //! Return this tensor transposed (only available for 2d tensors)
+    template<typename Self>
+    constexpr auto transposed(this Self&& self) requires(shape.dimension == 2) {
+        auto transposed_terms = self._reduce([&] <std::size_t i, std::size_t j> (md_index_constant<i, j>, auto&& terms) {
+            return std::tuple_cat(std::move(terms), std::tuple{self[md_index<j, i>]});
+        }, std::tuple{}, md_index_constant_iterator{shape});
+        return std::apply([] <typename... Terms> (Terms&&... ts) {
+            return backward::tensor_expression{shape, std::forward<Terms>(ts)...};
+        }, std::move(transposed_terms));
+    }
+
     //! Cast this into a scalar expression (only available if shape.count == 1)
     constexpr auto as_scalar() const requires(shape.count == 1) {
         return first_type_t<type_list<Es...>>{};
