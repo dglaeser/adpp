@@ -419,6 +419,26 @@ int main() {
         expect(eq(evaluate(t.det(), at(t = {-2, -1, 2, 2, 1, 4, -3, 3, -1})), 54));
     };
 
+    "tensor_inverse_2x2"_test = [] () {
+        static constexpr tensor t{shape<2, 2>};
+        static constexpr auto inverse = t.inverted();
+        static constexpr auto inv_times_t = evaluate(inverse.apply_to(t), at(t = {2.0, -3.0, 1.0, 5.0}));
+        static_assert(inv_times_t[0, 1] == 0); expect(eq(inv_times_t[0, 1], 0.0));
+        static_assert(inv_times_t[1, 0] == 0); expect(eq(inv_times_t[1, 0], 0.0));
+    };
+
+    "tensor_inverse_3x3"_test = [] () {
+        static constexpr tensor t{shape<3, 3>};
+        static constexpr auto inverse = t.inverted();
+        static constexpr auto inv_times_t = evaluate(inverse.apply_to(t), at(t = {2.0, -3.0, 1.0, 5.0, 4.0, 3.0, 6.0, 2.0, 3.5}));
+        static_assert(inv_times_t[0, 1] == 0); expect(eq(inv_times_t[0, 1], 0.0));
+        static_assert(inv_times_t[0, 2] == 0); expect(eq(inv_times_t[0, 2], 0.0));
+        static_assert(inv_times_t[1, 0] == 0); expect(eq(inv_times_t[1, 0], 0.0));
+        static_assert(inv_times_t[1, 2] == 0); expect(eq(inv_times_t[1, 2], 0.0));
+        static_assert(inv_times_t[2, 0] == 0); expect(eq(inv_times_t[2, 0], 0.0));
+        static_assert(inv_times_t[2, 1] == 0); expect(eq(inv_times_t[2, 1], 0.0));
+    };
+
     "md_newton"_test = [] () {
         using namespace adpp::indices;
         static constexpr vec<2> v;

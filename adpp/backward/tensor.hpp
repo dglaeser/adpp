@@ -264,6 +264,37 @@ struct tensor_expression : bindable, indexed<Es...> {
         }
     }
 
+    //! Return the inverse of this matrix (only available for 2x2 or 3x3 tensors)
+    template<typename Self>
+    constexpr auto inverted(this Self&& self) requires(shape.dimension == 2) {
+        using namespace indices;
+        if constexpr (shape.extent_in(_0) == 2 && shape.extent_in(_1) == 2) {
+            return backward::tensor_expression{
+                shape,
+                self[md_index<1, 1>], -self[md_index<0, 1>],
+                -self[md_index<1, 0>], self[md_index<0, 0>]
+            }.scaled_with(self.det());
+        } else if constexpr (shape.extent_in(_0) == 3 && shape.extent_in(_1) == 3) {
+            // see https://mo.mathematik.uni-stuttgart.de/inhalt/beispiel/beispiel1113/
+            return backward::tensor_expression{
+                shape,
+                self[md_index<1, 1>]*self[md_index<2, 2>] - self[md_index<1, 2>]*self[md_index<2, 1>],
+                -self[md_index<0, 1>]*self[md_index<2, 2>] + self[md_index<0, 2>]*self[md_index<2, 1>],
+                self[md_index<0, 1>]*self[md_index<1, 2>] - self[md_index<0, 2>]*self[md_index<1, 1>],
+
+                -self[md_index<1, 0>]*self[md_index<2, 2>] + self[md_index<1, 2>]*self[md_index<2, 0>],
+                self[md_index<0, 0>]*self[md_index<2, 2>] - self[md_index<0, 2>]*self[md_index<2, 0>],
+                -self[md_index<0, 0>]*self[md_index<1, 2>] + self[md_index<0, 2>]*self[md_index<1, 0>],
+
+                self[md_index<1, 0>]*self[md_index<2, 1>] - self[md_index<1, 1>]*self[md_index<2, 0>],
+                -self[md_index<0, 0>]*self[md_index<2, 1>] + self[md_index<0, 1>]*self[md_index<2, 0>],
+                self[md_index<0, 0>]*self[md_index<1, 1>] - self[md_index<0, 1>]*self[md_index<1, 0>]
+            }.scaled_with(self.det());
+        } else {
+            static_assert(always_false<>::value, "Inverse only implemented for 2x2 and 3x3 tensors");
+        }
+    }
+
     //! Return this tensor transposed (only available for 2d tensors)
     template<typename Self>
     constexpr auto transposed(this Self&& self) requires(shape.dimension == 2) {
