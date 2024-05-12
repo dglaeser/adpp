@@ -466,9 +466,11 @@ struct tensor
 : detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type {
     using base = detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type;
     using base::operator=;
+    using variables = typename detail::vars_n<_, shape.count, type_list<>>::type;
 
     template<std::size_t... n>
     constexpr tensor(md_shape<n...>) noexcept {}
+    constexpr variables vars() const noexcept { return {}; }
 };
 
 template<std::size_t... n, auto _ = [] () {}>
