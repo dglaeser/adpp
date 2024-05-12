@@ -223,7 +223,7 @@ int main() {
         auto derivative = differentiate(expr, wrt(a));
         expect(eq(
             evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
-            (1.0/std::sqrt((1.0 + 2.0)*2.0))*3.0*2.0
+            -(1.0/std::sqrt((1.0 + 2.0)*2.0))*3.0*2.0
         ));
     };
 

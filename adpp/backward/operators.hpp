@@ -301,7 +301,7 @@ template<typename A>
 struct differentiator<op::sqrt, A> {
     template<typename V>
     constexpr auto operator()(const type_list<V>& v) {
-        return detail::simplify_mul(cval<1>/sqrt(A{}), A{}.differentiate(v));
+        return detail::simplify_mul(cval<-1>/sqrt(A{}), A{}.differentiate(v));
     }
 };
 
