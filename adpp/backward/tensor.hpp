@@ -187,10 +187,10 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     //! Perform a dot product with another vector
     template<auto other_shape, typename... T>
-        requires(shape.is_vector() and other_shape.is_vector() and shape.first() == other_shape.first())
+        requires(shape == other_shape)
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
-        return _reduce([&] (auto i, auto&& e) {
-            if constexpr (is_zero_constant_v<decltype(e)>)
+        return _reduce([&] <typename E> (auto i, E&& e) {
+            if constexpr (is_zero_constant_v<std::remove_cvref_t<E>>)
                 return (*this)[i]*other[i];
             else
                 return std::move(e) + (*this)[i]*other[i];
@@ -311,13 +311,13 @@ struct tensor_expression : bindable, indexed<Es...> {
         return first_type_t<type_list<Es...>>{};
     }
 
-    //! Return the expression representing the squared l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
+    //! Return the expression representing the squared l2-norm of this expression
+    constexpr auto l2_norm_squared() const {
         return dot(*this);
     }
 
-    //! Return the expression representing the l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm() const requires(shape.is_vector()) {
+    //! Return the expression representing the l2-norm of this expression
+    constexpr auto l2_norm() const {
         return sqrt(l2_norm_squared());
     }
 

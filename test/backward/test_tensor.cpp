@@ -160,6 +160,23 @@ int main() {
         }
     };
 
+    "tensor_expression_dot"_test = [] () {
+        tensor a{shape<2, 2>};
+        tensor b{shape<2, 2>};
+        static constexpr auto bindings = at(
+            a = {1, 3, 5, 6},
+            b = {7, 8, 9, 11}
+        );
+        static_assert(
+            evaluate(a.dot(b), bindings) ==
+            evaluate(a.apply_to(b.transposed()).trace(), bindings)
+        );
+        expect(eq(
+            evaluate(a.dot(b), bindings),
+            evaluate(a.apply_to(b.transposed()).trace(), bindings)
+        ));
+    };
+
     "vec_expression_l2_norm"_test = [] () {
         {
             vector v(length<3>);
