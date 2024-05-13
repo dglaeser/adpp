@@ -275,12 +275,14 @@ int main() {
             decltype((y*x)*(x+y) + y*y)
         >);
 
-        constexpr auto result = evaluate(expr, at(x = 1, y = 2));
+        constexpr auto xval = 42;
+        constexpr auto yval = 76;
+        constexpr auto result = evaluate(expr, at(x = xval, y = yval));
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
-        static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
-        static_assert(result[0, 1] == 1*(1 + 2) + 1*2*2);
-        static_assert(result[1, 0] == (1*2)*1 + 2*2*2);
-        static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
+        static_assert(result[0, 0] == xval*xval + xval*yval*(yval*yval));
+        static_assert(result[0, 1] == xval*(xval + yval) + xval*yval*yval);
+        static_assert(result[1, 0] == (xval*yval)*xval + yval*yval*yval);
+        static_assert(result[1, 1] == (yval*xval)*(xval+yval) + yval*yval);
     };
 
     "md_tensor_expression_tensor_apply"_test = [] () {
@@ -380,21 +382,21 @@ int main() {
     };
 
     "tensor_transposed_2x2"_test = [] () {
-        static constexpr var x;
-        static constexpr var y;
-        static constexpr tensor_expression expr{shape<2, 2>, x, x - y, x + y, y};
-        static constexpr auto result = evaluate(expr, at(x = 2, y = 3));
+        static constexpr tensor t{shape<2, 2>};
+        static constexpr auto a = t[adpp::md_index<0, 0>];
+        static constexpr auto b = t[adpp::md_index<0, 1>];
+        static constexpr auto c = t[adpp::md_index<1, 0>];
+        static constexpr auto d = t[adpp::md_index<1, 1>];
 
-        static_assert(result[0, 0] == 2); expect(eq(result[0, 0], 2));
-        static_assert(result[0, 1] == 2 - 3); expect(eq(result[0, 1], 2 - 3));
-        static_assert(result[1, 0] == 3 + 2); expect(eq(result[1, 0], 3 + 2));
-        static_assert(result[1, 1] == 3); expect(eq(result[1, 1], 3));
+        static constexpr auto check_equal = [] <typename T1, typename T2> (T1&&, T2&&) -> bool {
+            return std::is_same_v<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+        };
 
-        static constexpr auto transposed = evaluate(expr.transposed(), at(x = 2, y = 3));
-        static_assert(transposed[0, 0] == 2); expect(eq(transposed[0, 0], 2));
-        static_assert(transposed[0, 1] == 3 + 2); expect(eq(transposed[0, 1], 3 + 2));
-        static_assert(transposed[1, 0] == 2 - 3); expect(eq(transposed[1, 0], 2 - 3));
-        static_assert(transposed[1, 1] == 3); expect(eq(transposed[1, 1], 3));
+        static constexpr auto transposed = t.transposed();
+        static_assert(check_equal(transposed[adpp::md_index<0, 0>], a));
+        static_assert(check_equal(transposed[adpp::md_index<0, 1>], c));
+        static_assert(check_equal(transposed[adpp::md_index<1, 0>], b));
+        static_assert(check_equal(transposed[adpp::md_index<1, 1>], d));
     };
 
     "tensor_trace_2x2"_test = [] () {
@@ -402,7 +404,9 @@ int main() {
         static constexpr var y;
         static constexpr tensor_expression expr{shape<2, 2>, x, x - y, x + y, y};
         static_assert(evaluate(expr.trace(), at(x = 2, y = 42)) == 44);
+        static_assert(evaluate(expr.trace(), at(x = 3, y = 42)) == 45);
         expect(eq(evaluate(expr.trace(), at(x = 2, y = 42)), 44));
+        expect(eq(evaluate(expr.trace(), at(x = 3, y = 42)), 45));
     };
 
     "tensor_determinant_2x2"_test = [] () {
