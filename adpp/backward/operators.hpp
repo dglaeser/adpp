@@ -226,7 +226,7 @@ namespace detail {
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_mul(T0 t0, T1 t1) {
+    constexpr auto simplify_mul(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&&) { return cval<0>; },
@@ -236,7 +236,7 @@ namespace detail {
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_plus(T0 t0, T1 t1) {
+    constexpr auto simplify_plus(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&& a) { return a; },
@@ -246,7 +246,7 @@ namespace detail {
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_division(T0 t0, T1 t1) {
+    constexpr auto simplify_division(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&& a) { static_assert(always_false<T0>::value, "division by zero!"); return a; },
