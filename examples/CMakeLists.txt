@@ -1,1 +1,3 @@
-adpp_add_test(example_add_and_multiply add_and_multiply.cpp)
+add_executable(example_add_and_multiply add_and_multiply.cpp)
+target_link_libraries(example_add_and_multiply PRIVATE adpp::adpp)
+add_test(NAME example_add_and_multiply COMMAND ./example_add_and_multiply)
