@@ -187,10 +187,10 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     //! Perform a dot product with another vector
     template<auto other_shape, typename... T>
-        requires(shape.is_vector() and other_shape.is_vector() and shape.first() == other_shape.first())
+        requires(shape == other_shape)
     constexpr auto dot(const tensor_expression<other_shape, T...>& other) const {
-        return _reduce([&] (auto i, auto&& e) {
-            if constexpr (is_zero_constant_v<decltype(e)>)
+        return _reduce([&] <typename E> (auto i, E&& e) {
+            if constexpr (is_zero_constant_v<std::remove_cvref_t<E>>)
                 return (*this)[i]*other[i];
             else
                 return std::move(e) + (*this)[i]*other[i];
@@ -228,6 +228,21 @@ struct tensor_expression : bindable, indexed<Es...> {
         }, std::move(result_tuple));
     }
 
+    //! Return the trace of this tensor (only available for quadratic 2d tensors)
+    template<typename Self>
+    constexpr auto trace(this Self&& self) requires(shape.dimension == 2 and shape.first() == shape.last()) {
+        return self._reduce(
+            [&] <std::size_t i> (md_index_constant<i>, auto&& result) {
+                return std::move(result) + self[md_index<i, i>];
+            },
+            self[md_index<0, 0>],
+            md_index_constant_iterator{
+                adpp::md_shape<shape.first()>{},
+                md_index_constant<1>{}
+            }
+        );
+    }
+
     //! Return the determinant of this tensor (only available for 2x2 or 3x3 tensors)
     template<typename Self>
     constexpr auto det(this Self&& self) requires(shape.dimension == 2) {
@@ -249,18 +264,60 @@ struct tensor_expression : bindable, indexed<Es...> {
         }
     }
 
+    //! Return the inverse of this matrix (only available for 2x2 or 3x3 tensors)
+    template<typename Self>
+    constexpr auto inverted(this Self&& self) requires(shape.dimension == 2) {
+        using namespace indices;
+        if constexpr (shape.extent_in(_0) == 2 && shape.extent_in(_1) == 2) {
+            return backward::tensor_expression{
+                shape,
+                self[md_index<1, 1>], -self[md_index<0, 1>],
+                -self[md_index<1, 0>], self[md_index<0, 0>]
+            }.scaled_with(self.det());
+        } else if constexpr (shape.extent_in(_0) == 3 && shape.extent_in(_1) == 3) {
+            // see https://mo.mathematik.uni-stuttgart.de/inhalt/beispiel/beispiel1113/
+            return backward::tensor_expression{
+                shape,
+                self[md_index<1, 1>]*self[md_index<2, 2>] - self[md_index<1, 2>]*self[md_index<2, 1>],
+                -self[md_index<0, 1>]*self[md_index<2, 2>] + self[md_index<0, 2>]*self[md_index<2, 1>],
+                self[md_index<0, 1>]*self[md_index<1, 2>] - self[md_index<0, 2>]*self[md_index<1, 1>],
+
+                -self[md_index<1, 0>]*self[md_index<2, 2>] + self[md_index<1, 2>]*self[md_index<2, 0>],
+                self[md_index<0, 0>]*self[md_index<2, 2>] - self[md_index<0, 2>]*self[md_index<2, 0>],
+                -self[md_index<0, 0>]*self[md_index<1, 2>] + self[md_index<0, 2>]*self[md_index<1, 0>],
+
+                self[md_index<1, 0>]*self[md_index<2, 1>] - self[md_index<1, 1>]*self[md_index<2, 0>],
+                -self[md_index<0, 0>]*self[md_index<2, 1>] + self[md_index<0, 1>]*self[md_index<2, 0>],
+                self[md_index<0, 0>]*self[md_index<1, 1>] - self[md_index<0, 1>]*self[md_index<1, 0>]
+            }.scaled_with(self.det());
+        } else {
+            static_assert(always_false<>::value, "Inverse only implemented for 2x2 and 3x3 tensors");
+        }
+    }
+
+    //! Return this tensor transposed (only available for 2d tensors)
+    template<typename Self>
+    constexpr auto transposed(this Self&& self) requires(shape.dimension == 2) {
+        auto transposed_terms = self._reduce([&] <std::size_t i, std::size_t j> (md_index_constant<i, j>, auto&& terms) {
+            return std::tuple_cat(std::move(terms), std::tuple{self[md_index<j, i>]});
+        }, std::tuple{}, md_index_constant_iterator{shape});
+        return std::apply([] <typename... Terms> (Terms&&... ts) {
+            return backward::tensor_expression{shape, std::forward<Terms>(ts)...};
+        }, std::move(transposed_terms));
+    }
+
     //! Cast this into a scalar expression (only available if shape.count == 1)
     constexpr auto as_scalar() const requires(shape.count == 1) {
         return first_type_t<type_list<Es...>>{};
     }
 
-    //! Return the expression representing the squared l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm_squared() const requires(shape.is_vector()) {
+    //! Return the expression representing the squared l2-norm of this expression
+    constexpr auto l2_norm_squared() const {
         return dot(*this);
     }
 
-    //! Return the expression representing the l2-norm of this expression (only available for vectors)
-    constexpr auto l2_norm() const requires(shape.is_vector()) {
+    //! Return the expression representing the l2-norm of this expression
+    constexpr auto l2_norm() const {
         return sqrt(l2_norm_squared());
     }
 
@@ -409,9 +466,11 @@ struct tensor
 : detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type {
     using base = detail::tensor_with<shape, typename detail::vars_n<_, shape.count, type_list<>>::type>::type;
     using base::operator=;
+    using variables = typename detail::vars_n<_, shape.count, type_list<>>::type;
 
     template<std::size_t... n>
     constexpr tensor(md_shape<n...>) noexcept {}
+    constexpr variables vars() const noexcept { return {}; }
 };
 
 template<std::size_t... n, auto _ = [] () {}>

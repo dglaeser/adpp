@@ -160,6 +160,23 @@ int main() {
         }
     };
 
+    "tensor_expression_dot"_test = [] () {
+        tensor a{shape<2, 2>};
+        tensor b{shape<2, 2>};
+        static constexpr auto bindings = at(
+            a = {1, 3, 5, 6},
+            b = {7, 8, 9, 11}
+        );
+        static_assert(
+            evaluate(a.dot(b), bindings) ==
+            evaluate(a.apply_to(b.transposed()).trace(), bindings)
+        );
+        expect(eq(
+            evaluate(a.dot(b), bindings),
+            evaluate(a.apply_to(b.transposed()).trace(), bindings)
+        ));
+    };
+
     "vec_expression_l2_norm"_test = [] () {
         {
             vector v(length<3>);
@@ -275,12 +292,14 @@ int main() {
             decltype((y*x)*(x+y) + y*y)
         >);
 
-        constexpr auto result = evaluate(expr, at(x = 1, y = 2));
+        constexpr auto xval = 42;
+        constexpr auto yval = 76;
+        constexpr auto result = evaluate(expr, at(x = xval, y = yval));
         static_assert(expr.shape == adpp::md_shape<2, 2>{});
-        static_assert(result[0, 0] == 1*1 + 1*2*(2*2));
-        static_assert(result[0, 1] == 1*(1 + 2) + 1*2*2);
-        static_assert(result[1, 0] == (1*2)*1 + 2*2*2);
-        static_assert(result[1, 1] == (2*1)*(1+2) + 2*2);
+        static_assert(result[0, 0] == xval*xval + xval*yval*(yval*yval));
+        static_assert(result[0, 1] == xval*(xval + yval) + xval*yval*yval);
+        static_assert(result[1, 0] == (xval*yval)*xval + yval*yval*yval);
+        static_assert(result[1, 1] == (yval*xval)*(xval+yval) + yval*yval);
     };
 
     "md_tensor_expression_tensor_apply"_test = [] () {
@@ -379,6 +398,34 @@ int main() {
         expect(eq(jac[_0, _0], 42.0));
     };
 
+    "tensor_transposed_2x2"_test = [] () {
+        static constexpr tensor t{shape<2, 2>};
+        static constexpr auto a = t[adpp::md_index<0, 0>];
+        static constexpr auto b = t[adpp::md_index<0, 1>];
+        static constexpr auto c = t[adpp::md_index<1, 0>];
+        static constexpr auto d = t[adpp::md_index<1, 1>];
+
+        static constexpr auto check_equal = [] <typename T1, typename T2> (T1&&, T2&&) -> bool {
+            return std::is_same_v<std::remove_cvref_t<T1>, std::remove_cvref_t<T2>>;
+        };
+
+        static constexpr auto transposed = t.transposed();
+        static_assert(check_equal(transposed[adpp::md_index<0, 0>], a));
+        static_assert(check_equal(transposed[adpp::md_index<0, 1>], c));
+        static_assert(check_equal(transposed[adpp::md_index<1, 0>], b));
+        static_assert(check_equal(transposed[adpp::md_index<1, 1>], d));
+    };
+
+    "tensor_trace_2x2"_test = [] () {
+        static constexpr var x;
+        static constexpr var y;
+        static constexpr tensor_expression expr{shape<2, 2>, x, x - y, x + y, y};
+        static_assert(evaluate(expr.trace(), at(x = 2, y = 42)) == 44);
+        static_assert(evaluate(expr.trace(), at(x = 3, y = 42)) == 45);
+        expect(eq(evaluate(expr.trace(), at(x = 2, y = 42)), 44));
+        expect(eq(evaluate(expr.trace(), at(x = 3, y = 42)), 45));
+    };
+
     "tensor_determinant_2x2"_test = [] () {
         // see https://en.wikipedia.org/wiki/Determinant#Two_by_two_matrices
         tensor t{shape<2, 2>};
@@ -391,6 +438,26 @@ int main() {
         tensor t{shape<3, 3>};
         static_assert(evaluate(t.det(), at(t = {-2, -1, 2, 2, 1, 4, -3, 3, -1})) == 54);
         expect(eq(evaluate(t.det(), at(t = {-2, -1, 2, 2, 1, 4, -3, 3, -1})), 54));
+    };
+
+    "tensor_inverse_2x2"_test = [] () {
+        static constexpr tensor t{shape<2, 2>};
+        static constexpr auto inverse = t.inverted();
+        static constexpr auto inv_times_t = evaluate(inverse.apply_to(t), at(t = {2.0, -3.0, 1.0, 5.0}));
+        static_assert(inv_times_t[0, 1] == 0); expect(eq(inv_times_t[0, 1], 0.0));
+        static_assert(inv_times_t[1, 0] == 0); expect(eq(inv_times_t[1, 0], 0.0));
+    };
+
+    "tensor_inverse_3x3"_test = [] () {
+        static constexpr tensor t{shape<3, 3>};
+        static constexpr auto inverse = t.inverted();
+        static constexpr auto inv_times_t = evaluate(inverse.apply_to(t), at(t = {2.0, -3.0, 1.0, 5.0, 4.0, 3.0, 6.0, 2.0, 3.5}));
+        static_assert(inv_times_t[0, 1] == 0); expect(eq(inv_times_t[0, 1], 0.0));
+        static_assert(inv_times_t[0, 2] == 0); expect(eq(inv_times_t[0, 2], 0.0));
+        static_assert(inv_times_t[1, 0] == 0); expect(eq(inv_times_t[1, 0], 0.0));
+        static_assert(inv_times_t[1, 2] == 0); expect(eq(inv_times_t[1, 2], 0.0));
+        static_assert(inv_times_t[2, 0] == 0); expect(eq(inv_times_t[2, 0], 0.0));
+        static_assert(inv_times_t[2, 1] == 0); expect(eq(inv_times_t[2, 1], 0.0));
     };
 
     "md_newton"_test = [] () {
