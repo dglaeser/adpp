@@ -250,8 +250,13 @@ namespace detail {
     concept exposes_value_type = requires { typename T::value_type; };
 
     template<typename T>
-    concept exposes_static_size = requires {
+    concept exposes_static_size_function = requires {
         { T::size() } -> std::convertible_to<std::size_t>;
+    };
+
+    template<typename T>
+    concept exposes_static_size = requires {
+        { T::size } -> std::convertible_to<std::size_t>;
     };
 
 }  // namespace detail
@@ -302,8 +307,10 @@ template<typename T>
 struct size_of;
 template<typename T, std::size_t N>
 struct size_of<std::array<T, N>> : std::integral_constant<std::size_t, N> {};
-template<detail::exposes_static_size T>
+template<detail::exposes_static_size_function T>
 struct size_of<T> : std::integral_constant<std::size_t, T::size()> {};
+template<detail::exposes_static_size T>
+struct size_of<T> : std::integral_constant<std::size_t, T::size> {};
 template<typename T, std::size_t N>
 struct size_of<T[N]> : std::integral_constant<std::size_t, N> {};
 template<typename T>

@@ -160,6 +160,30 @@ int main() {
         }
     };
 
+    "tensor_expression_bind_from_vec"_test = [] () {
+        tensor t{shape<2, 2>};
+        static constexpr auto dot_expected = 1*1 + 2*2 + 3*3 + 4*4;
+        static_assert(evaluate(t.dot(t), at(t = {1, 2, 3, 4})) == dot_expected);
+        static_assert(evaluate(t.dot(t), at(t = std::array{1, 2, 3, 4})) == dot_expected);
+    };
+
+    "tensor_expression_bind_from_tensor"_test = [&] () {
+        tensor t{shape<2, 2>};
+        static constexpr auto dot_expected = 1*1 + 2*2 + 3*3 + 4*4;
+        static constexpr std::array<std::array<int, 2>, 2> value{std::array{1, 2}, std::array{3, 4}};
+        static_assert(evaluate(t.dot(t), at(t = value)) == dot_expected);
+        expect(eq(evaluate(t.dot(t), at(t = value)), dot_expected));
+
+        tensor t2{shape<2, 2, 2>};
+        static constexpr auto dot2_expected = dot_expected + 5*5 + 6*6 + 7*7 + 8*8;
+        static constexpr std::array<std::array<std::array<int, 2>, 2>, 2> value2{
+            std::array{std::array{1, 2}, std::array{3, 4}},
+            std::array{std::array{5, 6}, std::array{7, 8}}
+        };
+        static_assert(evaluate(t2.dot(t2), at(t2 = value2)) == dot2_expected);
+        expect(eq(evaluate(t2.dot(t2), at(t2 = value2)), dot2_expected));
+    };
+
     "tensor_expression_dot"_test = [] () {
         tensor a{shape<2, 2>};
         tensor b{shape<2, 2>};

@@ -25,9 +25,12 @@ namespace adpp::backward {
 //! \addtogroup Backward
 //! \{
 
-//! Binder for tensorial expressions, takes the values for all elements as a flat vector
+//! Binder for tensorial expressions, takes the values for all elements as a flat range or mdrange with matching shape
 template<typename S, typename V>
-    requires(static_vec_n<std::remove_cvref_t<V>, S::shape.count>)
+    requires(
+        static_vec_n<std::remove_cvref_t<V>, S::shape.count> or
+        shape_of_v<std::remove_cvref_t<V>> == S::shape
+    )
 struct tensor_value_binder : value_binder<S, V>{
     static constexpr std::size_t number_of_sub_binders = S::shape.count;
 
@@ -37,32 +40,50 @@ struct tensor_value_binder : value_binder<S, V>{
     template<typename Self>
     constexpr auto sub_binders(this Self&& self) noexcept {
         static constexpr bool owning = !std::is_lvalue_reference_v<Self>;
-        return self.template _concat<owning>(typename S::sub_expressions{}, std::tuple{});
+        return self.template _concat<owning>(
+            typename S::sub_expressions{},
+            std::tuple{},
+            md_index_constant_iterator{S::shape}
+        );
     }
 
  private:
-    template<bool owning, typename... E, typename... T>
-    constexpr auto _concat(type_list<E...>, std::tuple<T...>&& current) const noexcept {
-        if constexpr (sizeof...(T) == number_of_sub_binders) {
+    template<bool owning, typename... E, typename... T, std::size_t... n, typename I>
+    constexpr auto _concat(type_list<E...>,
+                           std::tuple<T...>&& current,
+                           md_index_constant_iterator<md_shape<n...>, I>&& md_iterator) const noexcept {
+        if constexpr (md_index_constant_iterator<md_shape<n...>, I>::is_end()) {
+            static_assert(sizeof...(T) == number_of_sub_binders);
             return std::move(current);
         } else {
-            static constexpr std::size_t i = sizeof...(T);
             return _concat<owning>(
                 drop_first_type_t<type_list<E...>>{},
                 std::tuple_cat(
                     std::move(current),
-                    std::make_tuple(value_binder{first_type_t<type_list<E...>>{}, _get<i, owning>()})
-                )
+                    std::make_tuple(value_binder{first_type_t<type_list<E...>>{}, _get<owning>(md_iterator.current())})
+                ),
+                md_iterator.next()
             );
         }
     }
 
-    template<std::size_t i, bool copy>
-    constexpr decltype(auto) _get() const noexcept {
-        if constexpr (copy)
-            return value_type_t<std::remove_cvref_t<V>>{this->unwrap()[i]};
-        else
-            return this->unwrap()[i];
+    template<bool copy, std::size_t... is>
+    constexpr decltype(auto) _get(md_index_constant<is...>&&) const noexcept {
+        static constexpr bool is_vec = static_vec_n<std::remove_cvref_t<V>, S::shape.count>;
+        if constexpr (is_vec) {
+            static constexpr auto i = S::shape.flat_index_of(md_index_constant<is...>{});
+            if constexpr (copy)
+                return value_type_t<std::remove_cvref_t<V>>{this->unwrap()[i]};
+            else
+                return this->unwrap()[i];
+        } else {
+            if constexpr (copy)
+                return md_value_type_t<std::remove_cvref_t<V>>{
+                    access_with(md_index_constant<is...>{}, this->unwrap())
+                };
+            else
+                return access_with(md_index_constant<is...>{}, this->unwrap());
+        }
     }
 };
 
@@ -84,7 +105,6 @@ struct tensor_expression : bindable, indexed<Es...> {
 
     //! Bind the given values to this expression (has to be as many elements as this expression)
     template<typename Self, typename V>
-        requires(static_vec_n<std::remove_cvref_t<V>, size>)
     constexpr auto bind(this Self&& self, V&& value) noexcept {
         return tensor_value_binder{std::forward<Self>(self), std::forward<V>(value)};
     }
