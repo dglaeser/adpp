@@ -69,14 +69,74 @@ int main() {
     };
 
     "expression_with_cval_derivative"_test = [] () {
+        using namespace adpp::indices;
         var x;
         var y;
         var z;
         const auto expr = x - 2*y - x + exp(cval<3.0>/z);
         const auto derivs = derivatives_of(expr, wrt(x, y, z), at(x = 3, y = 2, z = 4.0));
         expect(eq(derivs[x], 0));
+        expect(eq(derivs[_0], 0));
+
         expect(eq(derivs[y], -2));
+        expect(eq(derivs[_1], -2));
+
         expect(eq(derivs[z], std::exp(3.0/4.0)*(-3.0/16.0)));
+        expect(eq(derivs[_2], std::exp(3.0/4.0)*(-3.0/16.0)));
+    };
+
+
+    "expression_exp_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = exp(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 1.0, b = 2.0));
+        expect(eq(derivatives[a], std::exp(1.0)*std::log(2.0)));
+    };
+
+    "expression_log_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = log(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+        expect(eq(derivatives[a], 1.0/2.0*std::log(2.0)));
+    };
+
+    "expression_sqrt_derivative"_test = [] () {
+        var a;
+        var b;
+        auto expr = sqrt(a)*log(b);
+        auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+        expect(eq(derivatives[a], -1.0/std::sqrt(2.0)*std::log(2.0)));
+    };
+
+    "expression_pow_derivative"_test = [] () {
+        var a;
+        var b;
+        {
+            auto expr = pow(a, log(b));
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = 2.0));
+            expect(eq(derivatives[a], std::log(2.0)*std::pow(2.0, std::log(2.0) - 1.0)));
+        }
+        {
+            auto expr = pow(a, b);
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = 2.0, b = -2.0/3.0));
+            expect(eq(derivatives[a], -2.0/3.0*std::pow(2.0, -2.0/3.0 - 1.0)));
+        }
+        {
+            const auto aval = 2.0;
+            const auto bval = -2.0/3.0;
+            auto expr = pow(a*a, b*a + a*a);
+            auto derivatives = derivatives_of(expr, wrt(a), at(a = aval, b = bval));
+            expect(eq(
+                derivatives[a],
+                std::pow(aval*aval, aval*(bval + aval))*(
+                    (bval + 2.0*aval)*std::log(aval*aval)
+                    +
+                    2.0*(bval + aval)
+                )
+            ));
+        }
     };
 
     "expression_with_cval_gradient"_test = [] () {
@@ -181,7 +241,7 @@ int main() {
         }
     };
 
-    "derivative_expression_complex"_test = [] () {
+    "derivative_expression_exp"_test = [] () {
         var a;
         var b;
         let mu;
@@ -205,6 +265,43 @@ int main() {
             expect(eq(
                 evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
                 std::exp((1.0 + 2.0)*2.0)
+            ));
+        }
+    };
+
+    "derivative_expression_sqrt"_test = [] () {
+        var a;
+        var b;
+        let mu;
+        auto expr = sqrt((a + b)*b)*mu;
+        auto derivative = differentiate(expr, wrt(a));
+        expect(eq(
+            evaluate(derivative, at(a = 1.0, b = 2.0, mu = 3.0)),
+            -(1.0/std::sqrt((1.0 + 2.0)*2.0))*3.0*2.0
+        ));
+    };
+
+    "derivative_expression_pow"_test = [] () {
+        var a;
+        var b;
+        let mu;
+        {
+            auto expr = pow(a*b, mu);
+            auto derivative = differentiate(expr, wrt(a));
+            expect(eq(evaluate(derivative, at(a = 2.0, b = 4.0, mu = 3.0)), 3.0*std::pow(2.0*4.0, 2.0)*4.0));
+        }
+        {
+            const auto aval = 2.0;
+            const auto bval = -2.0/3.0;
+            auto expr = pow(a*a, b*a + a*a);
+            auto derivative = differentiate(expr, wrt(a));
+            expect(eq(
+                evaluate(derivative, at(a = aval, b = bval)),
+                std::pow(aval*aval, aval*(bval + aval))*(
+                    (bval + 2.0*aval)*std::log(aval*aval)
+                    +
+                    2.0*(bval + aval)
+                )
             ));
         }
     };
@@ -266,6 +363,39 @@ int main() {
 
         static_assert(derivative.evaluate() == 8.0);
         expect(eq(derivative.evaluate(), 8.0));
+    };
+
+    "function_differentiate"_test = [] () {
+        var a;
+        let b;
+        var c;
+        function f = (a + b)*a;
+        function df_da = f.differentiate(wrt(a));
+        expect(eq(df_da(a = 2.0, b = 4.0, c = 10.0), 2.0*2.0 + 4.0));
+    };
+
+    "differentiate_exp"_test = [] () {
+        var a;
+        var b;
+        const auto expr = exp(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), std::exp(2.0)*std::log(3.0)));
+    };
+
+    "differentiate_sqrt"_test = [] () {
+        var a;
+        var b;
+        const auto expr = sqrt(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), -1.0/std::sqrt(2.0)*std::log(3.0)));
+    };
+
+    "differentiate_log"_test = [] () {
+        var a;
+        var b;
+        const auto expr = log(a)*log(b);
+        const auto deriv = differentiate(expr, wrt(a));
+        expect(eq(evaluate(deriv, at(a = 2.0, b = 3.0)), 1.0/2.0*std::log(3.0)));
     };
 
     return EXIT_SUCCESS;

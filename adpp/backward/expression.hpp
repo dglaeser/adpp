@@ -1,15 +1,26 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures around symbolic expressions.
+ */
 #pragma once
 
 #include <cmath>
 #include <utility>
 #include <type_traits>
 
-#include <adpp/type_traits.hpp>
+#include <adpp/utils.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
 #include <adpp/backward/derivatives.hpp>
+#include <adpp/backward/symbols.hpp>
 
 namespace adpp::backward {
+
+//! \addtogroup Backward
+//! \{
 
 #ifndef DOXYGEN
 namespace detail {
@@ -21,8 +32,8 @@ namespace detail {
     struct symbols_impl<E, type_list<Ts...>> {
         using type = std::conditional_t<
             symbolic<std::remove_cvref_t<E>>,
-            typename unique_types<type_list<Ts...>, std::remove_cvref_t<E>>::type,
-            typename unique_types<type_list<Ts...>>::type
+            unique_t<type_list<Ts...>, std::remove_cvref_t<E>>,
+            unique_t<type_list<Ts...>>
         >;
     };
 
@@ -33,12 +44,10 @@ namespace detail {
 
     template<typename E0, typename... Es, typename... Ts>
     struct symbols_impl<type_list<E0, Es...>, type_list<Ts...>> {
-        using type = typename unique_types<
-            typename merged_types<
-                typename symbols_impl<E0, type_list<Ts...>>::type,
-                typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
-            >::type
-        >::type;
+        using type = unique_t<merged_t<
+            typename symbols_impl<E0, type_list<Ts...>>::type,
+            typename symbols_impl<type_list<Es...>, type_list<Ts...>>::type
+        >>;
     };
 
     // closures to stop recursion
@@ -51,57 +60,54 @@ namespace detail {
 }  // namespace detail
 #endif  // DOXYGEN
 
+//! Type trait to extract the symbols of an expression
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 struct symbols : detail::symbols_impl<E, type_list<>> {};
-
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using symbols_t = typename symbols<E>::type;
-
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto symbols_of(const E&) {
     return symbols_t<E>{};
 }
 
-
+//! Type trait to extract the unbound symbols of an expression
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct unbound_symbols : filtered_types<decayed_trait<is_unbound_symbol>::type, symbols_t<E>> {};
-
+struct unbound_symbols : filtered<decayed_arg_trait<is_unbound_symbol>::type, symbols_t<E>> {};
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using unbound_symbols_t = typename unbound_symbols<E>::type;
-
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto unbound_symbols_of(const E&) {
     return unbound_symbols_t<E>{};
 }
 
-
+//! Type trait to extract the variables of an expression
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
-struct vars : filtered_types<decayed_trait<detail::is_var>::type, symbols_t<E>> {};
-
+struct vars : filtered<decayed_arg_trait<detail::is_var>::type, symbols_t<E>> {};
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 using vars_t = typename vars<E>::type;
-
 template<typename E> requires(is_expression_v<std::remove_cvref_t<E>>)
 inline constexpr auto variables_of(const E&) {
     return vars_t<E>{};
 }
 
-
-// traits forward declarations
+// forward declarations
 template<typename R, typename op, typename... T> struct back_propagator;
 template<typename op, typename... T> struct formatter;
 template<typename op, typename... T> struct differentiator;
 
+//! Class to represent expressions resulting from an operator applied to the given terms
 template<typename op, term... Ts>
 struct expression : bindable, negatable {
     constexpr expression() = default;
     constexpr expression(const op&, const Ts&...) noexcept {}
 
+    //! Evaluate the expression using the given values for the operands
     template<typename... B>
     constexpr decltype(auto) evaluate(const bindings<B...>& operands) const {
         return op{}(Ts{}.evaluate(operands)...);
     }
 
+    //! Back-propagate the derivatives of the expression at the given values and w.r.t. the given variables
     template<scalar R, typename Self, typename... B, typename... V>
     constexpr auto back_propagate(this Self&& self, const bindings<B...>& bindings, const type_list<V...>& vars) {
         auto [value, derivs] = back_propagator<R, op, Ts...>{}(bindings, vars);
@@ -110,11 +116,13 @@ struct expression : bindable, negatable {
         return std::make_pair(std::move(value), std::move(derivs));
     }
 
+    //! Differentiate the expression and return the resulting expression
     template<typename V>
     constexpr auto differentiate(const type_list<V>& var) const {
         return differentiator<op, Ts...>{}(var);
     }
 
+    //! Export this expression to the given output stream
     template<typename... B>
     constexpr void export_to(std::ostream& out, const bindings<B...>& name_bindings) const {
         formatter<op, Ts...>{}(out, name_bindings);
@@ -129,6 +137,8 @@ struct is_expression<expression<op, Ts...>> : std::true_type {};
 
 template<typename op, typename... T>
 struct operands<expression<op, T...>> : std::type_identity<type_list<T...>> {};
+
+//! \} group Backward
 
 }  // namespace adpp::backward
 

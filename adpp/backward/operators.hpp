@@ -1,9 +1,16 @@
+// SPDX-FileCopyrightText: 2024 Dennis Gläser <dennis.glaeser@iws.uni-stuttgart.de>
+// SPDX-License-Identifier: MIT
+/*!
+ * \file
+ * \ingroup Backward
+ * \brief Data structures to represent operations on symbols/expressions.
+ */
 #pragma once
 
 #include <cmath>
 #include <type_traits>
 
-#include <adpp/type_traits.hpp>
+#include <adpp/utils.hpp>
 #include <adpp/backward/symbols.hpp>
 #include <adpp/backward/concepts.hpp>
 #include <adpp/backward/bindings.hpp>
@@ -12,13 +19,40 @@
 
 namespace adpp::backward {
 
+//! \addtogroup Backward
+//! \{
+
 namespace op {
+
+struct log {
+    template<typename T>
+    constexpr auto operator()(const T& t) const {
+        using std::log;
+        return log(t);
+    }
+};
 
 struct exp {
     template<typename T>
     constexpr auto operator()(const T& t) const {
         using std::exp;
         return exp(t);
+    }
+};
+
+struct sqrt {
+    template<typename T>
+    constexpr auto operator()(const T& t) const {
+        using std::sqrt;
+        return sqrt(t);
+    }
+};
+
+struct pow {
+    template<typename T, typename E>
+    constexpr auto operator()(const T& t, const E& exponent) const {
+        using std::pow;
+        return pow(t, exponent);
     }
 };
 
@@ -37,51 +71,51 @@ namespace detail {
     struct is_cval : std::false_type {};
     template<auto v>
     struct is_cval<constant<v>> : std::true_type {};
+    template<typename T>
+    struct is_scalar : std::bool_constant<scalar<T> or is_scalar_expression_v<T>> {};
 
     template<typename... Ts>
     inline constexpr bool all_cvals_v = std::conjunction_v<is_cval<std::remove_cvref_t<Ts>>...>;
 
-    template<into_term T, auto _ = [] () {}>
-    inline constexpr decltype(auto) as_term(T&& t) noexcept {
-        if constexpr (term<std::remove_cvref_t<T>>)
-            return std::forward<T>(t);
-        else
-            return val<T, _>{std::forward<T>(t)};
-    }
+    template<typename... Ts>
+    inline constexpr bool all_scalars_v = std::conjunction_v<is_scalar<std::remove_cvref_t<Ts>>...>;
 
 }  // namespace detail
 #endif  // DOXYGEN
 
-template<typename op, term... Ts>
-using op_result_t = expression<op, std::remove_cvref_t<Ts>...>;
-
-// for arithmetic operations between cvals, we use the operators defined in-class
-template<typename op, term... Ts> requires(!detail::all_cvals_v<Ts...>)
-using arithmetic_op_result_t = op_result_t<op, Ts...>;
-
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator+(A&& a, B&& b) {
-    return expression{op::add{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::add{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator-(A&& a, B&& b) {
-    return expression{op::subtract{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::subtract{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator*(A&& a, B&& b) {
-    return expression{op::multiply{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::multiply{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
-template<into_term A, into_term B> requires(!detail::all_cvals_v<A, B>)
+template<into_term A, into_term B> requires(detail::all_scalars_v<A, B> and !detail::all_cvals_v<A, B>)
 inline constexpr auto operator/(A&& a, B&& b) {
-    return expression{op::divide{}, detail::as_term(std::forward<A>(a)), detail::as_term(std::forward<B>(b))};
+    return expression{op::divide{}, as_term(std::forward<A>(a)), as_term(std::forward<B>(b))};
 }
 template<into_term A>
-inline constexpr op_result_t<op::exp, A> exp(A&& a) {
-    return expression{op::exp{}, detail::as_term(std::forward<A>(a))};
+inline constexpr auto exp(A&& a) {
+    return expression{op::exp{}, as_term(std::forward<A>(a))};
+}
+template<into_term A>
+inline constexpr auto sqrt(A&& a) {
+    return expression{op::sqrt{}, as_term(std::forward<A>(a))};
+}
+template<into_term A>
+inline constexpr auto log(A&& a) {
+    return expression{op::log{}, as_term(std::forward<A>(a))};
+}
+template<into_term A, into_term E>
+inline constexpr auto pow(A&& a, E&& exponent) {
+    return expression{op::pow{}, as_term(std::forward<A>(a)), as_term(std::forward<E>(exponent))};
 }
 
-
-// traits implementations
 template<typename R, typename A, typename B>
 struct back_propagator<R, op::add, A, B> {
     template<typename... _B, typename... V>
@@ -140,29 +174,59 @@ struct back_propagator<R, op::exp, A> {
     }
 };
 
+template<typename R, typename A>
+struct back_propagator<R, op::log, A> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto result = op::log{}(value_inner);
+        return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(R{1}/value_inner));
+    }
+};
+
+template<typename R, typename A>
+struct back_propagator<R, op::sqrt, A> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto result = op::sqrt{}(value_inner);
+        return std::make_pair(std::move(result), std::move(derivs_inner).scaled_with(-1.0/result));
+    }
+};
+
+template<typename R, typename A, typename E>
+struct back_propagator<R, op::pow, A, E> {
+    template<typename... _B, typename... V>
+    constexpr auto operator()(const bindings<_B...>& b, const type_list<V...>& vars) {
+        auto [value_inner, derivs_inner] = A{}.template back_propagate<R>(b, vars);
+        auto [value_exp, derivs_exp] = E{}.template back_propagate<R>(b, vars);
+        auto result = op::pow{}(value_inner, value_exp);
+        return std::make_pair(
+            result,
+            (
+                std::move(derivs_exp).scaled_with(op::log{}(value_inner)) +
+                std::move(derivs_inner).scaled_with(value_exp/value_inner)
+            ).scaled_with(result)
+        );
+    }
+};
+
 
 #ifndef DOXYGEN
 namespace detail {
 
-    template<typename T> requires(!is_cval<std::remove_cvref_t<T>>::value)
-    constexpr bool is_zero() { return false; }
-    template<typename T> requires(is_cval<std::remove_cvref_t<T>>::value)
-    constexpr bool is_zero() { return T::value == 0; }
-    template<typename T>
-    constexpr bool is_zero(const T&) { return is_zero<T>(); }
-
     template<typename T0, typename T1, typename F0, typename F1, typename F>
     constexpr auto simplified(T0&& t0, T1&& t1, const F0& f0, const F1& f1, const F& f) {
-        if constexpr (is_zero<std::remove_cvref_t<T0>>())
+        if constexpr (is_zero_constant_v<std::remove_cvref_t<T0>>)
             return f1(std::forward<T1>(t1));
-        else if constexpr (is_zero<std::remove_cvref_t<T1>>())
+        else if constexpr (is_zero_constant_v<std::remove_cvref_t<T1>>)
             return f0(std::forward<T0>(t0));
         else
             return f(std::forward<T0>(t0), std::forward<T1>(t1));
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_mul(T0 t0, T1 t1) {
+    constexpr auto simplify_mul(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&&) { return cval<0>; },
@@ -172,7 +236,7 @@ namespace detail {
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_plus(T0 t0, T1 t1) {
+    constexpr auto simplify_plus(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&& a) { return a; },
@@ -182,7 +246,7 @@ namespace detail {
     }
 
     template<typename T0, typename T1>
-    constexpr auto simplify_division(T0 t0, T1 t1) {
+    constexpr auto simplify_division(T0&& t0, T1&& t1) {
         return simplified(
             std::forward<T0>(t0), std::forward<T1>(t1),
             [] (auto&& a) { static_assert(always_false<T0>::value, "division by zero!"); return a; },
@@ -283,6 +347,42 @@ struct differentiator<op::exp, A> {
     }
 };
 
+template<typename A>
+struct differentiator<op::log, A> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_division(A{}.differentiate(v), A{});
+    }
+};
+
+template<typename A>
+struct differentiator<op::sqrt, A> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_mul(cval<-1>/sqrt(A{}), A{}.differentiate(v));
+    }
+};
+
+template<typename A, typename E>
+struct differentiator<op::pow, A, E> {
+    template<typename V>
+    constexpr auto operator()(const type_list<V>& v) {
+        return detail::simplify_mul(
+            pow(A{}, E{}),
+            detail::simplify_plus(
+                detail::simplify_mul(
+                    E{}.differentiate(v),
+                    log(A{})
+                ),
+                detail::simplify_mul(
+                    A{}.differentiate(v),
+                    detail::simplify_division(E{}, A{})
+                )
+            )
+        );
+    }
+};
+
 
 #ifndef DOXYGEN
 namespace detail {
@@ -347,6 +447,38 @@ struct formatter<op::exp, A> {
         out << ")";
     }
 };
+
+template<typename A>
+struct formatter<op::log, A> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        out << "log(";
+        A{}.export_to(out, name_map);
+        out << ")";
+    }
+};
+
+template<typename A>
+struct formatter<op::sqrt, A> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        out << "√(";
+        A{}.export_to(out, name_map);
+        out << ")";
+    }
+};
+
+template<typename A, typename E>
+struct formatter<op::pow, A, E> {
+    template<typename... N>
+    constexpr void operator()(std::ostream& out, const bindings<N...>& name_map) {
+        A{}.export_to(out, name_map);
+        out << "^";
+        detail::in_braces(out, E{}, name_map);
+    }
+};
+
+//! \} group Backward
 
 }  // namespace adpp::backward
 

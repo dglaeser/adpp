@@ -26,7 +26,7 @@ int main() {
         val d{3};
         auto expr = (a + b)*c + d;
         using symbols = adpp::backward::symbols_t<std::remove_cvref_t<decltype(expr)>>;
-        static_assert(adpp::type_list_size_v<symbols> == 4);
+        static_assert(symbols::size == 4);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(a)>, symbols>);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(b)>, symbols>);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(c)>, symbols>);
@@ -40,7 +40,7 @@ int main() {
         val d{3};
         auto expr = (a + b)*c + d;
         using unbound = adpp::backward::unbound_symbols_t<std::remove_cvref_t<decltype(expr)>>;
-        static_assert(adpp::type_list_size_v<unbound> == 2);
+        static_assert(unbound::size == 2);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(a)>, unbound>);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(b)>, unbound>);
     };
@@ -52,7 +52,7 @@ int main() {
         val d{3};
         auto expr = (a + b)*c + d;
         using unbound = adpp::backward::vars_t<std::remove_cvref_t<decltype(expr)>>;
-        static_assert(adpp::type_list_size_v<unbound> == 1);
+        static_assert(unbound::size == 1);
         static_assert(adpp::contains_decayed_v<std::remove_cvref_t<decltype(a)>, unbound>);
     };
 
